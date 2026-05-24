@@ -1,0 +1,197 @@
+{
+  "type": "map",
+  "version": "1.10",
+  "tiledversion": "1.10.2",
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "width": 96,
+  "height": 58,
+  "tilewidth": 16,
+  "tileheight": 16,
+  "infinite": false,
+  "nextlayerid": 8,
+  "nextobjectid": 82,
+  "tilesets": [],
+  "layers": [
+    {
+      "id": 1,
+      "name": "rooms",
+      "type": "objectgroup",
+      "visible": true,
+      "opacity": 1,
+      "objects": [
+        { "id": 1, "name": "ops floor", "type": "room", "x": 64, "y": 88, "width": 620, "height": 360, "properties": [
+          { "name": "floorKey", "type": "string", "value": "floorWood" },
+          { "name": "tint", "type": "string", "value": "0xa98762" }
+        ] },
+        { "id": 2, "name": "command", "type": "room", "x": 720, "y": 88, "width": 360, "height": 360, "properties": [
+          { "name": "floorKey", "type": "string", "value": "floorBlue" },
+          { "name": "tint", "type": "string", "value": "0x7891b6" }
+        ] },
+        { "id": 3, "name": "kitchen", "type": "room", "x": 64, "y": 500, "width": 360, "height": 330, "properties": [
+          { "name": "floorKey", "type": "string", "value": "floorPurple" },
+          { "name": "tint", "type": "string", "value": "0x8b6db0" }
+        ] },
+        { "id": 4, "name": "lounge", "type": "room", "x": 456, "y": 500, "width": 360, "height": 330, "properties": [
+          { "name": "floorKey", "type": "string", "value": "floorStone" },
+          { "name": "tint", "type": "string", "value": "0x92907e" }
+        ] },
+        { "id": 5, "name": "runtime", "type": "room", "x": 860, "y": 500, "width": 620, "height": 330, "properties": [
+          { "name": "floorKey", "type": "string", "value": "floorStone" },
+          { "name": "tint", "type": "string", "value": "0x7d8d8f" }
+        ] },
+        { "id": 6, "name": "meeting", "type": "room", "x": 1116, "y": 88, "width": 364, "height": 360, "properties": [
+          { "name": "floorKey", "type": "string", "value": "floorStone" },
+          { "name": "tint", "type": "string", "value": "0x92907e" }
+        ] }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "walls",
+      "type": "objectgroup",
+      "visible": true,
+      "opacity": 1,
+      "objects": [
+        { "id": 10, "name": "ops-window-1", "type": "wallPanel", "x": 110, "y": 126, "width": 132, "height": 62 },
+        { "id": 11, "name": "ops-window-2", "type": "wallPanel", "x": 314, "y": 126, "width": 132, "height": 62 },
+        { "id": 12, "name": "command-window", "type": "wallPanel", "x": 820, "y": 126, "width": 132, "height": 62 },
+        { "id": 13, "name": "meeting-window-1", "type": "wallPanel", "x": 1164, "y": 126, "width": 132, "height": 62 },
+        { "id": 14, "name": "meeting-window-2", "type": "wallPanel", "x": 1320, "y": 126, "width": 132, "height": 62 }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "decor",
+      "type": "objectgroup",
+      "visible": true,
+      "opacity": 1,
+      "objects": [
+        { "id": 20, "name": "okami-brand", "type": "okamiBrand", "x": 92, "y": 150, "width": 166, "height": 34 },
+        { "id": 21, "name": "ops-neon-1", "type": "neonBar", "x": 472, "y": 154, "properties": [ { "name": "color", "type": "string", "value": "0xff4fd8" } ] },
+        { "id": 22, "name": "command-neon", "type": "neonBar", "x": 934, "y": 154, "properties": [ { "name": "color", "type": "string", "value": "0xff8a3d" } ] },
+        { "id": 23, "name": "meeting-neon", "type": "neonBar", "x": 1294, "y": 154, "properties": [ { "name": "color", "type": "string", "value": "0x00e5ff" } ] },
+        { "id": 24, "name": "runtime-neon", "type": "neonBar", "x": 1288, "y": 540, "properties": [ { "name": "color", "type": "string", "value": "0xff4fd8" } ] },
+        { "id": 25, "name": "meeting-bookshelf", "type": "image", "x": 1360, "y": 206, "properties": [
+          { "name": "key", "type": "string", "value": "bookshelf" },
+          { "name": "scale", "type": "float", "value": 2.7 },
+          { "name": "depth", "type": "int", "value": 160 }
+        ] },
+        { "id": 26, "name": "command-whiteboard", "type": "image", "x": 780, "y": 218, "properties": [
+          { "name": "key", "type": "string", "value": "whiteboard" },
+          { "name": "scale", "type": "float", "value": 2.7 },
+          { "name": "depth", "type": "int", "value": 170 }
+        ] },
+        { "id": 27, "name": "ops-large-plant", "type": "image", "x": 600, "y": 132, "properties": [
+          { "name": "key", "type": "string", "value": "largePlant" },
+          { "name": "scale", "type": "float", "value": 2.55 },
+          { "name": "depth", "type": "int", "value": 190 }
+        ] },
+        { "id": 28, "name": "meeting-large-plant", "type": "image", "x": 1420, "y": 352, "properties": [
+          { "name": "key", "type": "string", "value": "largePlant" },
+          { "name": "scale", "type": "float", "value": 2.55 },
+          { "name": "depth", "type": "int", "value": 360 }
+        ] },
+        { "id": 29, "name": "kitchen-plant", "type": "image", "x": 92, "y": 772, "properties": [
+          { "name": "key", "type": "string", "value": "plant" },
+          { "name": "scale", "type": "float", "value": 2.5 },
+          { "name": "depth", "type": "int", "value": 850 }
+        ] },
+        { "id": 30, "name": "runtime-plant", "type": "image", "x": 1418, "y": 772, "properties": [
+          { "name": "key", "type": "string", "value": "plant" },
+          { "name": "scale", "type": "float", "value": 2.5 },
+          { "name": "depth", "type": "int", "value": 850 }
+        ] }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "furniture",
+      "type": "objectgroup",
+      "visible": true,
+      "opacity": 1,
+      "objects": [
+        { "id": 40, "name": "meeting-table", "type": "image", "x": 1210, "y": 270, "properties": [
+          { "name": "key", "type": "string", "value": "tableFront" },
+          { "name": "scale", "type": "float", "value": 3.2 },
+          { "name": "depth", "type": "int", "value": 280 }
+        ] },
+        { "id": 41, "name": "meeting-chair-1", "type": "image", "x": 1168, "y": 346, "properties": [
+          { "name": "key", "type": "string", "value": "woodenChairFront" },
+          { "name": "scale", "type": "float", "value": 2.35 },
+          { "name": "depth", "type": "int", "value": 340 }
+        ] },
+        { "id": 42, "name": "meeting-chair-2", "type": "image", "x": 1286, "y": 346, "properties": [
+          { "name": "key", "type": "string", "value": "woodenChairFront" },
+          { "name": "scale", "type": "float", "value": 2.35 },
+          { "name": "depth", "type": "int", "value": 340 }
+        ] },
+        { "id": 43, "name": "meeting-chair-3", "type": "image", "x": 1398, "y": 346, "properties": [
+          { "name": "key", "type": "string", "value": "woodenChairFront" },
+          { "name": "scale", "type": "float", "value": 2.35 },
+          { "name": "depth", "type": "int", "value": 340 }
+        ] },
+        { "id": 44, "name": "lounge-sofa", "type": "image", "x": 642, "y": 590, "properties": [
+          { "name": "key", "type": "string", "value": "sofaFront" },
+          { "name": "scale", "type": "float", "value": 2.8 },
+          { "name": "depth", "type": "int", "value": 260 }
+        ] },
+        { "id": 45, "name": "lounge-coffee-table", "type": "image", "x": 646, "y": 654, "properties": [
+          { "name": "key", "type": "string", "value": "coffeeTable" },
+          { "name": "scale", "type": "float", "value": 2.55 },
+          { "name": "depth", "type": "int", "value": 320 }
+        ] },
+        { "id": 46, "name": "kitchen-zone", "type": "kitchen", "x": 112, "y": 594 },
+        { "id": 47, "name": "games-zone", "type": "games", "x": 502, "y": 650 },
+        { "id": 48, "name": "runtime-bridge", "type": "bridge", "x": 930, "y": 522, "width": 176, "height": 88 }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "runtimeRacks",
+      "type": "objectgroup",
+      "visible": true,
+      "opacity": 1,
+      "objects": [
+        { "id": 50, "name": "rack-1", "type": "rack", "x": 914, "y": 626 },
+        { "id": 51, "name": "rack-2", "type": "rack", "x": 962, "y": 626 },
+        { "id": 52, "name": "rack-3", "type": "rack", "x": 1010, "y": 626 },
+        { "id": 53, "name": "rack-4", "type": "rack", "x": 1058, "y": 626 },
+        { "id": 54, "name": "rack-5", "type": "rack", "x": 1320, "y": 626 },
+        { "id": 55, "name": "rack-6", "type": "rack", "x": 1368, "y": 626 }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "workstations",
+      "type": "objectgroup",
+      "visible": true,
+      "opacity": 1,
+      "objects": [
+        { "id": 60, "name": "desk-1", "type": "workstation", "x": 114, "y": 220 },
+        { "id": 61, "name": "desk-2", "type": "workstation", "x": 294, "y": 220 },
+        { "id": 62, "name": "desk-3", "type": "workstation", "x": 474, "y": 220 },
+        { "id": 63, "name": "desk-4", "type": "workstation", "x": 770, "y": 218 },
+        { "id": 64, "name": "desk-5", "type": "workstation", "x": 912, "y": 218 },
+        { "id": 65, "name": "desk-6", "type": "workstation", "x": 930, "y": 552 },
+        { "id": 66, "name": "desk-7", "type": "workstation", "x": 1088, "y": 552 },
+        { "id": 67, "name": "desk-8", "type": "workstation", "x": 1246, "y": 552 }
+      ]
+    },
+    {
+      "id": 7,
+      "name": "roamingSpawns",
+      "type": "objectgroup",
+      "visible": true,
+      "opacity": 1,
+      "objects": [
+        { "id": 72, "name": "kitchen-walk", "type": "roaming", "x": 284, "y": 690 },
+        { "id": 73, "name": "lounge-walk", "type": "roaming", "x": 644, "y": 760 },
+        { "id": 74, "name": "command-walk", "type": "roaming", "x": 922, "y": 360 },
+        { "id": 75, "name": "runtime-walk", "type": "roaming", "x": 1390, "y": 746 },
+        { "id": 76, "name": "meeting-walk-1", "type": "roaming", "x": 1210, "y": 342 },
+        { "id": 77, "name": "meeting-walk-2", "type": "roaming", "x": 1380, "y": 342 }
+      ]
+    }
+  ]
+}

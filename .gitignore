@@ -1,0 +1,40 @@
+# ─── Build & deps ────────────────────────────────────────────
+node_modules/
+dist/
+.vite/
+*.log
+
+# ─── Env & secrets ───────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ─── OS junk ─────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# ─── Editor / IDE ────────────────────────────────────────────
+.idea/
+.vscode/
+*.iml
+
+# ─── Local backend data (Hermes SSH config + state) ──────────
+server/.data/
+
+# ─── Plugin settings locais (não compartilhar) ───────────────
+.claude/
+
+# ─── Source assets pesados (fora do repo) ────────────────────
+# Os pacotes originais ficam fora — o app usa apenas o que está em /public.
+Modern_Office_Revamped_v1.2/
+RPG Top Down Character Asset Pack - FULL/
+Office.png
+office2.png
+/office.mp4
+
+# ─── Captures & temp ─────────────────────────────────────────
+*.tmp
+captures/
+.cache/
