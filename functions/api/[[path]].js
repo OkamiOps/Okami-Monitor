@@ -10,7 +10,7 @@ const HOP_BY_HOP_HEADERS = new Set([
   "host",
 ]);
 
-function cloneProxyHeaders(request, token) {
+function cloneProxyHeaders(request, token, env) {
   const headers = new Headers();
   for (const [key, value] of request.headers.entries()) {
     if (!HOP_BY_HOP_HEADERS.has(key.toLowerCase())) {
@@ -19,6 +19,12 @@ function cloneProxyHeaders(request, token) {
   }
   headers.set("x-okami-proxy-token", token);
   headers.set("x-okami-edge", "cloudflare-pages");
+
+  if (env.CF_ACCESS_CLIENT_ID && env.CF_ACCESS_CLIENT_SECRET) {
+    headers.set("CF-Access-Client-Id", env.CF_ACCESS_CLIENT_ID);
+    headers.set("CF-Access-Client-Secret", env.CF_ACCESS_CLIENT_SECRET);
+  }
+
   return headers;
 }
 
@@ -38,7 +44,7 @@ export async function onRequest(context) {
   const targetUrl = `${backendUrl}${incomingUrl.pathname}${incomingUrl.search}`;
   const init = {
     method: request.method,
-    headers: cloneProxyHeaders(request, proxyToken),
+    headers: cloneProxyHeaders(request, proxyToken, env),
     redirect: "manual",
   };
 
