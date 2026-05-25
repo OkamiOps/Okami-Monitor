@@ -278,10 +278,10 @@ export const mockMissionControl = {
     Done: [{ title: "Inventario de apps", meta: "Scout · Links", priority: "P3", owner: "Scout", estimate: "done" }],
   },
   apiKeys: [
-    { id: "openai", name: "OpenAI", maskedValue: "sk-••••••••••M4", detail: "Produção · rotacao em 18d", latency: 310, usage: 46, status: "healthy" },
-    { id: "anthropic", name: "Anthropic", maskedValue: "sk-ant-•••••91", detail: "Hermes · fallback ativo", latency: 280, usage: 61, status: "healthy" },
-    { id: "openrouter", name: "OpenRouter", maskedValue: "or-••••••••A2", detail: "Rate limit 82%", latency: 520, usage: 82, status: "watch" },
-    { id: "github", name: "GitHub", maskedValue: "ghp_••••••••7F", detail: "Repos OkamiOps", latency: 190, usage: 33, status: "healthy" },
+    { id: "openai", name: "OpenAI", maskedValue: "openai-token-masked", detail: "Produção · rotacao em 18d", latency: 310, usage: 46, status: "healthy" },
+    { id: "anthropic", name: "Anthropic", maskedValue: "anthropic-token-masked", detail: "Hermes · fallback ativo", latency: 280, usage: 61, status: "healthy" },
+    { id: "openrouter", name: "OpenRouter", maskedValue: "openrouter-token-masked", detail: "Rate limit 82%", latency: 520, usage: 82, status: "watch" },
+    { id: "github", name: "GitHub", maskedValue: "github-token-masked", detail: "Repos OkamiOps", latency: 190, usage: 33, status: "healthy" },
   ],
   apps: [
     { name: "Okami Site", url: "https://okami-site.msant262.workers.dev", detail: "workers.dev", status: "Online", uptime: 99.99, env: "prod" },

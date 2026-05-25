@@ -1,14 +1,17 @@
 import { mockMissionControl } from "../data/mockMissionControl";
 
-const API_BASE_URL = import.meta.env.VITE_OKAMI_API_BASE_URL?.replace(/\/$/, "");
+const rawApiBaseUrl = import.meta.env.VITE_OKAMI_API_BASE_URL;
+const API_BASE_URL = rawApiBaseUrl === "same-origin"
+  ? ""
+  : rawApiBaseUrl?.replace(/\/$/, "");
 const API_TOKEN = import.meta.env.VITE_OKAMI_API_TOKEN;
 
 export function isMissionApiConfigured() {
-  return Boolean(API_BASE_URL);
+  return rawApiBaseUrl === "same-origin" || Boolean(API_BASE_URL);
 }
 
 async function request(path, options = {}) {
-  if (!API_BASE_URL) {
+  if (!isMissionApiConfigured()) {
     return { data: null, source: "mock", error: null };
   }
 
