@@ -8,9 +8,41 @@ import { mockMissionControl } from "../src/data/mockMissionControl.js";
 
 const app = express();
 const port = Number(process.env.OKAMI_API_PORT) || 3001;
+const backendProxyToken = process.env.OKAMI_BACKEND_PROXY_TOKEN || "";
+const allowedOrigins = (process.env.OKAMI_ALLOWED_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+const isProduction = process.env.NODE_ENV === "production";
 
-app.use(cors({ origin: true }));
+function requireBackendAuth(request, response, next) {
+  if (!backendProxyToken && !isProduction) {
+    next();
+    return;
+  }
+
+  const headerToken = request.get("x-okami-proxy-token") || "";
+  const bearerToken = request.get("authorization")?.replace(/^Bearer\s+/i, "") || "";
+  if (backendProxyToken && (headerToken === backendProxyToken || bearerToken === backendProxyToken)) {
+    next();
+    return;
+  }
+
+  response.status(401).json({ error: "Unauthorized" });
+}
+
+app.use(cors({
+  origin(origin, callback) {
+    if (!allowedOrigins.length || !origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+    callback(new Error("CORS origin blocked"));
+  },
+  credentials: Boolean(allowedOrigins.length),
+}));
 app.use(express.json({ limit: "2mb" }));
+app.use("/api", requireBackendAuth);
 
 function asyncRoute(handler) {
   return async (request, response, next) => {

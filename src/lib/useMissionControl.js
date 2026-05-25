@@ -3,7 +3,11 @@ import { getMissionControlState } from "./apiClient";
 import { mockMissionControl } from "../data/mockMissionControl";
 
 const DEFAULT_POLL_INTERVAL = 8000;
-const API_BASE_URL = import.meta.env.VITE_OKAMI_API_BASE_URL?.replace(/\/$/, "");
+const rawApiBaseUrl = import.meta.env.VITE_OKAMI_API_BASE_URL;
+const API_BASE_URL = rawApiBaseUrl === "same-origin"
+  ? ""
+  : rawApiBaseUrl?.replace(/\/$/, "");
+const API_CONFIGURED = rawApiBaseUrl === "same-origin" || Boolean(API_BASE_URL);
 
 export function useMissionControl() {
   const [state, setState] = useState({
@@ -65,7 +69,7 @@ export function useMissionControl() {
     }
 
     function startStream() {
-      if (!API_BASE_URL) {
+      if (!API_CONFIGURED) {
         // Sem backend configurado — usa só mock.
         setState({
           data: mockMissionControl,
