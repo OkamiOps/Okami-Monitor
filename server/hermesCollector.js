@@ -24,7 +24,8 @@ function shellQuote(value) {
 
 function shellPath(value) {
   const raw = String(value || "");
-  if (raw === "~" || raw.startsWith("~/")) return `$HOME${raw.slice(1)}`;
+  if (raw === "~") return "\"$HOME\"";
+  if (raw.startsWith("~/")) return `"$HOME"${shellQuote(raw.slice(1))}`;
   return shellQuote(raw);
 }
 
