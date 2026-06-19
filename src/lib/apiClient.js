@@ -1,6 +1,10 @@
 import { mockMissionControl } from "../data/mockMissionControl";
 
-const rawApiBaseUrl = import.meta.env.VITE_OKAMI_API_BASE_URL;
+// Em produção assume `same-origin` por padrão (proxy via functions/api) para
+// não ficar preso no mock quando o build não define VITE_OKAMI_API_BASE_URL.
+// Veja a nota em useMissionControl.js.
+const rawApiBaseUrl = import.meta.env.VITE_OKAMI_API_BASE_URL
+  ?? (import.meta.env.PROD ? "same-origin" : undefined);
 const API_BASE_URL = rawApiBaseUrl === "same-origin"
   ? ""
   : rawApiBaseUrl?.replace(/\/$/, "");

@@ -3,7 +3,14 @@ import { getMissionControlState } from "./apiClient";
 import { mockMissionControl } from "../data/mockMissionControl";
 
 const DEFAULT_POLL_INTERVAL = 8000;
-const rawApiBaseUrl = import.meta.env.VITE_OKAMI_API_BASE_URL;
+// Em build de produção (ex.: Cloudflare Pages) assumimos `same-origin` por
+// padrão: o frontend chama /api no mesmo domínio, onde functions/api/[[path]].js
+// faz o proxy pro backend real usando os segredos de runtime (OKAMI_BACKEND_URL
+// etc.). Sem isto, o Pages buildava sem VITE_OKAMI_API_BASE_URL e o app ficava
+// preso no mock mesmo com os segredos configurados. Em dev mantém mock por
+// padrão (defina VITE_OKAMI_API_BASE_URL pra conectar localmente).
+const rawApiBaseUrl = import.meta.env.VITE_OKAMI_API_BASE_URL
+  ?? (import.meta.env.PROD ? "same-origin" : undefined);
 const API_BASE_URL = rawApiBaseUrl === "same-origin"
   ? ""
   : rawApiBaseUrl?.replace(/\/$/, "");
