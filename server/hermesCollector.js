@@ -836,12 +836,11 @@ function buildRealApps(config, status, registryApps) {
 export async function collectKanbanRaw(config, store) {
   const hermesHome = config.hermesHome || "~/.hermes";
   const command = String.raw`python3 - <<'PY'
-import json, os, sqlite3
+import glob, json, os, sqlite3
 
 base = os.path.expanduser(${pythonString(hermesHome)})
-db = os.path.join(base, 'kanban.db')
 out = []
-boards_map = {}
+boards = []
 
 def rows(cur, sql, args=()):
     try:
@@ -849,28 +848,18 @@ def rows(cur, sql, args=()):
     except Exception:
         return []
 
-if os.path.exists(db):
-    con = sqlite3.connect(db)
+# Lê todas as tasks (não-arquivadas) de um kanban.db e marca cada uma com o
+# board de origem. O Hermes guarda cada board como um kanban.db separado.
+def collect_db(db, board_slug, board_name):
+    if not os.path.exists(db):
+        return
+    try:
+        con = sqlite3.connect('file:' + db + '?mode=ro', uri=True)
+    except Exception:
+        return
     con.row_factory = sqlite3.Row
     cur = con.cursor()
     tables = [row['name'] for row in rows(cur, "select name from sqlite_master where type='table'")]
-
-    # Mapa board_id -> nome, lido de qualquer tabela 'boards'/'board'.
-    for table in tables:
-        if table.lower() not in ('boards', 'board'):
-            continue
-        cols = [row['name'] for row in rows(cur, f"pragma table_info({table})")]
-        lower_cols = {col.lower(): col for col in cols}
-        id_col = next((lower_cols[name] for name in ['id', 'board_id', 'uuid', 'slug', 'key'] if name in lower_cols), None)
-        name_col = next((lower_cols[name] for name in ['name', 'title', 'label', 'slug'] if name in lower_cols), None)
-        if not id_col:
-            continue
-        for row in rows(cur, f"select * from {table}"):
-            board_id = row.get(id_col)
-            if board_id is None:
-                continue
-            boards_map[str(board_id)] = str(row.get(name_col) or board_id) if name_col else str(board_id)
-
     for table in tables:
         lower_table = table.lower()
         if any(token in lower_table for token in ['comment', 'event', 'log', 'history', 'run', 'attempt']):
@@ -898,9 +887,31 @@ if os.path.exists(db):
             body = row.get('body') or row.get('description') or row.get('notes') or ''
             if not str(title).strip() and not str(body).strip():
                 continue
-            out.append({**row, '_table': table})
+            out.append({**row, '_table': table, '_board': board_name, '_board_slug': board_slug})
+    con.close()
 
-print(json.dumps({'tasks': out, 'boards': boards_map, 'source': db}, ensure_ascii=False))
+# Board "Default" = kanban.db na raiz do ~/.hermes.
+collect_db(os.path.join(base, 'kanban.db'), 'default', 'Default')
+boards.append({'slug': 'default', 'name': 'Default'})
+
+# Boards adicionais = ~/.hermes/kanban/boards/<slug>/kanban.db, com nome no board.json.
+for bdir in sorted(glob.glob(os.path.join(base, 'kanban', 'boards', '*'))):
+    slug = os.path.basename(bdir)
+    name = slug
+    meta_path = os.path.join(bdir, 'board.json')
+    if os.path.exists(meta_path):
+        try:
+            with open(meta_path, encoding='utf-8') as handle:
+                meta = json.load(handle)
+            if meta.get('archived'):
+                continue
+            name = meta.get('name') or slug
+        except Exception:
+            pass
+    collect_db(os.path.join(bdir, 'kanban.db'), slug, name)
+    boards.append({'slug': slug, 'name': name})
+
+print(json.dumps({'tasks': out, 'boards': boards, 'source': base}, ensure_ascii=False))
 PY`;
   const rawDb = await tryExec(config, store, command, "");
   const parsedDb = parseJson(rawDb, null);
@@ -951,7 +962,9 @@ function parseKanbanJson(raw) {
     const parsed = JSON.parse(raw);
     const items = Array.isArray(parsed) ? parsed : parsed.tasks ?? parsed.items ?? [];
     const boardsMap = (!Array.isArray(parsed) && parsed.boards) || {};
-    const boardField = detectBoardField(items);
+    // O coletor já marca cada task com o board de origem (_board). Quando presente,
+    // usamos isso direto; senão caímos na auto-detecção (tenant/board_id/etc.).
+    const boardField = items.some((item) => item && item._board) ? "_board" : detectBoardField(items);
     const board = {};
     const statusLabels = {
       blocked: "Blocked",
@@ -1071,14 +1084,20 @@ PY`;
 }
 
 function attachKanbanDetails(kanban, details) {
+  // collectKanbanDetails só lê o kanban.db raiz (board Default). Os ids reiniciam
+  // em cada board, então só enriquecemos tasks do Default para não colar
+  // comentários/runs de uma task em outra de mesmo id em outro board.
   return Object.fromEntries(Object.entries(kanban).map(([column, tasks]) => [
     column,
-    tasks.map((task) => ({
-      ...task,
-      comments: details[task.id]?.comments ?? [],
-      runHistory: details[task.id]?.runHistory ?? [],
-      workLog: details[task.id]?.workLog ?? [],
-    })),
+    tasks.map((task) => {
+      const isDefaultBoard = !task.board || task.board === "Default";
+      return {
+        ...task,
+        comments: isDefaultBoard ? details[task.id]?.comments ?? [] : [],
+        runHistory: isDefaultBoard ? details[task.id]?.runHistory ?? [] : [],
+        workLog: isDefaultBoard ? details[task.id]?.workLog ?? [] : [],
+      };
+    }),
   ]));
 }
 
@@ -1103,7 +1122,10 @@ export async function collectHermesState(config, store) {
   ]);
 
   const parsedKanban = parseKanbanJson(kanbanRaw) ?? mockMissionControl.kanban;
-  const kanbanDetailMap = await collectKanbanDetails(config, store, Object.values(parsedKanban).flat());
+  // Detalhes (comments/runs/workLog) só existem no kanban.db raiz → só busca para
+  // o board Default; os outros boards têm seus próprios ids e dbs.
+  const defaultBoardTasks = Object.values(parsedKanban).flat().filter((task) => !task.board || task.board === "Default");
+  const kanbanDetailMap = await collectKanbanDetails(config, store, defaultBoardTasks);
   const kanban = attachKanbanDetails(parsedKanban, kanbanDetailMap);
   const totalProfile = (analytics.profiles ?? []).find((profile) => profile.profile === "default")
     ?? (analytics.profiles ?? []).reduce((sum, profile) => ({
