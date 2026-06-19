@@ -1,3 +1,28 @@
+// Analytics sintético para o modo demo/mock: 24 baldes de hora-do-dia e 30 dias
+// de calendário (ancorados em datas reais terminando hoje). Sem isto, todos os
+// ranges do Overview (1h/24h/7d/30d) caíam no mesmo fallback e o filtro parecia
+// "de enfeite". Com dados reais do Hermes via SSH, este bloco é substituído.
+const MOCK_NOW = new Date();
+const mockHourBuckets = Array.from({ length: 24 }, (_, index) => {
+  const input = 14000 + Math.round(11000 * Math.abs(Math.sin((index + 1) / 3.1)));
+  const output = 9000 + Math.round(8000 * Math.abs(Math.cos((index + 2) / 4.3)));
+  return { bucket: String(index).padStart(2, "0"), input_tokens: input, output_tokens: output, tokens: input + output };
+});
+const mockDayBuckets = Array.from({ length: 30 }, (_, index) => {
+  const date = new Date(MOCK_NOW);
+  date.setUTCDate(date.getUTCDate() - (29 - index));
+  const input = 95000 + Math.round(90000 * Math.abs(Math.sin((index + 1) / 5.5)));
+  const output = 60000 + Math.round(70000 * Math.abs(Math.cos((index + 1) / 6.7)));
+  return {
+    bucket: date.toISOString().slice(0, 10),
+    input_tokens: input,
+    output_tokens: output,
+    tokens: input + output,
+    sessions: 3 + (index % 6),
+  };
+});
+const mockAnalytics = { hours: mockHourBuckets, days: mockDayBuckets };
+
 export const mockMissionControl = {
   status: {
     label: "Hermes online",
@@ -267,15 +292,15 @@ export const mockMissionControl = {
   ],
   kanban: {
     Backlog: [
-      { title: "Conectar Supabase metrics", meta: "Hermes · API", priority: "P1", owner: "Hermes", estimate: "4h" },
-      { title: "Mapa de custos por cliente", meta: "Finance · Data", priority: "P2", owner: "Codex", estimate: "6h" },
+      { title: "Conectar Supabase metrics", meta: "Hermes · API", priority: "P1", owner: "Hermes", estimate: "4h", board: "Okami Core" },
+      { title: "Mapa de custos por cliente", meta: "Finance · Data", priority: "P2", owner: "Codex", estimate: "6h", board: "Cliente Aurora" },
     ],
     "Em progresso": [
-      { title: "Mission Control mobile", meta: "Codex · UI", hot: true, priority: "P1", owner: "Coder-1", estimate: "2h" },
-      { title: "Proxy reverso Hermes", meta: "Gateway · Infra", priority: "P1", owner: "Hermes", estimate: "1d" },
+      { title: "Mission Control mobile", meta: "Codex · UI", hot: true, priority: "P1", owner: "Coder-1", estimate: "2h", board: "Okami Core" },
+      { title: "Proxy reverso Hermes", meta: "Gateway · Infra", priority: "P1", owner: "Hermes", estimate: "1d", board: "Okami Core" },
     ],
-    Review: [{ title: "Docs de instalacao CLI", meta: "Writer · Docs", priority: "P2", owner: "Writer", estimate: "40m" }],
-    Done: [{ title: "Inventario de apps", meta: "Scout · Links", priority: "P3", owner: "Scout", estimate: "done" }],
+    Review: [{ title: "Docs de instalacao CLI", meta: "Writer · Docs", priority: "P2", owner: "Writer", estimate: "40m", board: "Cliente Aurora" }],
+    Done: [{ title: "Inventario de apps", meta: "Scout · Links", priority: "P3", owner: "Scout", estimate: "done", board: "Cliente Aurora" }],
   },
   apiKeys: [
     { id: "openai", name: "OpenAI", maskedValue: "openai-token-masked", detail: "Produção · rotacao em 18d", latency: 310, usage: 46, status: "healthy" },
@@ -319,6 +344,7 @@ export const mockMissionControl = {
     },
   ],
   hermes: {
+    analytics: mockAnalytics,
     accessMode: "private-ssh",
     sshHost: "vps-hostinger.okami.internal",
     sshUser: "root",
