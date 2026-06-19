@@ -153,7 +153,7 @@ for db, profile in dbs:
 
     for row in safe_rows(cur, f"""
         select coalesce(model,'unknown') name,
-               strftime('%Y-%m-%d', datetime(started_at, 'unixepoch')) bucket,
+               strftime('%Y-%m-%d', (case when typeof(started_at) in ('integer','real') then datetime(started_at, 'unixepoch') else datetime(started_at) end)) bucket,
                coalesce(sum({token_expr()}),0) tokens,
                count(*) sessions
         from sessions
@@ -216,7 +216,7 @@ for db, profile in dbs:
                 events.append(row)
 
     for row in safe_rows(cur, f"""
-        select strftime('%Y-%m-%d', datetime(started_at, 'unixepoch')) bucket,
+        select strftime('%Y-%m-%d', (case when typeof(started_at) in ('integer','real') then datetime(started_at, 'unixepoch') else datetime(started_at) end)) bucket,
                coalesce(sum(input_tokens),0) input_tokens,
                coalesce(sum(output_tokens),0) output_tokens,
                coalesce(sum({token_expr()}),0) tokens,
@@ -231,7 +231,7 @@ for db, profile in dbs:
             current[key] += row[key] or 0
 
     for row in safe_rows(cur, f"""
-        select strftime('%H', datetime(started_at, 'unixepoch')) bucket,
+        select strftime('%H', (case when typeof(started_at) in ('integer','real') then datetime(started_at, 'unixepoch') else datetime(started_at) end)) bucket,
                coalesce(sum(input_tokens),0) input_tokens,
                coalesce(sum(output_tokens),0) output_tokens,
                coalesce(sum({token_expr()}),0) tokens
