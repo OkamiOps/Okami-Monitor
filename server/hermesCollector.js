@@ -79,6 +79,7 @@ function parseJson(raw, fallback = null) {
 }
 
 async function collectAnalytics(config, store) {
+  const hermesHome = config.hermesHome || "~/.hermes";
   const command = String.raw`python3 - <<'PY'
 import glob, json, os, sqlite3, time
 
@@ -96,8 +97,9 @@ def safe_rows(cur, sql, args=()):
     except Exception:
         return []
 
-dbs = [('/root/.hermes/state.db', 'default')]
-for db in sorted(glob.glob('/root/.hermes/profiles/*/state.db')):
+base = os.path.expanduser(${pythonString(hermesHome)})
+dbs = [(os.path.join(base, 'state.db'), 'default')]
+for db in sorted(glob.glob(os.path.join(base, 'profiles', '*', 'state.db'))):
     dbs.append((db, db.split('/profiles/')[1].split('/')[0]))
 
 profiles = []
@@ -115,7 +117,9 @@ for db, profile in dbs:
         continue
     con = connect(db)
     cur = con.cursor()
-    agg = cur.execute(f"""
+    # Guardado: se o schema da tabela sessions divergir, nao derruba todo o
+    # analytics — zera o profile e segue (models/days/hours usam safe_rows).
+    agg_rows = safe_rows(cur, f"""
         select count(*) sessions,
                coalesce(sum(message_count),0) messages,
                coalesce(sum(tool_call_count),0) tool_calls,
@@ -127,8 +131,11 @@ for db, profile in dbs:
                coalesce(sum({token_expr()}),0) tokens,
                sum(case when ended_at is null then 1 else 0 end) active_sessions
         from sessions
-    """).fetchone()
-    profile_row = dict(agg)
+    """)
+    profile_row = dict(agg_rows[0]) if agg_rows else {}
+    for key in ['sessions', 'messages', 'tool_calls', 'input_tokens', 'output_tokens',
+                'cache_read_tokens', 'cache_write_tokens', 'reasoning_tokens', 'tokens', 'active_sessions']:
+        profile_row.setdefault(key, 0)
     profile_row['profile'] = profile
     profiles.append(profile_row)
 
@@ -242,7 +249,7 @@ for db, profile in dbs:
     con.close()
 
 skills = {}
-for path in ['/root/.hermes/skills/.usage.json'] + sorted(glob.glob('/root/.hermes/profiles/*/skills/.usage.json')):
+for path in [os.path.join(base, 'skills', '.usage.json')] + sorted(glob.glob(os.path.join(base, 'profiles', '*', 'skills', '.usage.json'))):
     profile = 'default'
     if '/profiles/' in path:
         profile = path.split('/profiles/')[1].split('/')[0]
@@ -1105,6 +1112,8 @@ export async function collectHermesState(config, store) {
       messages: Number(sum.messages || 0) + Number(profile.messages || 0),
       tool_calls: Number(sum.tool_calls || 0) + Number(profile.tool_calls || 0),
       tokens: Number(sum.tokens || 0) + Number(profile.tokens || 0),
+      input_tokens: Number(sum.input_tokens || 0) + Number(profile.input_tokens || 0),
+      output_tokens: Number(sum.output_tokens || 0) + Number(profile.output_tokens || 0),
       active_sessions: Number(sum.active_sessions || 0) + Number(profile.active_sessions || 0),
     }), {});
   const realModels = buildRealModels(analytics);
