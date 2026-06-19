@@ -272,6 +272,28 @@ function formatTokenValue(value) {
   return `${number} tokens`;
 }
 
+// Constrói uma janela contínua de N dias de calendário terminando hoje (ou no
+// dia mais recente com dados, o que for maior). Dias sem registro entram com 0.
+// Isso garante que 7d/30d sempre mostrem N pontos — antes o 7d agrupava só os
+// dias de calendário existentes (poucos), parecendo "menos dados" que o 24h,
+// que agrupa por hora-do-dia (até 24 baldes somando todo o histórico).
+function buildDailyWindow(days, windowSize) {
+  const byBucket = new Map((days ?? []).filter((day) => day?.bucket).map((day) => [day.bucket, day]));
+  const buckets = [...byBucket.keys()].sort();
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const latestKey = buckets.at(-1);
+  const endKey = latestKey && latestKey > todayKey ? latestKey : todayKey;
+  const end = new Date(`${endKey}T00:00:00Z`);
+  const window = [];
+  for (let offset = windowSize - 1; offset >= 0; offset -= 1) {
+    const day = new Date(end);
+    day.setUTCDate(day.getUTCDate() - offset);
+    const key = day.toISOString().slice(0, 10);
+    window.push(byBucket.get(key) ?? { bucket: key, input_tokens: 0, output_tokens: 0, tokens: 0, sessions: 0 });
+  }
+  return window;
+}
+
 function seriesFromAnalytics(data, range) {
   const analytics = data.hermes?.analytics ?? {};
   if (range === "1h") {
@@ -286,16 +308,23 @@ function seriesFromAnalytics(data, range) {
       label: "ultima 1h",
     };
   }
-  if (range === "7d") {
-    const days = (analytics.days ?? []).slice(-7);
-    const hasEnoughDays = days.length > 1;
+  if (range === "7d" || range === "30d") {
+    const windowSize = range === "7d" ? 7 : 30;
+    const days = buildDailyWindow(analytics.days, windowSize);
+    const hasAnyData = (analytics.days ?? []).length > 0;
+    if (!hasAnyData) {
+      return {
+        input: data.tokenSeries.input,
+        output: data.tokenSeries.output,
+        labels: Array.from({ length: data.tokenSeries.input?.length ?? 0 }, (_, index) => `d-${(data.tokenSeries.input?.length ?? 0) - index - 1}`),
+        label: range === "7d" ? "ultimos 7 dias" : "ultimos 30 dias",
+      };
+    }
     return {
-      input: hasEnoughDays ? days.map((day) => Math.max(1, Math.round(Number(day.input_tokens || 0) / 1000))) : data.tokenSeries.input,
-      output: hasEnoughDays ? days.map((day) => Math.max(1, Math.round(Number(day.output_tokens || 0) / 1000))) : data.tokenSeries.output,
-      labels: hasEnoughDays
-        ? days.map((day, index) => formatBucketLabel(day, `d-${days.length - index - 1}`))
-        : Array.from({ length: data.tokenSeries.input?.length ?? 0 }, (_, index) => `d-${(data.tokenSeries.input?.length ?? 0) - index - 1}`),
-      label: "ultimos 7 dias",
+      input: days.map((day) => Math.max(0, Math.round(Number(day.input_tokens || 0) / 1000))),
+      output: days.map((day) => Math.max(0, Math.round(Number(day.output_tokens || 0) / 1000))),
+      labels: days.map((day) => formatBucketLabel(day, day.bucket)),
+      label: range === "7d" ? "ultimos 7 dias" : "ultimos 30 dias",
     };
   }
   const hours = (analytics.hours ?? []).slice(-24);
@@ -913,7 +942,7 @@ function Overview({ data }) {
     <section className="view is-active">
       <SectionHead eyebrow="§01 / command deck" title="Operacao Hermes em tempo real">
         <div className="filters" aria-label="Filtros de periodo">
-          {["1h", "24h", "7d"].map((item) => (
+          {["1h", "24h", "7d", "30d"].map((item) => (
             <button className={range === item ? "is-active" : ""} onClick={() => setRange(item)} type="button" key={item}>{item}</button>
           ))}
         </div>
@@ -1617,21 +1646,50 @@ function TimelineList({ items, empty }) {
 function Kanban({ data }) {
   const [board, setBoard] = useState(data.kanban);
   const [selectedTask, setSelectedTask] = useState(null);
+  const [selectedBoard, setSelectedBoard] = useState(null);
   const [draft, setDraft] = useState({ title: "", assignee: "Hermes", priority: "P2", status: "Triage", body: "" });
   const [syncStatus, setSyncStatus] = useState("Fonte planejada: ~/.hermes/kanban.db via /api/hermes/kanban/tasks.");
-  const taskCount = Object.values(board).flat().length;
-  const blockedCount = Object.values(board).flat().filter((task) => (
+
+  // Lista de boards distintos detectados nas tasks (campo `board` vindo do backend).
+  const boards = useMemo(() => {
+    const names = new Set();
+    Object.values(board).flat().forEach((task) => { if (task.board) names.add(task.board); });
+    return [...names];
+  }, [board]);
+
+  // Mantém uma seleção válida quando os dados mudam.
+  useEffect(() => {
+    if (boards.length && (selectedBoard === null || !boards.includes(selectedBoard))) {
+      setSelectedBoard(boards[0]);
+    } else if (!boards.length && selectedBoard !== null) {
+      setSelectedBoard(null);
+    }
+  }, [boards, selectedBoard]);
+
+  // View filtrada pelo board selecionado. Sem boards múltiplos, usa o board inteiro.
+  const visibleBoard = useMemo(() => {
+    if (!boards.length || selectedBoard === null) return board;
+    return Object.fromEntries(
+      Object.entries(board).map(([column, tasks]) => [
+        column,
+        tasks.filter((task) => (task.board ?? boards[0]) === selectedBoard),
+      ]),
+    );
+  }, [board, boards, selectedBoard]);
+
+  const taskCount = Object.values(visibleBoard).flat().length;
+  const blockedCount = Object.values(visibleBoard).flat().filter((task) => (
     String(task.meta).toLowerCase().includes("blocked")
     || String(task.status).toLowerCase().includes("blocked")
     || String(task.raw?.status).toLowerCase().includes("blocked")
   )).length;
-  const ownerCount = new Set(Object.values(board).flat().map((task) => task.owner).filter(Boolean)).size;
+  const ownerCount = new Set(Object.values(visibleBoard).flat().map((task) => task.owner).filter(Boolean)).size;
   const columnEntries = useMemo(() => {
     const orderedNames = new Set(kanbanColumnOrder.map((column) => column.toLowerCase()));
-    const ordered = kanbanColumnOrder.map((column) => [column, board[column] ?? board[column.toLowerCase()] ?? []]);
-    const extra = Object.entries(board).filter(([column]) => !orderedNames.has(column.toLowerCase()));
+    const ordered = kanbanColumnOrder.map((column) => [column, visibleBoard[column] ?? visibleBoard[column.toLowerCase()] ?? []]);
+    const extra = Object.entries(visibleBoard).filter(([column]) => !orderedNames.has(column.toLowerCase()));
     return [...ordered, ...extra];
-  }, [board]);
+  }, [visibleBoard]);
 
   useEffect(() => {
     setBoard(data.kanban);
@@ -1662,6 +1720,7 @@ function Kanban({ data }) {
       priority: created.priority,
       owner: created.assignee,
       estimate: "sync",
+      board: selectedBoard ?? undefined,
     };
 
     setBoard((current) => ({
@@ -1675,6 +1734,20 @@ function Kanban({ data }) {
   return (
     <section className="view is-active">
       <SectionHead eyebrow="§04 / execution board" title="Kanban operacional dos agentes">
+        {boards.length > 1 ? (
+          <div className="filters board-selector" aria-label="Selecionar board">
+            {boards.map((boardName) => (
+              <button
+                className={selectedBoard === boardName ? "is-active" : ""}
+                onClick={() => setSelectedBoard(boardName)}
+                type="button"
+                key={boardName}
+              >
+                {boardName}
+              </button>
+            ))}
+          </div>
+        ) : null}
         <button className="primary-button" onClick={createTask} type="button">Criar no Hermes</button>
       </SectionHead>
       <article className="kanban-brief panel">

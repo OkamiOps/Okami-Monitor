@@ -834,6 +834,7 @@ import json, os, sqlite3
 base = os.path.expanduser(${pythonString(hermesHome)})
 db = os.path.join(base, 'kanban.db')
 out = []
+boards_map = {}
 
 def rows(cur, sql, args=()):
     try:
@@ -846,6 +847,23 @@ if os.path.exists(db):
     con.row_factory = sqlite3.Row
     cur = con.cursor()
     tables = [row['name'] for row in rows(cur, "select name from sqlite_master where type='table'")]
+
+    # Mapa board_id -> nome, lido de qualquer tabela 'boards'/'board'.
+    for table in tables:
+        if table.lower() not in ('boards', 'board'):
+            continue
+        cols = [row['name'] for row in rows(cur, f"pragma table_info({table})")]
+        lower_cols = {col.lower(): col for col in cols}
+        id_col = next((lower_cols[name] for name in ['id', 'board_id', 'uuid', 'slug', 'key'] if name in lower_cols), None)
+        name_col = next((lower_cols[name] for name in ['name', 'title', 'label', 'slug'] if name in lower_cols), None)
+        if not id_col:
+            continue
+        for row in rows(cur, f"select * from {table}"):
+            board_id = row.get(id_col)
+            if board_id is None:
+                continue
+            boards_map[str(board_id)] = str(row.get(name_col) or board_id) if name_col else str(board_id)
+
     for table in tables:
         lower_table = table.lower()
         if any(token in lower_table for token in ['comment', 'event', 'log', 'history', 'run', 'attempt']):
@@ -875,7 +893,7 @@ if os.path.exists(db):
                 continue
             out.append({**row, '_table': table})
 
-print(json.dumps({'tasks': out, 'source': db}, ensure_ascii=False))
+print(json.dumps({'tasks': out, 'boards': boards_map, 'source': db}, ensure_ascii=False))
 PY`;
   const rawDb = await tryExec(config, store, command, "");
   const parsedDb = parseJson(rawDb, null);
@@ -884,11 +902,49 @@ PY`;
   return tryExec(config, store, "hermes kanban list --json 2>/dev/null || hermes tasks list --json 2>/dev/null || true", "");
 }
 
+// Candidatos de campo que separam um board do outro, em ordem de preferência.
+const BOARD_FIELD_CANDIDATES = [
+  "board_id", "boardId", "board", "board_name", "boardName",
+  "tenant", "project", "workspace", "space", "_table",
+];
+
+// Detecta automaticamente qual campo identifica o board: usa o candidato com
+// mais valores distintos (>1). Se nenhum tiver mais de um valor, não há boards
+// múltiplos e o comportamento atual (board único) é mantido.
+function detectBoardField(items) {
+  let best = null;
+  let bestCount = 1;
+  for (const field of BOARD_FIELD_CANDIDATES) {
+    const values = new Set();
+    for (const item of items) {
+      const value = item?.[field];
+      if (value !== undefined && value !== null && String(value).trim() !== "") {
+        values.add(String(value));
+      }
+    }
+    if (values.size > bestCount) {
+      bestCount = values.size;
+      best = field;
+    }
+  }
+  return best;
+}
+
+function resolveBoardName(item, field, boardsMap) {
+  if (!field) return null;
+  const raw = item?.[field];
+  if (raw === undefined || raw === null || String(raw).trim() === "") return null;
+  const key = String(raw);
+  return boardsMap?.[key] ?? key;
+}
+
 function parseKanbanJson(raw) {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw);
     const items = Array.isArray(parsed) ? parsed : parsed.tasks ?? parsed.items ?? [];
+    const boardsMap = (!Array.isArray(parsed) && parsed.boards) || {};
+    const boardField = detectBoardField(items);
     const board = {};
     const statusLabels = {
       blocked: "Blocked",
@@ -930,6 +986,7 @@ function parseKanbanJson(raw) {
         priority: item.priority ?? "P2",
         owner: item.assignee ?? item.owner ?? "Hermes",
         estimate: item.updated_at ?? item.updatedAt ?? item.created_at ?? item.createdAt ?? "sync",
+        board: resolveBoardName(item, boardField, boardsMap),
         body: item.body ?? item.description ?? item.notes ?? "",
         description: item.description ?? item.body ?? item.notes ?? "",
         raw: item,

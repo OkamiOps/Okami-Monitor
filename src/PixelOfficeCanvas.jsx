@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 
 // ──────────────────────────────────────────────────────────────────
 // OKAMI Pixel Office — paleta alinhada com Design System v0.2.0
@@ -44,7 +44,14 @@ const rpgCharacterAssetBase = "/rpg-characters";
 const modernOfficeAssetBase = "/modern-office";
 const characterScale = 2.2;
 const furnitureScale = 2.45;
-const modernSingleIds = Array.from({ length: 339 }, (_, index) => index + 1);
+// Só carregamos os singles realmente referenciados pelo desenho do escritório.
+// Antes carregávamos os 339 PNGs (300+ requests HTTP bloqueando o preload do
+// Phaser, atrasando o canvas e os agentes). Esta lista cobre todos os ids usados
+// em addModernSingle(), drawServerRack() (172/173) e drawModernPlantLine().
+const modernSingleIds = [
+  98, 99, 100, 107, 108, 167, 168, 170, 171, 172, 173, 175, 176,
+  194, 196, 197, 198, 267, 305, 313, 314, 318, 320, 337, 338,
+];
 const openGameArtAgents = [
   { key: "sp-girl-1", frames: [0, 1, 2, 3, 4, 5], scale: 0.62, tint: 0xffffff, accent: OKAMI_PALETTE.cyan },
   { key: "sp-girl-2", frames: [0, 1, 2, 3, 4, 5], scale: 0.68, tint: 0xffffff, accent: OKAMI_PALETTE.magenta },
@@ -4008,10 +4015,31 @@ function drawOffice(scene, agents, tasks, selectedAgentId, onSelect, options = {
 export function PixelOfficeCanvas({ agents, tasks, selectedAgentId, onSelectAgent, mode = "live", layoutVariant = "ops" }) {
   const hostRef = useRef(null);
   const stateRef = useRef({ agents, tasks, selectedAgentId, onSelectAgent, mode, layoutVariant });
+  const gameRef = useRef(null);
+  // Assinatura do conjunto de agentes desenhados — usada para redesenhar quando
+  // a lista de agentes muda (ex.: dados reais chegam via SSH depois do mount).
+  const lastDrawnSignatureRef = useRef("");
 
   useEffect(() => {
     stateRef.current = { agents, tasks, selectedAgentId, onSelectAgent, mode, layoutVariant };
   }, [agents, tasks, selectedAgentId, onSelectAgent, mode, layoutVariant]);
+
+  // Ordenado por id para ser independente da ordem em que a API devolve os
+  // agentes — só muda quando o conjunto realmente muda (entra/sai agente).
+  const agentSignature = useMemo(
+    () => (agents ?? []).map((agent) => agent.id ?? agent.name).sort().join("|"),
+    [agents],
+  );
+
+  // Quando o conjunto de agentes muda de fato (não a cada poll com a mesma lista),
+  // reinicia a cena para redesenhar com os dados atuais. Se a cena ainda está em
+  // preload, não faz nada — o create() já desenha o estado mais recente.
+  useEffect(() => {
+    const scene = gameRef.current?.scene?.getScene?.("office");
+    if (!scene || !scene.scene.isActive()) return;
+    if (lastDrawnSignatureRef.current === agentSignature) return;
+    scene.scene.restart();
+  }, [agentSignature]);
 
   useEffect(() => {
     let game;
@@ -4037,7 +4065,10 @@ export function PixelOfficeCanvas({ agents, tasks, selectedAgentId, onSelectAgen
               (agentId) => stateRef.current.onSelectAgent?.(agentId),
               { mode: current.mode, layoutVariant: current.layoutVariant },
             );
-            
+            // Registra o que acabou de ser desenhado para evitar reinício redundante.
+            lastDrawnSignatureRef.current = (current.agents ?? []).map((agent) => agent.id ?? agent.name).sort().join("|");
+
+
             // Interaction heartbeat — checa colisões/grupos a cada 1.8s
             this.time.addEvent({
               delay: 1800,
@@ -4073,6 +4104,7 @@ export function PixelOfficeCanvas({ agents, tasks, selectedAgentId, onSelectAgen
           transparent: true,
         },
       });
+      gameRef.current = game;
       // Garantir que canvas Phaser fique acima do <video>
       setTimeout(() => {
         const canvasEl = hostRef.current?.querySelector("canvas");
@@ -4116,6 +4148,7 @@ export function PixelOfficeCanvas({ agents, tasks, selectedAgentId, onSelectAgen
       document.removeEventListener("visibilitychange", onVisibility);
       resizeObserver?.disconnect();
       game?.destroy(true);
+      gameRef.current = null;
     };
   }, []);
 
