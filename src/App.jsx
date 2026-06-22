@@ -274,6 +274,7 @@ const I18nContext = createContext({
   language: DEFAULT_LANGUAGE,
   setLanguage: () => {},
   t: (key) => translations[DEFAULT_LANGUAGE][key] ?? key,
+  tx: (value) => value,
 });
 
 function normalizeLanguage(value) {
@@ -290,6 +291,559 @@ function initialLanguage() {
 
 function useI18n() {
   return useContext(I18nContext);
+}
+
+const UI_TEXT_EN = {
+  "Demo conectado": "Demo connected",
+  "Hermes online": "Hermes online",
+  "Proxy seguro · 4 agentes ativos": "Secure proxy · 4 active agents",
+  "atualizacao viva": "live update",
+  "atualização viva": "live update",
+  "simulados": "simulated",
+  "tokens hoje": "tokens today",
+  "custo hoje": "daily cost",
+  "tarefas ativas": "active tasks",
+  "servicos hit": "service hits",
+  "serviços hit": "service hits",
+  "runtimes hit": "runtime hits",
+  "Recebeu brief do WhatsApp gateway": "Received WhatsApp gateway brief",
+  "Gerando UI de dashboards responsivos": "Building responsive dashboard UI",
+  "Monitorando concorrentes e docs": "Monitoring competitors and docs",
+  "Fallback para OpenRouter acionado": "OpenRouter fallback triggered",
+  "Proxy Hermes com latencia acima do alvo": "Hermes proxy latency above target",
+  "Scout aguardando credencial da VPS": "Scout waiting for VPS credential",
+  "sem endpoint publico": "no public endpoint",
+  "sem endpoint público": "no public endpoint",
+  "privado via SSH": "private via SSH",
+  "nao configurado": "not configured",
+  "não configurado": "not configured",
+  "registro atual": "current record",
+  "plataformas / sessoes": "platforms / sessions",
+  "plataformas / sessões": "platforms / sessions",
+  "atividade recente": "recent activity",
+  "Sem breakdown de plataformas no snapshot atual.": "No platform breakdown in the current snapshot.",
+  "Nenhuma aplicacao de gateway cadastrada ainda em Apps.": "No gateway app registered in Apps yet.",
+  "Nenhuma aplicação de gateway cadastrada ainda em Apps.": "No gateway app registered in Apps yet.",
+  "Nenhuma rota de gateway foi retornada pelo estado atual.": "No gateway route was returned by the current state.",
+  "tarefa ativa": "active task",
+  "Sem tarefa ativa vinculada": "No linked active task",
+  "sem tarefa vinculada": "no linked task",
+  "sem prioridade": "no priority",
+  "O Hermes nao retornou descricao detalhada para esta tarefa no snapshot atual.": "Hermes did not return a detailed description for this task in the current snapshot.",
+  "O Hermes não retornou descrição detalhada para esta tarefa no snapshot atual.": "Hermes did not return a detailed description for this task in the current snapshot.",
+  "Processamento": "Processing",
+  "sem eventos recentes": "no recent events",
+  "logs do perfil": "profile logs",
+  "Subagentes": "Subagents",
+  "Nenhum subagente recente detectado.": "No recent subagent detected.",
+  "Sem subagentes": "No subagents",
+  "Kanban vinculado": "Linked Kanban",
+  "Nenhum card do Kanban vinculado a esse agente.": "No Kanban card linked to this agent.",
+  "aguardando stream do agente…": "waiting for agent stream...",
+  "Abrir tarefa": "Open task",
+  "Abrir monitor externo": "Open external monitor",
+  "tarefa atual": "current task",
+  "monitor externo": "external monitor",
+  "monitor do agente": "agent monitor",
+  "Comentários": "Comments",
+  "Sem eventos de work log para esta task.": "No work log events for this task.",
+  "Criar no Hermes": "Create in Hermes",
+  "Nova tarefa para o Hermes": "New task for Hermes",
+  "detalhe da tarefa Hermes": "Hermes task detail",
+  "Informe um titulo para criar a tarefa no Kanban do Hermes.": "Enter a title to create the task in Hermes Kanban.",
+  "Criando tarefa no Hermes Kanban...": "Creating task in Hermes Kanban...",
+  "Board sincronizado sem bloqueios reportados no snapshot atual.": "Board synchronized with no blocks reported in the current snapshot.",
+  "tarefas": "tasks",
+  "bloqueios": "blocks",
+  "custo x uso": "cost vs usage",
+  "plano": "plan",
+  "tokens": "tokens",
+  "custo": "cost",
+  "forecast": "forecast",
+  "uso relativo": "relative usage",
+  "acao": "action",
+  "ação": "action",
+  "monitorar": "monitor",
+  "cancelar": "cancel",
+  "rebaixar": "downgrade",
+  "avaliar": "evaluate",
+  "manter": "keep",
+  "mensal fixo": "fixed monthly",
+  "economia": "savings",
+  "Fluxo de tokens": "Token flow",
+  "leitura do Hermes": "Hermes reading",
+  "Sem consumo real": "No real usage",
+  "Nao ha corte urgente, mas o uso continua concentrado em poucas assinaturas.": "No urgent cut, but usage is still concentrated in a few subscriptions.",
+  "Não ha corte urgente, mas o uso continua concentrado em poucas assinaturas.": "No urgent cut, but usage is still concentrated in a few subscriptions.",
+  "hoje": "today",
+  "ontem": "yesterday",
+  "Diario": "Daily",
+  "Diário": "Daily",
+  "Semanal": "Weekly",
+  "Mensal": "Monthly",
+  "Filtros de uso": "Usage filters",
+  "Servidor": "Server",
+  "Acesso": "Access",
+  "Navegador": "Browser",
+  "Agentes": "Agents",
+  "agentes": "agents",
+  "Agente": "Agent",
+  "Arquivos": "Files",
+  "Arquivo": "File",
+  "arquivo": "file",
+  "Selecionado": "Selected",
+  "Perfil": "Profile",
+  "Ambiente": "Environment",
+  "Ambientes": "Environments",
+  "Ativas": "Active",
+  "Inativas": "Inactive",
+  "Total": "Total",
+  "Filtro": "Filter",
+  "Buscar": "Search",
+  "Limpar busca": "Clear search",
+  "Salvar filtro": "Save filter",
+  "Salvar filtros": "Save filters",
+  "Detalhe da sessao": "Session detail",
+  "Detalhe da sessão": "Session detail",
+  "Duração": "Duration",
+  "de": "of",
+  "sessões": "sessions",
+  "sessoes": "sessions",
+  "registros": "records",
+  "Selecionar board": "Select board",
+  "Acesso avancado": "Advanced access",
+  "Acesso avançado": "Advanced access",
+  "Servidor dos agentes": "Agent server",
+  "Agentes conectados": "Connected agents",
+  "Acesso e keys (avancado)": "Access and keys (advanced)",
+  "Acesso e keys (avançado)": "Access and keys (advanced)",
+  "Acesso do painel": "Dashboard access",
+  "primeiro acesso": "first access",
+  "acesso": "access",
+  "Preparando...": "Preparing...",
+  "Criar backup de acesso": "Create access backup",
+  "O que ela libera": "What it enables",
+  "Key criada agora (backup)": "Key created now (backup)",
+  "Copiar key": "Copy key",
+  "Avancado: colar key existente ou gerar uma key manual": "Advanced: paste an existing key or generate a manual key",
+  "Avançado: colar key existente ou gerar uma key manual": "Advanced: paste an existing key or generate a manual key",
+  "Vincular key existente": "Link existing key",
+  "Vincular key": "Link key",
+  "Remover deste navegador": "Remove from this browser",
+  "Recarregar status": "Reload status",
+  "Key manual": "Manual key",
+  "suporte": "support",
+  "Nome da key": "Key name",
+  "Gerando...": "Generating...",
+  "Gerar key manual": "Generate manual key",
+  "Acessos cadastrados": "Registered access keys",
+  "nome": "name",
+  "prefixo": "prefix",
+  "ultimo uso": "last use",
+  "último uso": "last use",
+  "Revogar": "Revoke",
+  "Nenhuma key listada": "No key listed",
+  "vincule uma key admin para listar": "link an admin key to list",
+  "Conectar novo agente": "Connect new agent",
+  "Agente principal": "Main agent",
+  "agente-principal": "main-agent",
+  "automatico": "automatic",
+  "automático": "automatic",
+  "Identificador": "Identifier",
+  "Nome": "Name",
+  "Tipo": "Type",
+  "Comando de teste": "Test command",
+  "Pasta do agente": "Agent folder",
+  "Arquivo principal": "Main file",
+  "Workspace": "Workspace",
+  "Nome interno da key": "Internal key name",
+  "comando": "command",
+  "pasta": "folder",
+  "arquivo de acesso": "access file",
+  "arquivo_de_acesso": "access file",
+  "tipo": "type",
+  "Conectando...": "Connecting...",
+  "Conectar agente": "Connect agent",
+  "Limpar": "Clear",
+  "Abrir": "Open",
+  "Editar": "Edit",
+  "Excluir": "Delete",
+  "Arquivos do agente": "Agent files",
+  "Acesso do agente": "Agent access",
+  "Renovar acesso do agente": "Renew agent access",
+  "Remover agente externo": "Remove external agent",
+  "Editar arquivo do agente": "Edit agent file",
+  "Arquivos do perfil": "Profile files",
+  "sem tarefa ativa": "no active task",
+  "Skills": "Skills",
+  "Logs recentes": "Recent logs",
+  "termos em logs e eventos…": "terms in logs and events...",
+  "todos": "all",
+  "aviso": "warning",
+  "erro": "error",
+  "Salvar arquivo": "Save file",
+  "Salvar cron": "Save cron",
+  "Salvar timer": "Save timer",
+  "Verificar host": "Verify host",
+  "Politica recomendada": "Recommended policy",
+  "Política recomendada": "Recommended policy",
+  "guardrails": "guardrails",
+  "Conexao SSH do servidor": "Server SSH connection",
+  "Conexão SSH do servidor": "Server SSH connection",
+  "agentes remotos": "remote agents",
+  "Pasta base dos agentes": "Agent base folder",
+  "Metodo de auth": "Auth method",
+  "Método de auth": "Auth method",
+  "Senha SSH": "SSH password",
+  "Opcoes avancadas": "Advanced options",
+  "Opções avançadas": "Advanced options",
+  "Modo de roteamento": "Routing mode",
+  "Orcamento diario": "Daily budget",
+  "Orçamento diário": "Daily budget",
+  "Registrar auditoria": "Record audit",
+  "APIs e secrets por ambiente": "APIs and secrets by environment",
+  "Adicionar API": "Add API",
+  "Conexoes": "Connections",
+  "Conexões": "Connections",
+  "Salvar API": "Save API",
+  "Testar conexao": "Test connection",
+  "Testar conexão": "Test connection",
+  "Rotacionar secret": "Rotate secret",
+  "Excluir API": "Delete API",
+  "Rotacao": "Rotation",
+  "Rotação": "Rotation",
+  "rotacao em 18 dias": "rotation in 18 days",
+  "rotação em 18 dias": "rotation in 18 days",
+  "token principal validado": "main token validated",
+  "escopo repo/admin limitado": "repo/admin scope limited",
+  "Diagnostico": "Diagnostics",
+  "Diagnóstico": "Diagnostics",
+  "latencia": "latency",
+  "Latencia": "Latency",
+  "Uso": "Usage",
+  "Selecione uma conexao para editar.": "Select a connection to edit.",
+  "Selecione uma conexão para editar.": "Select a connection to edit.",
+  "Alteracoes locais ainda nao salvas.": "Local changes are not saved yet.",
+  "Alterações locais ainda não salvas.": "Local changes are not saved yet.",
+  "Nova API criada localmente. Revise e salve.": "New API created locally. Review and save it.",
+  "Novo ambiente": "New environment",
+  "Links dos produtos e ambientes": "Product and environment links",
+  "Novo link": "New link",
+  "Ambiente a configurar": "Environment to configure",
+  "Salvar link": "Save link",
+  "registro de aplicacao": "application record",
+  "registro de aplicação": "application record",
+  "Detalhe": "Detail",
+  "Documentacao viva para agentes": "Live documentation for agents",
+  "Documentação viva para agentes": "Live documentation for agents",
+  "Sincronizar": "Sync",
+  "Novo doc": "New doc",
+  "Novo documento": "New document",
+  "Resumo curto para agentes.": "Short summary for agents.",
+  "Adicione aqui o conteudo que sera usado pelos agentes.": "Add the content agents will use here.",
+  "Adicione aqui o conteúdo que será usado pelos agentes.": "Add the content agents will use here.",
+  "agora": "now",
+  "cobertura": "coverage",
+  "Cobertura": "Coverage",
+  "texto disponivel": "text available",
+  "texto disponível": "text available",
+  "Checklist documental": "Documentation checklist",
+  "incidentes e rollback cobertos": "incidents and rollback covered",
+  "falta politica de memoria por agente": "missing memory policy per agent",
+  "falta política de memória por agente": "missing memory policy per agent",
+  "tokens visuais sincronizados": "visual tokens synchronized",
+  "Resumo": "Summary",
+  "Conteudo em texto": "Text content",
+  "Conteúdo em texto": "Text content",
+  "Markdown, runbook, briefing ou texto livre.": "Markdown, runbook, briefing or free text.",
+  "Preview do conteudo": "Content preview",
+  "Preview do conteúdo": "Content preview",
+  "vazio": "empty",
+  "Sem conteudo em texto para exibir.": "No text content to display.",
+  "Sem conteúdo em texto para exibir.": "No text content to display.",
+  "Salvar doc": "Save doc",
+  "Deploy, rollback, incidentes e proxy Hermes.": "Deploy, rollback, incidents and Hermes proxy.",
+  "Objetivos, ferramentas, limites e rotinas por agente.": "Goals, tools, limits and routines per agent.",
+  "Tokens, componentes, tom visual e padroes Okami.": "Tokens, components, visual tone and Okami patterns.",
+  "Tokens, componentes, tom visual e padrões Okami.": "Tokens, components, visual tone and Okami patterns.",
+  "sem perfil": "no profile",
+  "Verificando host Hermes via SSH...": "Verifying Hermes host via SSH...",
+  "Hermes status executado.": "Hermes status executed.",
+  "Status do host": "Host status",
+  "um diretorio isolado por agente": "one isolated directory per agent",
+  "um diretório isolado por agente": "one isolated directory per agent",
+  "limite diario por CLI e por agente": "daily limit per CLI and per agent",
+  "limite diário por CLI e por agente": "daily limit per CLI and per agent",
+  "registrar comando, cwd, diff e exit code": "record command, cwd, diff and exit code",
+  "Atualizar runbook de conexao Hostinger": "Update Hostinger connection runbook",
+  "Atualizar runbook de conexão Hostinger": "Update Hostinger connection runbook",
+  "Outros agentes": "Other agents",
+  "Agente principal do Okami com state.db, kanban.db, sessoes, skills e logs coletados via SSH.": "Main Okami agent with state.db, kanban.db, sessions, skills and logs collected over SSH.",
+  "Agente principal do Okami com state.db, kanban.db, sessões, skills e logs coletados via SSH.": "Main Okami agent with state.db, kanban.db, sessions, skills and logs collected over SSH.",
+  "logs remotos": "remote logs",
+  "Configurar SSH dos agents": "Configure agent SSH",
+  "Configurar SSH dos agentes": "Configure agent SSH",
+  "Testar comando de status": "Test status command",
+  "Mapear profiles em ~/.hermes/profiles": "Map profiles in ~/.hermes/profiles",
+  "Credencial SSH": "SSH credential",
+  "cofre seguro": "secure vault",
+  "Chave privada SSH": "SSH private key",
+  "Selecionada": "Selected",
+  "Passphrase opcional": "Optional passphrase",
+  "Senha SSH e menos segura": "SSH password is less secure",
+  "Use apenas para teste. Para producao, prefira chave SSH com permissao limitada.": "Use only for testing. For production, prefer an SSH key with limited permission.",
+  "Use apenas para teste. Para produção, prefira chave SSH com permissão limitada.": "Use only for testing. For production, prefer an SSH key with limited permission.",
+  "Detalhes tecnicos da conexao SSH": "SSH connection technical details",
+  "Detalhes técnicos da conexão SSH": "SSH connection technical details",
+  "navegador": "browser",
+  "nao persiste private key nem senha": "does not persist private key or password",
+  "não persiste private key nem senha": "does not persist private key or password",
+  "Leitura": "Read",
+  "Campos": "Fields",
+  "campos": "fields",
+  "Texto bruto": "Raw text",
+  "Sumario": "Summary",
+  "Sumário": "Summary",
+  "Aplicacao": "Application",
+  "Rotas": "Routes",
+  "Fluxo": "Flow",
+  "Eventos": "Events",
+  "Eventos state.db": "state.db events",
+  "Status_tarefa": "Task status",
+  "progresso": "progress",
+  "subagentes": "subagents",
+  "Detalhes": "Details",
+  "Ver monitor": "Open monitor",
+  "Projeto": "Project",
+  "Fonte": "Source",
+  "fonte": "source",
+  "Mensagens": "Messages",
+  "Custo": "Cost",
+  "Sem tarefa ativa": "No active task",
+  "Nenhum subagente recente.": "No recent subagent.",
+  "agente no Pixel Office": "agent in Pixel Office",
+  "ferramenta": "tool",
+  "Pixel office dos agentes": "Agent Pixel Office",
+  "tarefa_atual": "current task",
+  "Este agente está idle ou sem tarefa ativa vinculada ao kanban atual.": "This agent is idle or has no active task linked to the current Kanban.",
+  "Este agente esta idle ou sem tarefa ativa vinculada ao kanban atual.": "This agent is idle or has no active task linked to the current Kanban.",
+  "Sem descricao detalhada no retorno atual.": "No detailed description in the current response.",
+  "Sem descrição detalhada no retorno atual.": "No detailed description in the current response.",
+  "Prioridade": "Priority",
+  "Titulo": "Title",
+  "Título": "Title",
+  "Coluna": "Column",
+  "Contexto que sera salvo na task": "Context saved in the task",
+  "Contexto que será salvo na task": "Context saved in the task",
+  "Coluna vazia": "Empty column",
+  "Arraste uma task ou crie uma nova.": "Drag a task here or create a new one.",
+  "Sem comentarios retornados pelo kanban.db.": "No comments returned by kanban.db.",
+  "Sem comentários retornados pelo kanban.db.": "No comments returned by kanban.db.",
+  "Sem runs associados encontrados.": "No linked runs found.",
+  "Sem dados": "No data",
+  "resultado": "result",
+  "registrado": "recorded",
+  "Nenhum resultado retornado ainda pelo Kanban do Hermes.": "No result returned by Hermes Kanban yet.",
+  "descricao": "description",
+  "descrição": "description",
+  "Sem descricao detalhada no retorno atual do Hermes.": "No detailed description in the current Hermes response.",
+  "Sem descrição detalhada no retorno atual do Hermes.": "No detailed description in the current Hermes response.",
+  "Sem skills declaradas nesta task.": "No skills declared for this task.",
+  "Decisao de assinatura": "Subscription decision",
+  "Decisão de assinatura": "Subscription decision",
+  "Assinaturas": "Subscriptions",
+  "controle operacional": "operational control",
+  "Manter por enquanto, mas limitar agentes de review fora do horario de trabalho.": "Keep for now, but limit review agents outside working hours.",
+  "Manter por enquanto, mas limitar agentes de review fora do horário de trabalho.": "Keep for now, but limit review agents outside working hours.",
+  "Pode rebaixar se Codex assumir mais tarefas de implementacao.": "Can downgrade if Codex takes over more implementation tasks.",
+  "Pode rebaixar se Codex assumir mais tarefas de implementação.": "Can downgrade if Codex takes over more implementation tasks.",
+  "Baixo custo e uso pontual. Manter como fallback barato.": "Low cost and occasional use. Keep as a cheap fallback.",
+  "Candidato a cancelar se nao houver tarefas long-context na semana.": "Candidate for cancellation if there are no long-context tasks this week.",
+  "Candidato a cancelar se não houver tarefas long-context na semana.": "Candidate for cancellation if there are no long-context tasks this week.",
+  "Cancelar ou pausar se nao estiver ligado a automacoes essenciais.": "Cancel or pause if it is not tied to essential automations.",
+  "Cancelar ou pausar se não estiver ligado a automações essenciais.": "Cancel or pause if it is not tied to essential automations.",
+  "Manter como laboratorio, mas sem permitir consumo automatico.": "Keep as a lab, but do not allow automatic consumption.",
+  "Manter como laboratório, mas sem permitir consumo automático.": "Keep as a lab, but do not allow automatic consumption.",
+  "Filtros de logs": "Log filters",
+  "Filtros de sessão": "Session filters",
+  "Filtros de sessao": "Session filters",
+  "Severidade": "Severity",
+  "ver bruto": "view raw",
+  "Clique em uma sessao para abrir o detalhe aqui, sem modal.": "Click a session to open the detail here, without a modal.",
+  "Clique em uma sessão para abrir o detalhe aqui, sem modal.": "Click a session to open the detail here, without a modal.",
+  "Conectar servidor": "Connect server",
+  "Ler arquivos remotos": "Read remote files",
+  "Conectar agentes": "Connect agents",
+  "Conecte o servidor e os agentes em um unico lugar. O painel prepara as keys automaticamente, sem pedir edicao manual de arquivo.": "Connect the server and agents in one place. The dashboard prepares keys automatically without asking users to edit files manually.",
+  "Conecte o servidor e os agentes em um único lugar. O painel prepara as keys automaticamente, sem pedir edição manual de arquivo.": "Connect the server and agents in one place. The dashboard prepares keys automatically without asking users to edit files manually.",
+  "Conecte OpenClaw, OpenHuman, Claude, Codex e outros agentes com key automatica, arquivos editaveis e comandos permitidos.": "Connect OpenClaw, OpenHuman, Claude, Codex and other agents with automatic keys, editable files and allowed commands.",
+  "Conecte OpenClaw, OpenHuman, Claude, Codex e outros agentes com key automática, arquivos editáveis e comandos permitidos.": "Connect OpenClaw, OpenHuman, Claude, Codex and other agents with automatic keys, editable files and allowed commands.",
+  "O painel cria a key do agente, guarda o segredo no cofre e tenta preparar o arquivo de acesso no workspace remoto. O usuario nao precisa colar key em arquivo.": "The dashboard creates the agent key, stores the secret in the vault and tries to prepare the access file in the remote workspace. The user does not need to paste a key into a file.",
+  "O painel cria a key do agente, guarda o segredo no cofre e tenta preparar o arquivo de acesso no workspace remoto. O usuário não precisa colar key em arquivo.": "The dashboard creates the agent key, stores the secret in the vault and tries to prepare the access file in the remote workspace. The user does not need to paste a key into a file.",
+  "O painel prepara esse acesso automaticamente ao conectar servidor ou agente. A key aparece aqui apenas como backup.": "The dashboard prepares this access automatically when connecting a server or agent. The key appears here only as a backup.",
+  "Este e o acesso completo do dono do dashboard. Para agentes, prefira o botao Conectar agente abaixo.": "This is the dashboard owner access. For agents, prefer the Connect agent button below.",
+  "Este é o acesso completo do dono do dashboard. Para agentes, prefira o botão Conectar agente abaixo.": "This is the dashboard owner access. For agents, prefer the Connect agent button below.",
+  "Sem arquivo": "No file",
+  "ARQUIVO": "FILE",
+  "arquivo real": "real file",
+  "uso sem arquivo": "usage without file",
+  "defina um arquivo principal para este agente": "set a main file for this agent",
+  "key interna": "internal key",
+  "Usar como base": "Use as base",
+  "Capacidades": "Capabilities",
+  "Permissoes": "Permissions",
+  "Permissões": "Permissions",
+  "key do agente": "agent key",
+  "Pendencias": "Pending items",
+  "Pendências": "Pending items",
+  "Comandos": "Commands",
+  "Comando": "Command",
+  "Executar": "Run",
+  "Instancias": "Instances",
+  "Instâncias": "Instances",
+  "Configure o SSH do servidor onde os agentes rodam. Ele alimenta arquivos, comandos, Kanban e logs do dashboard.": "Configure the server SSH where agents run. It powers dashboard files, commands, Kanban and logs.",
+  "Modo demo/local: testes nao validam o servidor real dos agentes.": "Demo/local mode: tests do not validate the real agent server.",
+  "Modo demo/local: testes não validam o servidor real dos agentes.": "Demo/local mode: tests do not validate the real agent server.",
+  "Configuracao alterada localmente. Salve para enviar ao servidor.": "Configuration changed locally. Save to send it to the server.",
+  "Configuração alterada localmente. Salve para enviar ao servidor.": "Configuration changed locally. Save to send it to the server.",
+  "Executor de comandos": "Command executor",
+  "Custo + qualidade": "Cost + quality",
+  "Menor latencia": "Lower latency",
+  "Menor latência": "Lower latency",
+  "Modelo fixo": "Fixed model",
+  "Feeds do dashboard": "Dashboard feeds",
+  "fontes de dados": "data sources",
+  "Rotas internas do dashboard": "Internal dashboard routes",
+  "Variaveis SSH": "SSH variables",
+  "Variáveis SSH": "SSH variables",
+  "ambiente remoto": "remote environment",
+  "Politicas": "Policies",
+  "Políticas": "Policies",
+  "seguranca": "security",
+  "segurança": "security",
+  "Roteamento": "Routing",
+  "modelos": "models",
+  "Base documental": "Documentation base",
+  "~/.hermes/config.yaml para terminal, modelos e display": "~/.hermes/config.yaml for terminal, models and display",
+  "TERMINAL_SSH_HOST e TERMINAL_SSH_USER sao obrigatorios": "TERMINAL_SSH_HOST and TERMINAL_SSH_USER are required",
+  "TERMINAL_SSH_HOST e TERMINAL_SSH_USER são obrigatórios": "TERMINAL_SSH_HOST and TERMINAL_SSH_USER are required",
+  "~/.hermes/kanban.db e a fonte canonica do board": "~/.hermes/kanban.db is the board canonical source",
+  "~/.hermes/kanban.db é a fonte canônica do board": "~/.hermes/kanban.db is the board canonical source",
+  "/v1/runs e /health/detailed alimentam runs e activity": "/v1/runs and /health/detailed feed runs and activity",
+  "Cofre e fingerprint": "Vault and fingerprint",
+  "metodo": "method",
+  "Minuto": "Minute",
+  "Hora": "Hour",
+  "Dia": "Day",
+  "Mes": "Month",
+  "Mês": "Month",
+  "Semana": "Week",
+  "linha final": "final line",
+  "Sem saida coletada.": "No output collected.",
+  "Sem saída coletada.": "No output collected.",
+  "Gerencie crontab e timers systemd com presets de horario, preview da linha final e salvamento via SSH.": "Manage crontab and systemd timers with schedule presets, final-line preview and SSH saving.",
+  "Gerencie crontab e timers systemd com presets de horário, preview da linha final e salvamento via SSH.": "Manage crontab and systemd timers with schedule presets, final-line preview and SSH saving.",
+  "Timer systemd detectado. O Mission Control salva um override em /etc/systemd/system com OnCalendar, recarrega o daemon e reinicia o timer.": "systemd timer detected. Mission Control saves an override in /etc/systemd/system with OnCalendar, reloads the daemon and restarts the timer.",
+  "Diario 09:00": "Daily 09:00",
+  "Diário 09:00": "Daily 09:00",
+  "Seg-Sex 08:30": "Mon-Fri 08:30",
+  "Sem headings": "No headings",
+  "Conteudo do arquivo": "File content",
+  "Conteúdo do arquivo": "File content",
+  "Uso agregado": "Aggregated usage",
+  "Editar conteudo": "Edit content",
+  "Editar conteúdo": "Edit content",
+  "Registro real": "Real record",
+  "Leia e edite os arquivos de personalidade, memoria e instrucao das agentes em modo leitor ou arquivo.": "Read and edit agent personality, memory and instruction files in reader or file mode.",
+  "Leia e edite os arquivos de personalidade, memória e instrução das agentes em modo leitor ou arquivo.": "Read and edit agent personality, memory and instruction files in reader or file mode.",
+  "Cruza uso real das skills com arquivos encontrados na VPS; quando nao ha SKILL.md, mostra o registro real de uso.": "Cross-checks real skill usage with files found on the VPS; when there is no SKILL.md, it shows the real usage record.",
+  "Cruza uso real das skills com arquivos encontrados na VPS; quando não há SKILL.md, mostra o registro real de uso.": "Cross-checks real skill usage with files found on the VPS; when there is no SKILL.md, it shows the real usage record.",
+  "Logs recentes e eventos do state.db formatados para leitura humana, com busca e severidade visual.": "Recent logs and state.db events formatted for human reading, with search and visual severity.",
+  "Separe sessões vivas e encerradas, filtre por perfil e abra o detalhe no painel lateral.": "Separate live and finished sessions, filter by profile and open the detail in the side panel.",
+  "Separe sessoes vivas e encerradas, filtre por perfil e abra o detalhe no painel lateral.": "Separate live and finished sessions, filter by profile and open the detail in the side panel.",
+  "Nao encontrei SKILL.md para esta skill. Exibindo o registro real agregado de uso do Hermes para voce decidir se cria uma definicao formal.": "I did not find SKILL.md for this skill. Showing the aggregated real Hermes usage record so you can decide whether to create a formal definition.",
+  "Não encontrei SKILL.md para esta skill. Exibindo o registro real agregado de uso do Hermes para você decidir se cria uma definição formal.": "I did not find SKILL.md for this skill. Showing the aggregated real Hermes usage record so you can decide whether to create a formal definition.",
+  "Esta skill tem uso real no Hermes, mas o coletor encontrou apenas o registro `.usage.json`. O conteúdo abaixo é uma leitura humana do uso; para editar comportamento, crie o `SKILL.md` no caminho sugerido.": "This skill has real Hermes usage, but the collector only found the `.usage.json` record. The content below is a human-readable usage view; to edit behavior, create `SKILL.md` at the suggested path.",
+  "filtrar campos...": "filter fields...",
+  "Sem titulos detectados": "No headings detected",
+  "Arquivo vazio.": "Empty file.",
+  "Selecione um item para visualizar e editar.": "Select an item to view and edit.",
+};
+
+function translateUiText(value, language = DEFAULT_LANGUAGE) {
+  if (value === null || value === undefined) return value;
+  if (typeof value !== "string") return value;
+  if (language !== "en") return value;
+  const exact = UI_TEXT_EN[value];
+  if (exact) return exact;
+
+  let text = value;
+  const replacements = [
+    [/\b(\d+)\s+agentes simulados\b/gi, "$1 simulated agents"],
+    [/\b(\d+)\s+agentes ativos\b/gi, "$1 active agents"],
+    [/\b(\d+)\s+mensagens\b/gi, "$1 messages"],
+    [/\b(\d+)\s+eventos\b/gi, "$1 events"],
+    [/\b(\d+)\s+registros\b/gi, "$1 records"],
+    [/\b(\d+)\s+arquivos\b/gi, "$1 files"],
+    [/\b(\d+)\s+sessões\b/gi, "$1 sessions"],
+    [/\b(\d+)\s+sessoes\b/gi, "$1 sessions"],
+    [/\b(\d+)\s+runtimes simulados\b/gi, "$1 simulated runtimes"],
+    [/\b(\d+)\s+agentes\s+·\s+ultimo run\s+(.+)/gi, "$1 agents · last run $2"],
+    [/\b(\d+)\s+agentes\s+·\s+último run\s+(.+)/gi, "$1 agents · last run $2"],
+    [/\b(\d+)\s+assinatura\(s\) sem uso detectado no Hermes\. Corte mais obvio: ([^.]+)\./gi, "$1 subscription(s) with no usage detected in Hermes. Clearest cut: $2."],
+    [/\b(\d+)\s+assinatura\(s\) sem uso detectado no Hermes\. Corte mais óbvio: ([^.]+)\./gi, "$1 subscription(s) with no usage detected in Hermes. Clearest cut: $2."],
+    [/\b(\d+)\s+tarefas operacionais\b/gi, "$1 operational tasks"],
+    [/\b(\d+)\s+bloqueio\(s\) precisam de revisao antes do proximo ciclo\./gi, "$1 block(s) need review before the next cycle."],
+    [/\b(\d+)\s+bloqueio\(s\) precisam de revisão antes do próximo ciclo\./gi, "$1 block(s) need review before the next cycle."],
+    [/\b(\d+)\s+em coding loop\b/gi, "$1 in coding loop"],
+    [/\b(\d+)\s+healthy\s+·\s+(\d+)\s+riscos\b/gi, "$1 healthy · $2 risks"],
+    [/\b(.+?)\s+concentra\s+(\d+)%\s+dos tokens\b/gi, "$1 holds $2% of tokens"],
+    [/\bConectando\s+(.+?)\.\.\./gi, "Connecting $1..."],
+    [/\bRemovendo\s+(.+?)\.\.\./gi, "Removing $1..."],
+    [/\bExecutando\s+(.+?)\.\.\./gi, "Running $1..."],
+    [/\bServidor conectado\. Latencia\s+(.+?)\./gi, "Server connected. Latency $1."],
+    [/\bServidor conectado\. Latência\s+(.+?)\./gi, "Server connected. Latency $1."],
+    [/\bLatência\s+(.+)/gi, "Latency $1"],
+    [/\bLatencia\s+(.+)/gi, "Latency $1"],
+    [/\bsem latencia\b/gi, "no latency"],
+    [/\bsem latência\b/gi, "no latency"],
+    [/\bsem detalhe\b/gi, "no detail"],
+    [/\bultimas\b/gi, "last"],
+    [/\búltimas\b/gi, "last"],
+    [/\bultimos\b/gi, "last"],
+    [/\búltimos\b/gi, "last"],
+    [/\batualizacao viva\b/gi, "live update"],
+    [/\batualização viva\b/gi, "live update"],
+    [/\bativo\b/gi, "active"],
+    [/\bativa\b/gi, "active"],
+    [/\binativo\b/gi, "inactive"],
+    [/\binativa\b/gi, "inactive"],
+    [/\bmensagens\b/gi, "messages"],
+    [/\bbloqueios\b/gi, "blocks"],
+    [/\btarefas\b/gi, "tasks"],
+    [/\bagentes\b/gi, "agents"],
+    [/\barquivos\b/gi, "files"],
+    [/\bpendente\b/gi, "pending"],
+    [/\bvinculado\b/gi, "linked"],
+    [/\bsem key\b/gi, "no key"],
+    [/\bconfiguradas\b/gi, "configured"],
+    [/\bnenhuma\b/gi, "none"],
+    [/\bnenhum\b/gi, "none"],
+    [/\bnunca\b/gi, "never"],
+    [/\bFalha\b/g, "Failed"],
+    [/\bSalvo\b/g, "Saved"],
+    [/\bsalvo\b/g, "saved"],
+    [/\bcriada\b/g, "created"],
+    [/\bcriado\b/g, "created"],
+    [/\bLatencia\b/g, "Latency"],
+    [/\bLatência\b/g, "Latency"],
+    [/\bvs ontem\b/gi, "vs yesterday"],
+    [/\bvia roteamento\b/gi, "via routing"],
+  ];
+  replacements.forEach(([pattern, replacement]) => {
+    text = text.replace(pattern, replacement);
+  });
+  return UI_TEXT_EN[text] ?? text;
 }
 
 // Ordem oficial das colunas do Kanban:
@@ -449,12 +1003,13 @@ function Sparkline({ values }) {
 }
 
 function StatList({ items }) {
+  const { tx } = useI18n();
   return (
     <div className="stat-list">
       {items.map((item) => (
         <div key={item.name ?? item.label}>
-          <span>{item.name ?? item.label}</span>
-          <b>{item.value}</b>
+          <span>{tx(item.name ?? item.label)}</span>
+          <b>{tx(item.value)}</b>
         </div>
       ))}
     </div>
@@ -676,7 +1231,7 @@ function actionTone(action) {
 }
 
 function DetailModal({ title, eyebrow, children, onClose }) {
-  const { t } = useI18n();
+  const { t, tx } = useI18n();
   useEffect(() => {
     if (!title) return;
     const onKey = (event) => { if (event.key === "Escape") onClose?.(); };
@@ -697,9 +1252,9 @@ function DetailModal({ title, eyebrow, children, onClose }) {
         <div className="modal-head">
           <div>
             <p className="ok-section-label">
-              <span>{eyebrow}</span>
+              <span>{tx(eyebrow)}</span>
             </p>
-            <h3>{title}</h3>
+            <h3>{tx(title)}</h3>
           </div>
           <button className="ok-btn ok-btn--ghost ok-btn--sm" type="button" onClick={onClose}>
             {t("button.close")} ✕
@@ -712,12 +1267,13 @@ function DetailModal({ title, eyebrow, children, onClose }) {
 }
 
 function ObjectFacts({ data }) {
+  const { tx } = useI18n();
   return (
     <div className="object-facts">
       {Object.entries(data).map(([key, value]) => (
         <div className={`fact-${key.replaceAll("_", "-")}`} key={key}>
-          <span>{key}</span>
-          <b>{Array.isArray(value) ? value.join(", ") : String(value ?? "-")}</b>
+          <span>{tx(key)}</span>
+          <b>{tx(Array.isArray(value) ? value.join(", ") : String(value ?? "-"))}</b>
         </div>
       ))}
     </div>
@@ -746,6 +1302,7 @@ function recordTime(record) {
 }
 
 function AgentMonitor({ agent, task }) {
+  const { tx } = useI18n();
   const events = agent?.workEvents ?? [];
   const subagents = agent?.subagents ?? [];
   const activeTask = task ?? agent?.tasks?.find((item) => !/(done|complete|completed|closed)/i.test(String(item.status ?? "")));
@@ -761,32 +1318,32 @@ function AgentMonitor({ agent, task }) {
         }} />
       </div>
       <div className="monitor-task-focus">
-        <span>tarefa ativa</span>
-        <h3>{activeTask?.title ?? agent?.currentTask ?? "Sem tarefa ativa vinculada"}</h3>
-        <p>{activeTask?.description ?? activeTask?.body ?? activeTask?.raw?.description ?? activeTask?.raw?.body ?? "O Hermes nao retornou descricao detalhada para esta tarefa no snapshot atual."}</p>
+        <span>{tx("tarefa ativa")}</span>
+        <h3>{tx(activeTask?.title ?? agent?.currentTask ?? "Sem tarefa ativa vinculada")}</h3>
+        <p>{tx(activeTask?.description ?? activeTask?.body ?? activeTask?.raw?.description ?? activeTask?.raw?.body ?? "O Hermes nao retornou descricao detalhada para esta tarefa no snapshot atual.")}</p>
         <div>
-          <b>{activeTask?.status ?? activeTask?.meta ?? agent?.status ?? "idle"}</b>
-          <b>{activeTask?.owner ?? activeTask?.assignee ?? agent?.name}</b>
-          <b>{activeTask?.priority ?? "sem prioridade"}</b>
+          <b>{tx(activeTask?.status ?? activeTask?.meta ?? agent?.status ?? "idle")}</b>
+          <b>{tx(activeTask?.owner ?? activeTask?.assignee ?? agent?.name)}</b>
+          <b>{tx(activeTask?.priority ?? "sem prioridade")}</b>
         </div>
       </div>
       <div className="agent-monitor-grid">
         <section className="monitor-stream">
           <div className="panel-title compact">
-            <h3>Processamento</h3>
-            <span>{events.length ? "state.db messages" : "sem eventos recentes"}</span>
+            <h3>{tx("Processamento")}</h3>
+            <span>{tx(events.length ? "state.db messages" : "sem eventos recentes")}</span>
           </div>
           <div className="work-event-list">
             {events.length ? events.map((event) => (
               <article key={event.id}>
                 <span>{event.type}</span>
-                <p>{event.message}</p>
+                <p>{tx(event.message)}</p>
                 <small>{event.role}{event.sessionId ? ` · ${String(event.sessionId).slice(0, 12)}` : ""}</small>
               </article>
             )) : agent?.logs?.map((log) => (
               <article key={log}>
                 <span>log</span>
-                <p>{log}</p>
+                <p>{tx(log)}</p>
                 <small>profile aggregate</small>
               </article>
             ))}
@@ -798,7 +1355,7 @@ function AgentMonitor({ agent, task }) {
             <pre>{agent?.monitorLines?.join("\n")}</pre>
           </div>
           <div className="panel-title compact">
-            <h3>Subagentes</h3>
+            <h3>{tx("Subagentes")}</h3>
             <span>{subagents.length}</span>
           </div>
           <div className="subagent-list compact-list">
@@ -808,7 +1365,7 @@ function AgentMonitor({ agent, task }) {
                 <span>{child.status} · {child.model}</span>
                 <p>{child.task}</p>
               </article>
-            )) : <p>Nenhum subagente recente detectado.</p>}
+            )) : <p>{tx("Nenhum subagente recente detectado.")}</p>}
           </div>
         </aside>
       </div>
@@ -817,6 +1374,7 @@ function AgentMonitor({ agent, task }) {
 }
 
 function PixelAgentMonitor({ agent, tasks = [] }) {
+  const { tx } = useI18n();
   const events = (agent?.workEvents ?? []).slice(0, 12);
   const logs = (agent?.logs ?? []).slice(0, 8);
   const subagents = agent?.subagents ?? [];
@@ -826,8 +1384,8 @@ function PixelAgentMonitor({ agent, tasks = [] }) {
       {/* COLUNA ESQUERDA: Processamento (alto) */}
       <section className="pixel-monitor-card pixel-card--events">
         <div className="panel-title compact">
-          <h3>Processamento</h3>
-          <span>{events.length ? `${events.length} eventos` : "logs do perfil"}</span>
+          <h3>{tx("Processamento")}</h3>
+          <span>{tx(events.length ? `${events.length} eventos` : "logs do perfil")}</span>
         </div>
         <div className="work-event-list pixel-work-list">
           {events.length ? events.map((event, idx) => {
@@ -841,7 +1399,7 @@ function PixelAgentMonitor({ agent, tasks = [] }) {
                   {event.role ? <span className="work-event__role">{event.role}</span> : null}
                 </header>
                 <div className="work-event__body">
-                  {looksMarkdown ? <MarkdownLite source={msg} /> : <p>{msg}</p>}
+                  {looksMarkdown ? <MarkdownLite source={msg} /> : <p>{tx(msg)}</p>}
                 </div>
                 <footer className="work-event__foot">
                   {event.sessionId ? (
@@ -858,7 +1416,7 @@ function PixelAgentMonitor({ agent, tasks = [] }) {
               <header className="work-event__head">
                 <span className="work-event__type">log</span>
               </header>
-              <div className="work-event__body"><p>{log}</p></div>
+              <div className="work-event__body"><p>{tx(log)}</p></div>
               <footer className="work-event__foot">
                 <small>profile aggregate</small>
               </footer>
@@ -884,7 +1442,7 @@ function PixelAgentMonitor({ agent, tasks = [] }) {
           <div className="ok-terminal__body">
             {monitorLines.length ? monitorLines.map((line, i) => (
               <span className="ok-terminal__line ok-terminal__line--out" key={i}>{line}</span>
-            )) : <span className="ok-terminal__line ok-terminal__line--out">aguardando stream do agente…</span>}
+            )) : <span className="ok-terminal__line ok-terminal__line--out">{tx("aguardando stream do agente…")}</span>}
             <span className="ok-terminal__cursor" aria-hidden="true" />
           </div>
         </div>
@@ -893,7 +1451,7 @@ function PixelAgentMonitor({ agent, tasks = [] }) {
       {/* COLUNA DIREITA MEIO: Subagentes */}
       <section className="pixel-monitor-card pixel-card--subagents">
         <div className="panel-title compact">
-          <h3>Subagentes</h3>
+          <h3>{tx("Subagentes")}</h3>
           <span>{subagents.length}</span>
         </div>
         <div className="subagent-grid">
@@ -916,8 +1474,8 @@ function PixelAgentMonitor({ agent, tasks = [] }) {
           )) : (
             <div className="ok-empty">
               <span className="ok-empty__icon" aria-hidden="true">∅</span>
-              <span className="ok-empty__title">Sem subagentes</span>
-              <span className="ok-empty__desc">Nenhum subagente recente detectado.</span>
+              <span className="ok-empty__title">{tx("Sem subagentes")}</span>
+              <span className="ok-empty__desc">{tx("Nenhum subagente recente detectado.")}</span>
             </div>
           )}
         </div>
@@ -926,7 +1484,7 @@ function PixelAgentMonitor({ agent, tasks = [] }) {
       {/* COLUNA DIREITA BASE: Kanban vinculado */}
       <section className="pixel-monitor-card pixel-card--kanban">
         <div className="panel-title compact">
-          <h3>Kanban vinculado</h3>
+          <h3>{tx("Kanban vinculado")}</h3>
           <span>{tasks.length}</span>
         </div>
         <div className="subagent-grid">
@@ -935,7 +1493,7 @@ function PixelAgentMonitor({ agent, tasks = [] }) {
               <header className="subagent-card__head">
                 <strong>{task.title}</strong>
                 <span className="ok-status-badge ok-status-badge--beta">
-                  {task.status ?? task.meta ?? "ativo"}
+                  {tx(task.status ?? task.meta ?? "ativo")}
                 </span>
               </header>
               <dl className="subagent-card__meta">
@@ -944,15 +1502,15 @@ function PixelAgentMonitor({ agent, tasks = [] }) {
               </dl>
               {(task.description ?? task.body ?? task.raw?.description) ? (
                 <p className="subagent-card__task">
-                  {task.description ?? task.body ?? task.raw?.description}
+                  {tx(task.description ?? task.body ?? task.raw?.description)}
                 </p>
               ) : null}
             </article>
           )) : (
             <div className="ok-empty">
               <span className="ok-empty__icon" aria-hidden="true">⌧</span>
-              <span className="ok-empty__title">Sem tarefa ativa</span>
-              <span className="ok-empty__desc">Nenhum card do Kanban vinculado a esse agente.</span>
+              <span className="ok-empty__title">{tx("Sem tarefa ativa")}</span>
+              <span className="ok-empty__desc">{tx("Nenhum card do Kanban vinculado a esse agente.")}</span>
             </div>
           )}
         </div>
@@ -962,7 +1520,7 @@ function PixelAgentMonitor({ agent, tasks = [] }) {
 }
 
 function Sidebar({ activeView, setActiveView, status, open, setOpen }) {
-  const { t } = useI18n();
+  const { t, tx } = useI18n();
   const isHealthy = Boolean(status?.healthy);
   return (
     <aside className={`sidebar ${open ? "is-open" : ""}`} aria-label={t("button.openMenu")}>
@@ -1032,8 +1590,8 @@ function Sidebar({ activeView, setActiveView, status, open, setOpen }) {
         aria-live="polite"
       >
         <div className="side-status__text">
-          <strong>{status?.label ?? (isHealthy ? "ONLINE" : "WARNING")}</strong>
-          {status?.detail ? <small>{status.detail}</small> : null}
+          <strong>{tx(status?.label ?? (isHealthy ? "ONLINE" : "WARNING"))}</strong>
+          {status?.detail ? <small>{tx(status.detail)}</small> : null}
         </div>
       </div>
     </aside>
@@ -1104,6 +1662,7 @@ function Topbar({ source, loading, lastSync, setOpen, setActiveView, onOpenGatew
 }
 
 function GatewayDetail({ data }) {
+  const { tx } = useI18n();
   const hermes = data.hermes ?? {};
   const gatewayHealth = data.overview?.serviceHealth?.find((item) => /gateway/i.test(item.name));
   const gatewayApp = data.apps?.find((app) => /gateway/i.test(`${app.name} ${app.detail} ${app.url}`));
@@ -1132,7 +1691,7 @@ function GatewayDetail({ data }) {
 
       <div className="gateway-grid">
         <article className="panel gateway-card">
-          <div className="panel-title"><h3>Aplicacao</h3><span>registro atual</span></div>
+          <div className="panel-title"><h3>{tx("Aplicacao")}</h3><span>{tx("registro atual")}</span></div>
           {gatewayApp ? (
             <ObjectFacts data={{
               nome: gatewayApp.name,
@@ -1142,7 +1701,7 @@ function GatewayDetail({ data }) {
               ambiente: gatewayApp.env,
             }} />
           ) : (
-            <p>Nenhuma aplicacao de gateway cadastrada ainda em Apps.</p>
+            <p>{tx("Nenhuma aplicacao de gateway cadastrada ainda em Apps.")}</p>
           )}
         </article>
 
@@ -1153,32 +1712,32 @@ function GatewayDetail({ data }) {
               <div key={`${route.method}-${route.path}`}>
                 <span>{route.method}</span>
                 <b>{route.path}</b>
-                <small>{route.purpose}</small>
+                <small>{tx(route.purpose)}</small>
               </div>
-            )) : <p>Nenhuma rota de gateway foi retornada pelo estado atual.</p>}
+            )) : <p>{tx("Nenhuma rota de gateway foi retornada pelo estado atual.")}</p>}
           </div>
         </article>
 
         <article className="panel gateway-card">
-          <div className="panel-title"><h3>Fluxo</h3><span>plataformas / sessoes</span></div>
+          <div className="panel-title"><h3>{tx("Fluxo")}</h3><span>{tx("plataformas / sessoes")}</span></div>
           <div className="gateway-route-list">
             {platforms.length ? platforms.map((platform) => (
               <div key={platform.source}>
                 <span>{platform.source}</span>
                 <b>{platform.sessions ?? 0} sessions</b>
-                <small>{formatTokenValue(platform.tokens ?? 0)} · {platform.messages ?? 0} mensagens</small>
+                <small>{formatTokenValue(platform.tokens ?? 0)} · {tx(`${platform.messages ?? 0} mensagens`)}</small>
               </div>
-            )) : <p>Sem breakdown de plataformas no snapshot atual.</p>}
+            )) : <p>{tx("Sem breakdown de plataformas no snapshot atual.")}</p>}
           </div>
         </article>
 
         <article className="panel gateway-card">
-          <div className="panel-title"><h3>Eventos</h3><span>atividade recente</span></div>
+          <div className="panel-title"><h3>{tx("Eventos")}</h3><span>{tx("atividade recente")}</span></div>
           <ul className="gateway-events">
             {(gatewayEvents.length ? gatewayEvents : liveEvents).map((event, index) => (
               <li key={`${event.actor ?? event.time}-${index}`}>
                 <span>{event.actor ?? event.time ?? "gateway"}</span>
-                <p>{event.message}</p>
+                <p>{tx(event.message)}</p>
                 <b>{event.status ?? event.tone ?? "live"}</b>
               </li>
             ))}
@@ -1214,7 +1773,7 @@ function SectionHead({ eyebrow, title, children, className = "" }) {
 }
 
 function Overview({ data }) {
-  const { t } = useI18n();
+  const { t, tx } = useI18n();
   const [range, setRange] = useState("24h");
   const selectedSeries = useMemo(() => seriesFromAnalytics(data, range), [data, range]);
   const periodTokens = selectedSeries.totalTokens
@@ -1251,8 +1810,17 @@ function Overview({ data }) {
     if (key === "ssh") {
       return { ...metric, label: t("metric.ssh") };
     }
-    return metric;
-  }), [data.metrics, periodInputTokens, periodOutputTokens, periodTokens, range, t]);
+    if (key.includes("custo")) {
+      return { ...metric, label: tx(metric.label), delta: tx(metric.delta) };
+    }
+    if (key.includes("tarefas")) {
+      return { ...metric, label: tx(metric.label), delta: tx(metric.delta) };
+    }
+    if (key.includes("servicos") || key.includes("serviços") || key.includes("runtimes")) {
+      return { ...metric, label: tx(metric.label), delta: tx(metric.delta) };
+    }
+    return { ...metric, label: tx(metric.label), delta: tx(metric.delta) };
+  }), [data.metrics, periodInputTokens, periodOutputTokens, periodTokens, range, t, tx]);
 
   return (
     <section className="view is-active">
@@ -1323,8 +1891,8 @@ function Overview({ data }) {
             {data.activity.map((event) => (
               <li key={`${event.actor}-${event.message}`}>
                 <b>{event.actor}</b>
-                <span>{event.message}</span>
-                <em className={event.tone === "warn" ? "warn" : ""}>{event.status}</em>
+                <span>{tx(event.message)}</span>
+                <em className={event.tone === "warn" ? "warn" : ""}>{tx(event.status)}</em>
               </li>
             ))}
           </ol>
@@ -1373,10 +1941,10 @@ function Overview({ data }) {
             {data.overview.incidents.map((incident) => (
               <article key={incident.title}>
                 <div>
-                  <strong>{incident.severity} · {incident.owner}</strong>
-                  <span>{incident.eta}</span>
+                  <strong>{incident.severity} · {tx(incident.owner)}</strong>
+                  <span>{tx(incident.eta)}</span>
                 </div>
-                <p>{incident.title}</p>
+                <p>{tx(incident.title)}</p>
               </article>
             ))}
           </div>
@@ -1387,7 +1955,7 @@ function Overview({ data }) {
 }
 
 function Usage({ data }) {
-  const { t } = useI18n();
+  const { t, tx } = useI18n();
   const subscriptions = data.subscriptions ?? [];
   const [period, setPeriod] = useState("Semanal");
   const totals = useMemo(() => {
@@ -1424,9 +1992,9 @@ function Usage({ data }) {
   return (
     <section className="view is-active">
       <SectionHead eyebrow={`§02 / ${t("section.usage.eyebrow")}`} title={t("section.usage.title")}>
-        <div className="filters" aria-label="Filtros de uso">
+        <div className="filters" aria-label={tx("Filtros de uso")}>
           {["Diario", "Semanal", "Mensal"].map((item) => (
-            <button className={period === item ? "is-active" : ""} onClick={() => setPeriod(item)} type="button" key={item}>{item}</button>
+            <button className={period === item ? "is-active" : ""} onClick={() => setPeriod(item)} type="button" key={item}>{tx(item)}</button>
           ))}
         </div>
       </SectionHead>
@@ -1434,23 +2002,23 @@ function Usage({ data }) {
       <div className="usage-v3">
         <article className="usage-brief panel">
           <div>
-            <span>leitura do Hermes</span>
-            <strong>{heaviest ? `${heaviest.name} concentra ${Math.round((Number(heaviest.tokenRaw || 0) / totalTokens) * 100)}% dos tokens` : "Sem consumo real"}</strong>
-            <p>{primaryCut ? `${inactiveCount} assinatura(s) sem uso detectado no Hermes. Corte mais obvio: ${bestCut?.name ?? primaryCut.name}.` : "Nao ha corte urgente, mas o uso continua concentrado em poucas assinaturas."}</p>
+            <span>{tx("leitura do Hermes")}</span>
+            <strong>{heaviest ? tx(`${heaviest.name} concentra ${Math.round((Number(heaviest.tokenRaw || 0) / totalTokens) * 100)}% dos tokens`) : tx("Sem consumo real")}</strong>
+            <p>{primaryCut ? tx(`${inactiveCount} assinatura(s) sem uso detectado no Hermes. Corte mais obvio: ${bestCut?.name ?? primaryCut.name}.`) : tx("Nao ha corte urgente, mas o uso continua concentrado em poucas assinaturas.")}</p>
           </div>
           <div className="usage-brief-metrics">
-            <div><span>mensal fixo</span><b>{formatCurrency(totals.monthlyCost)}</b></div>
+            <div><span>{tx("mensal fixo")}</span><b>{formatCurrency(totals.monthlyCost)}</b></div>
             <div><span>forecast</span><b>{formatCurrency(totals.monthlyForecast)}</b></div>
-            <div><span>{period}</span><b>{formatTokenValue(periodTokens)}</b></div>
-            <div><span>economia</span><b>{formatCurrency(savings)}</b></div>
+            <div><span>{tx(period)}</span><b>{formatTokenValue(periodTokens)}</b></div>
+            <div><span>{tx("economia")}</span><b>{formatCurrency(savings)}</b></div>
           </div>
         </article>
 
         <div className="usage-ops-grid">
           <article className="panel usage-flow-panel">
             <div className="panel-title">
-              <h3>Fluxo de tokens</h3>
-              <span>{period.toLowerCase()}</span>
+              <h3>{tx("Fluxo de tokens")}</h3>
+              <span>{tx(period.toLowerCase())}</span>
             </div>
             <div className="usage-flow-chart">
               <OkamiAreaChart
@@ -1462,7 +2030,7 @@ function Usage({ data }) {
               />
               <div className="usage-chart-axis">
                 {period === "Semanal"
-                  ? <><span>d-6</span><span>d-5</span><span>d-4</span><span>d-3</span><span>d-2</span><span>d-1</span><span>hoje</span></>
+                  ? <><span>d-6</span><span>d-5</span><span>d-4</span><span>d-3</span><span>d-2</span><span>d-1</span><span>{tx("hoje")}</span></>
                   : usageRows.map((item) => <span key={item.id}>{item.name.slice(0, 5)}</span>)}
               </div>
             </div>
@@ -1483,16 +2051,16 @@ function Usage({ data }) {
 
           <aside className="panel usage-command-center">
             <div className="panel-title">
-              <h3>Decisao de assinatura</h3>
-              <span>custo x uso</span>
+              <h3>{tx("Decisao de assinatura")}</h3>
+              <span>{tx("custo x uso")}</span>
             </div>
             {usageRows.map((item) => (
               <article className={`usage-decision-card tone-${actionTone(item.action)}`} key={item.id}>
                 <div>
                   <strong>{item.name}</strong>
-                  <span>{item.plan} · {actionLabel(item.action)}</span>
+                  <span>{item.plan} · {tx(actionLabel(item.action))}</span>
                 </div>
-                <p>{item.recommendation}</p>
+                <p>{tx(item.recommendation)}</p>
                 <footer>
                   <b>{formatCurrency(item.monthlyCost)}</b>
                   <i style={{ width: `${Math.max(2, item.utilization)}%` }}></i>
@@ -1505,11 +2073,11 @@ function Usage({ data }) {
 
         <div className="usage-ledger panel">
           <div className="panel-title">
-            <h3>Assinaturas</h3>
-            <span>controle operacional</span>
+            <h3>{tx("Assinaturas")}</h3>
+            <span>{tx("controle operacional")}</span>
           </div>
           <div className="usage-ledger-head">
-            <span>plano</span><span>tokens</span><span>custo</span><span>forecast</span><span>uso relativo</span><span>acao</span>
+            <span>{tx("plano")}</span><span>{tx("tokens")}</span><span>{tx("custo")}</span><span>forecast</span><span>{tx("uso relativo")}</span><span>{tx("acao")}</span>
           </div>
           <div className="usage-ledger-body">
             {usageRows.map((item) => (
@@ -1519,7 +2087,7 @@ function Usage({ data }) {
                 <b>{formatCurrency(item.monthlyCost)}</b>
                 <b>{formatCurrency(item.monthlyForecast)}</b>
                 <i><span style={{ width: `${Math.max(2, item.utilization)}%` }}></span></i>
-                <em>{actionLabel(item.action)}</em>
+                <em>{tx(actionLabel(item.action))}</em>
               </article>
             ))}
           </div>
@@ -1530,6 +2098,7 @@ function Usage({ data }) {
 }
 
 function OfficeCommandStrip({ activeAgents, activeTasks, agentCount, selectedAgent, selectedTask, subagentCount }) {
+  const { tx } = useI18n();
   const stats = [
     ["agentes", agentCount],
     ["ativos", activeAgents],
@@ -1540,13 +2109,13 @@ function OfficeCommandStrip({ activeAgents, activeTasks, agentCount, selectedAge
     <article className="office-brief panel">
       <div className="office-brief-main">
           <span>OKAMI OFFICE</span>
-          <strong>{selectedAgent.name} / {selectedAgent.status}</strong>
-          <p>{selectedTask?.title ?? selectedAgent.currentTask ?? "Sem tarefa ativa vinculada"}</p>
+          <strong>{selectedAgent.name} / {tx(selectedAgent.status)}</strong>
+          <p>{tx(selectedTask?.title ?? selectedAgent.currentTask ?? "Sem tarefa ativa vinculada")}</p>
       </div>
       <div className="office-brief-stats">
           {stats.map(([label, value]) => (
             <div key={label}>
-              <span>{label}</span>
+              <span>{tx(label)}</span>
               <b>{value}</b>
             </div>
           ))}
@@ -1556,6 +2125,7 @@ function OfficeCommandStrip({ activeAgents, activeTasks, agentCount, selectedAge
 }
 
 function AgentCard({ agent, index, selected, onOpenMonitor, onOpenTask, onSelect }) {
+  const { tx } = useI18n();
   const subagents = agent.subagents ?? [];
   return (
     <article className={`office-agent-row agent-${agent.color} ${selected ? "is-selected" : ""}`} onClick={onSelect} role="button" tabIndex={0} onKeyDown={(event) => {
@@ -1566,56 +2136,57 @@ function AgentCard({ agent, index, selected, onOpenMonitor, onOpenTask, onSelect
     }}>
       <span className="office-agent-topline">
         <span className="office-agent-index">AG-{String(index + 1).padStart(2, "0")}</span>
-        <span className="office-agent-state"><i></i>{agent.status}</span>
+        <span className="office-agent-state"><i></i>{tx(agent.status)}</span>
       </span>
       <span className="office-agent-identity">
         <span className="office-agent-avatar">{agent.name?.slice(0, 1)}</span>
         <span className="office-agent-name">
           <strong>{agent.name}</strong>
-          <small>{agent.role}</small>
+          <small>{tx(agent.role)}</small>
         </span>
       </span>
       <span className="office-agent-task">
-        <small>Status_tarefa</small>
-        <b>{agent.currentTask}</b>
+        <small>{tx("Status_tarefa")}</small>
+        <b>{tx(agent.currentTask)}</b>
       </span>
       <span className="office-agent-meta">
         <b><small>tool</small>{agent.tool}</b>
-        <b><small>progresso</small>{agent.progress}%</b>
-        <b><small>subagentes</small>{subagents.length}</b>
+        <b><small>{tx("progresso")}</small>{agent.progress}%</b>
+        <b><small>{tx("subagentes")}</small>{subagents.length}</b>
       </span>
       <span className="office-agent-subagents">
         {subagents.slice(0, 5).map((child) => <i key={child.id} title={child.task}></i>)}
       </span>
       <span className="office-agent-progress"><i style={{ width: `${agent.progress}%` }}></i></span>
       <span className="office-agent-actions">
-        <button className="ghost-button" onClick={(event) => { event.stopPropagation(); onOpenTask(); }} type="button">Detalhes</button>
-        <button className="primary-button" onClick={(event) => { event.stopPropagation(); onOpenMonitor(); }} type="button">Ver monitor</button>
+        <button className="ghost-button" onClick={(event) => { event.stopPropagation(); onOpenTask(); }} type="button">{tx("Detalhes")}</button>
+        <button className="primary-button" onClick={(event) => { event.stopPropagation(); onOpenMonitor(); }} type="button">{tx("Ver monitor")}</button>
       </span>
     </article>
   );
 }
 
 function AgentInspector({ agent, task, onOpenMonitor, onOpenTask }) {
+  const { tx } = useI18n();
   return (
     <aside className="office-inspector panel">
         <div className="agent-inspector-hero">
           <div className={`agent-orb agent-${agent.color}`}>{agent.name?.slice(0, 1)}</div>
           <div>
-            <span>{agent.role}</span>
+            <span>{tx(agent.role)}</span>
             <strong>{agent.name}</strong>
-            <p>{task?.title ?? agent.currentTask}</p>
+            <p>{tx(task?.title ?? agent.currentTask)}</p>
           </div>
         </div>
 
         <div className="panel-title">
           <h3>{agent.name}</h3>
-          <span>{agent.status}</span>
+          <span>{tx(agent.status)}</span>
         </div>
 
         <div className="agent-summary">
           <div>
-            <span>Projeto</span>
+            <span>{tx("Projeto")}</span>
             <strong>{agent.project}</strong>
           </div>
           <div>
@@ -1632,8 +2203,8 @@ function AgentInspector({ agent, task, onOpenMonitor, onOpenTask }) {
         <SubagentList subagents={agent.subagents ?? []} />
 
         <div className="inspector-actions">
-          <button className="primary-button" onClick={onOpenMonitor} type="button">Ver monitor</button>
-          <button className="ghost-button" onClick={onOpenTask} type="button">Abrir tarefa</button>
+          <button className="primary-button" onClick={onOpenMonitor} type="button">{tx("Ver monitor")}</button>
+          <button className="ghost-button" onClick={onOpenTask} type="button">{tx("Abrir tarefa")}</button>
         </div>
     </aside>
   );
@@ -1652,26 +2223,27 @@ function MonitorPanel({ agent }) {
 }
 
 function SubagentList({ subagents }) {
+  const { tx } = useI18n();
   return (
     <>
       <div className="panel-title compact">
-        <h3>Subagentes</h3>
+        <h3>{tx("Subagentes")}</h3>
         <span>{subagents.length}</span>
       </div>
       <div className="office-subagents">
         {subagents.length ? subagents.slice(0, 5).map((child) => (
           <article key={child.id}>
             <b>{child.name}</b>
-            <span>{child.status} · {child.model}</span>
+            <span>{tx(child.status)} · {child.model}</span>
           </article>
-        )) : <p>Nenhum subagente recente.</p>}
+        )) : <p>{tx("Nenhum subagente recente.")}</p>}
       </div>
     </>
   );
 }
 
 function Office({ data }) {
-  const { t } = useI18n();
+  const { t, tx } = useI18n();
   const [selectedAgentId, setSelectedAgentId] = useState(data.agents[0]?.id);
   const [modal, setModal] = useState(null);
   const selectedAgent = data.agents.find((agent) => agent.id === selectedAgentId) ?? data.agents[0];
@@ -1690,7 +2262,7 @@ function Office({ data }) {
   return (
     <section className="view is-active">
       <SectionHead eyebrow={`§03 / ${t("section.office.eyebrow")}`} title={t("section.office.title")}>
-        <button className="ghost-button" type="button" onClick={() => setModal({ type: "external", agent: selectedAgent, task: selectedTask })}>Abrir monitor externo</button>
+        <button className="ghost-button" type="button" onClick={() => setModal({ type: "external", agent: selectedAgent, task: selectedTask })}>{tx("Abrir monitor externo")}</button>
       </SectionHead>
       <OfficeCommandStrip
         activeAgents={activeAgents}
@@ -1744,7 +2316,7 @@ function Office({ data }) {
 }
 
 function Pixel({ data, source, loading }) {
-  const { t } = useI18n();
+  const { t, tx } = useI18n();
   const realAgents = loading ? [] : (data.agents ?? []);
   const [selectedAgentId, setSelectedAgentId] = useState(realAgents[0]?.id);
   const [modalAgentId, setModalAgentId] = useState(null);
@@ -1805,7 +2377,7 @@ function Pixel({ data, source, loading }) {
       </SectionHead>
 
       <div className="pixel-layout">
-        <div className="pixel-stage panel" aria-label="Pixel office dos agentes">
+        <div className="pixel-stage panel" aria-label={tx("Pixel office dos agentes")}>
           <PixelOfficeCanvas
             key={pixelAgentKey}
             agents={realAgents}
@@ -1829,15 +2401,15 @@ function Pixel({ data, source, loading }) {
               progresso: `${modalAgent.progress ?? 0}%`,
             }} />
             <div className="pixel-task-strip">
-              <span>tarefa atual</span>
+              <span>{tx("tarefa atual")}</span>
               {modalAgentTasks.length ? modalAgentTasks.map((task, index) => (
                 <button className="pixel-task-card" key={taskUiKey(task, modalAgent.id, index)} type="button">
-                  <b>{task.title}</b>
-                  <small>{task.status ?? task.meta ?? "ativo"} · {task.owner ?? modalAgent.name}</small>
-                  <em>{task.description ?? task.body ?? task.raw?.description ?? "Sem descricao detalhada no retorno atual."}</em>
+                  <b>{tx(task.title)}</b>
+                  <small>{tx(task.status ?? task.meta ?? "ativo")} · {task.owner ?? modalAgent.name}</small>
+                  <em>{tx(task.description ?? task.body ?? task.raw?.description ?? "Sem descricao detalhada no retorno atual.")}</em>
                 </button>
               )) : (
-                <p>Este agente está idle ou sem tarefa ativa vinculada ao kanban atual.</p>
+                <p>{tx("Este agente está idle ou sem tarefa ativa vinculada ao kanban atual.")}</p>
               )}
             </div>
             <PixelAgentMonitor agent={modalAgent} tasks={modalAgentTasks} />
@@ -1874,6 +2446,7 @@ function taskUiKey(task, scope, index) {
 }
 
 function TaskDetail({ task }) {
+  const { tx } = useI18n();
   const raw = task.raw ?? {};
   const description = task.body ?? task.description ?? raw.body ?? raw.description ?? raw.notes ?? "Sem descricao detalhada no retorno atual do Hermes.";
   const createdAt = raw.created_at ? new Date(Number(raw.created_at) * 1000).toLocaleString("pt-BR") : raw.createdAt;
@@ -1898,24 +2471,24 @@ function TaskDetail({ task }) {
           finalizado: completedAt ?? "-",
         }} />
         <div className="task-run-card">
-          <span>resultado</span>
-          <b>{raw.result ? "registrado" : "pendente"}</b>
-          <p>{raw.result ?? "Nenhum resultado retornado ainda pelo Kanban do Hermes."}</p>
+          <span>{tx("resultado")}</span>
+          <b>{tx(raw.result ? "registrado" : "pendente")}</b>
+          <p>{tx(raw.result ?? "Nenhum resultado retornado ainda pelo Kanban do Hermes.")}</p>
         </div>
         <div className="task-run-card">
           <span>skills</span>
           <b>{skillList.length || 0}</b>
-          <p>{skillList.length ? skillList.join(", ") : "Sem skills declaradas nesta task."}</p>
+          <p>{tx(skillList.length ? skillList.join(", ") : "Sem skills declaradas nesta task.")}</p>
         </div>
       </aside>
       <main className="task-modal-main">
         <section className="task-description-panel">
-          <span>descricao</span>
-          <p>{description}</p>
+          <span>{tx("descricao")}</span>
+          <p>{tx(description)}</p>
         </section>
         <div className="task-history-grid">
           <section>
-            <div className="panel-title compact"><h3>Comentários</h3><span>{comments.length}</span></div>
+            <div className="panel-title compact"><h3>{tx("Comentários")}</h3><span>{comments.length}</span></div>
             <TimelineList empty="Sem comentarios retornados pelo kanban.db." items={comments} />
           </section>
           <section>
@@ -1937,12 +2510,13 @@ function TaskDetail({ task }) {
 }
 
 function TimelineList({ items, empty }) {
+  const { tx } = useI18n();
   if (!items?.length) {
     return (
       <div className="ok-empty">
         <span className="ok-empty__icon" aria-hidden="true">⌧</span>
-        <span className="ok-empty__title">Sem dados</span>
-        <span className="ok-empty__desc">{empty}</span>
+        <span className="ok-empty__title">{tx("Sem dados")}</span>
+        <span className="ok-empty__desc">{tx(empty)}</span>
       </div>
     );
   }
@@ -1954,11 +2528,11 @@ function TimelineList({ items, empty }) {
           && (content.includes("\n") || /[`*#-]/.test(content));
         return (
           <article key={`${item.id ?? item._table ?? "row"}-${index}`}>
-            <span>{item._table ?? item.status ?? item.type ?? "event"}</span>
+            <span>{tx(item._table ?? item.status ?? item.type ?? "event")}</span>
             <div className="timeline-list__body">
               {looksLikeMarkdown
                 ? <MarkdownLite source={content} />
-                : <p>{content}</p>}
+                : <p>{tx(content)}</p>}
             </div>
             <small>{recordTime(item)}</small>
           </article>
@@ -1969,7 +2543,7 @@ function TimelineList({ items, empty }) {
 }
 
 function Kanban({ data }) {
-  const { t } = useI18n();
+  const { t, tx } = useI18n();
   const [board, setBoard] = useState(data.kanban);
   const [selectedTask, setSelectedTask] = useState(null);
   const [selectedBoard, setSelectedBoard] = useState(null);
@@ -2061,7 +2635,7 @@ function Kanban({ data }) {
     <section className="view is-active">
       <SectionHead eyebrow={`§04 / ${t("section.kanban.eyebrow")}`} title={t("section.kanban.title")}>
         {boards.length > 1 ? (
-          <div className="filters board-selector" aria-label="Selecionar board">
+          <div className="filters board-selector" aria-label={tx("Selecionar board")}>
             {boards.map((boardName) => (
               <button
                 className={selectedBoard === boardName ? "is-active" : ""}
@@ -2074,28 +2648,28 @@ function Kanban({ data }) {
             ))}
           </div>
         ) : null}
-        <button className="primary-button" onClick={createTask} type="button">Criar no Hermes</button>
+        <button className="primary-button" onClick={createTask} type="button">{tx("Criar no Hermes")}</button>
       </SectionHead>
       <article className="kanban-brief panel">
         <div>
           <span>Hermes kanban.db</span>
-          <strong>{taskCount} tarefas operacionais</strong>
-          <p>{blockedCount ? `${blockedCount} bloqueio(s) precisam de revisao antes do proximo ciclo.` : "Board sincronizado sem bloqueios reportados no snapshot atual."}</p>
+          <strong>{tx(`${taskCount} tarefas operacionais`)}</strong>
+          <p>{tx(blockedCount ? `${blockedCount} bloqueio(s) precisam de revisao antes do proximo ciclo.` : "Board sincronizado sem bloqueios reportados no snapshot atual.")}</p>
         </div>
         <div className="kanban-brief-metrics">
-          <div><span>tarefas</span><b>{taskCount}</b></div>
-          <div><span>bloqueios</span><b>{blockedCount}</b></div>
-          <div><span>agentes</span><b>{ownerCount}</b></div>
-          <div><span>fonte</span><b>SSH</b></div>
+          <div><span>{tx("tarefas")}</span><b>{taskCount}</b></div>
+          <div><span>{tx("bloqueios")}</span><b>{blockedCount}</b></div>
+          <div><span>{tx("agentes")}</span><b>{ownerCount}</b></div>
+          <div><span>{tx("fonte")}</span><b>SSH</b></div>
         </div>
       </article>
       <div className="kanban-sync-panel panel">
-        <label>Titulo<input value={draft.title} onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))} placeholder="Nova tarefa para o Hermes" /></label>
+        <label>{tx("Titulo")}<input value={draft.title} onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))} placeholder={tx("Nova tarefa para o Hermes")} /></label>
         <label>Assignee<input value={draft.assignee} onChange={(event) => setDraft((current) => ({ ...current, assignee: event.target.value }))} /></label>
-        <label>Prioridade<select value={draft.priority} onChange={(event) => setDraft((current) => ({ ...current, priority: event.target.value }))}><option>P1</option><option>P2</option><option>P3</option></select></label>
-        <label>Coluna<select value={draft.status} onChange={(event) => setDraft((current) => ({ ...current, status: event.target.value }))}>{[...new Set([draft.status, ...Object.keys(board)])].map((column) => <option key={column}>{column}</option>)}</select></label>
-        <label className="wide">Body / acceptance criteria<input value={draft.body} onChange={(event) => setDraft((current) => ({ ...current, body: event.target.value }))} placeholder="Contexto que sera salvo na task" /></label>
-        <p>{syncStatus}</p>
+        <label>{tx("Prioridade")}<select value={draft.priority} onChange={(event) => setDraft((current) => ({ ...current, priority: event.target.value }))}><option>P1</option><option>P2</option><option>P3</option></select></label>
+        <label>{tx("Coluna")}<select value={draft.status} onChange={(event) => setDraft((current) => ({ ...current, status: event.target.value }))}>{[...new Set([draft.status, ...Object.keys(board)])].map((column) => <option key={column}>{column}</option>)}</select></label>
+        <label className="wide">Body / acceptance criteria<input value={draft.body} onChange={(event) => setDraft((current) => ({ ...current, body: event.target.value }))} placeholder={tx("Contexto que sera salvo na task")} /></label>
+        <p>{tx(syncStatus)}</p>
       </div>
       <div className="kanban">
         {columnEntries.map(([column, tasks]) => (
@@ -2110,15 +2684,15 @@ function Kanban({ data }) {
                   <em>{task.priority}</em>
                   <small>{task.owner} · {task.estimate}</small>
                 </div>
-                <b>{task.title}</b>
-                <span>{task.meta}</span>
-                {task.body || task.description ? <p>{String(task.body ?? task.description).slice(0, 150)}</p> : null}
+                <b>{tx(task.title)}</b>
+                <span>{tx(task.meta)}</span>
+                {task.body || task.description ? <p>{tx(String(task.body ?? task.description).slice(0, 150))}</p> : null}
               </button>
             )) : (
               <div className="ok-empty kanban-empty-column">
                 <span className="ok-empty__icon" aria-hidden="true">∅</span>
-                <span className="ok-empty__title">Coluna vazia</span>
-                <span className="ok-empty__desc">Arraste uma task ou crie uma nova.</span>
+                <span className="ok-empty__title">{tx("Coluna vazia")}</span>
+                <span className="ok-empty__desc">{tx("Arraste uma task ou crie uma nova.")}</span>
               </div>
             )}
           </article>
@@ -2134,6 +2708,7 @@ function Kanban({ data }) {
 }
 
 function Apis({ data }) {
+  const { tx } = useI18n();
   const [apis, setApis] = useState(data.apiKeys);
   const [selectedApiId, setSelectedApiId] = useState(data.apiKeys[0]?.id);
   const [apiStatus, setApiStatus] = useState({ tone: "idle", message: "Selecione uma conexao para editar." });
@@ -2224,13 +2799,13 @@ function Apis({ data }) {
 
   return (
     <section className="view is-active">
-      <SectionHead eyebrow="§05 / secure config" title="APIs e secrets por ambiente">
-        <button className="primary-button" onClick={addApi} type="button">Adicionar API</button>
+      <SectionHead eyebrow="§05 / secure config" title={tx("APIs e secrets por ambiente")}>
+        <button className="primary-button" onClick={addApi} type="button">{tx("Adicionar API")}</button>
       </SectionHead>
 
       <div className="api-workbench">
         <div className="api-list panel">
-          <div className="panel-title"><h3>Conexoes</h3><span>{apis.length} providers</span></div>
+          <div className="panel-title"><h3>{tx("Conexoes")}</h3><span>{apis.length} providers</span></div>
           {apis.map((api) => (
             <button
               className={`api-row ${selectedApi.id === api.id ? "is-selected" : ""}`}
@@ -2240,9 +2815,9 @@ function Apis({ data }) {
             >
               <span>
                 <b>{api.name}</b>
-                <small>{api.detail}</small>
+                <small>{tx(api.detail)}</small>
               </span>
-              <em>{api.status}</em>
+              <em>{tx(api.status)}</em>
               <i style={{ width: `${api.usage}%` }}></i>
             </button>
           ))}
@@ -2250,24 +2825,24 @@ function Apis({ data }) {
 
         <aside className="api-editor panel">
           <div className="panel-title">
-            <h3>Editar {selectedApi.name}</h3>
-            <span>{selectedApi.status}</span>
+            <h3>{tx("Editar")} {selectedApi.name}</h3>
+            <span>{tx(selectedApi.status)}</span>
           </div>
           <div className="api-form">
-            <label>Nome<input value={selectedApi.name} onChange={(event) => updateSelectedApi("name", event.target.value)} /></label>
+            <label>{tx("Nome")}<input value={selectedApi.name} onChange={(event) => updateSelectedApi("name", event.target.value)} /></label>
             <label>Secret<input value={selectedApi.maskedValue} onChange={(event) => updateSelectedApi("maskedValue", event.target.value)} /></label>
-            <label>Ambiente<input value={selectedApi.detail} onChange={(event) => updateSelectedApi("detail", event.target.value)} /></label>
+            <label>{tx("Ambiente")}<input value={selectedApi.detail} onChange={(event) => updateSelectedApi("detail", event.target.value)} /></label>
             <label>Status<select value={selectedApi.status} onChange={(event) => updateSelectedApi("status", event.target.value)}><option>healthy</option><option>watch</option><option>disabled</option></select></label>
-            <label>Uso %<input type="number" value={selectedApi.usage} onChange={(event) => updateSelectedApi("usage", Number(event.target.value))} /></label>
-            <label>Latencia ms<input type="number" value={selectedApi.latency} onChange={(event) => updateSelectedApi("latency", Number(event.target.value))} /></label>
+            <label>{tx("Uso")} %<input type="number" value={selectedApi.usage} onChange={(event) => updateSelectedApi("usage", Number(event.target.value))} /></label>
+            <label>{tx("Latencia")} ms<input type="number" value={selectedApi.latency} onChange={(event) => updateSelectedApi("latency", Number(event.target.value))} /></label>
           </div>
           <div className="api-editor-actions">
-            <button className="primary-button" onClick={saveSelectedApi} type="button">Salvar API</button>
-            <button className="ghost-button" onClick={testSelectedApi} type="button">Testar conexao</button>
-            <button className="ghost-button" onClick={rotateSelectedApi} type="button">Rotacionar secret</button>
-            <button className="danger-button" disabled={apis.length <= 1} onClick={deleteSelectedApi} type="button">Excluir API</button>
+            <button className="primary-button" onClick={saveSelectedApi} type="button">{tx("Salvar API")}</button>
+            <button className="ghost-button" onClick={testSelectedApi} type="button">{tx("Testar conexao")}</button>
+            <button className="ghost-button" onClick={rotateSelectedApi} type="button">{tx("Rotacionar secret")}</button>
+            <button className="danger-button" disabled={apis.length <= 1} onClick={deleteSelectedApi} type="button">{tx("Excluir API")}</button>
           </div>
-          <p className={`api-status-strip tone-${apiStatus.tone}`}>{apiStatus.message}</p>
+          <p className={`api-status-strip tone-${apiStatus.tone}`}>{tx(apiStatus.message)}</p>
         </aside>
       </div>
 
@@ -2277,18 +2852,18 @@ function Apis({ data }) {
           <StatList items={apis.map((api) => ({ label: api.name, value: `${api.usage}%` }))} />
         </article>
         <article className="panel">
-          <div className="panel-title"><h3>Rotacao</h3><span>secrets</span></div>
+          <div className="panel-title"><h3>{tx("Rotacao")}</h3><span>secrets</span></div>
           <div className="terminal">
-            <p><span>OpenAI</span> rotacao em 18 dias</p>
-            <p><span>Anthropic</span> token principal validado</p>
-            <p><span>GitHub</span> escopo repo/admin limitado</p>
+            <p><span>OpenAI</span> {tx("rotacao em 18 dias")}</p>
+            <p><span>Anthropic</span> {tx("token principal validado")}</p>
+            <p><span>GitHub</span> {tx("escopo repo/admin limitado")}</p>
           </div>
         </article>
         <article className="panel">
-          <div className="panel-title"><h3>Diagnostico</h3><span>{selectedApi.name}</span></div>
+          <div className="panel-title"><h3>{tx("Diagnostico")}</h3><span>{selectedApi.name}</span></div>
           <div className="health-list">
             <div className={`health-row tone-${selectedApi.status === "healthy" ? "healthy" : "watch"}`}>
-              <span>latencia</span><b>{selectedApi.latency}ms</b><i style={{ width: `${Math.max(10, 100 - selectedApi.latency / 8)}%` }}></i>
+              <span>{tx("latencia")}</span><b>{selectedApi.latency}ms</b><i style={{ width: `${Math.max(10, 100 - selectedApi.latency / 8)}%` }}></i>
             </div>
             <div className={`health-row tone-${selectedApi.usage > 80 ? "watch" : "healthy"}`}>
               <span>rate limit</span><b>{selectedApi.usage}%</b><i style={{ width: `${selectedApi.usage}%` }}></i>
@@ -2301,6 +2876,7 @@ function Apis({ data }) {
 }
 
 function Apps({ data }) {
+  const { tx } = useI18n();
   const [apps, setApps] = useState(data.apps);
   const [selectedApp, setSelectedApp] = useState(null);
 
@@ -2323,22 +2899,22 @@ function Apps({ data }) {
 
   return (
     <section className="view is-active">
-      <SectionHead eyebrow="§06 / application registry" title="Links dos produtos e ambientes">
-        <button className="primary-button" type="button" onClick={addApp}>Novo link</button>
+      <SectionHead eyebrow="§06 / application registry" title={tx("Links dos produtos e ambientes")}>
+        <button className="primary-button" type="button" onClick={addApp}>{tx("Novo link")}</button>
       </SectionHead>
       <div className="app-grid">
         {apps.map((app) => (
           <button className="app-card" key={app.id ?? app.name} type="button" onClick={() => setSelectedApp(app)}>
-            <b>{app.name}</b>
-            <span>{app.detail}</span>
-            <em>{app.status}</em>
+            <b>{tx(app.name)}</b>
+            <span>{tx(app.detail)}</span>
+            <em>{tx(app.status)}</em>
             <small>{app.env} · {app.uptime}% uptime</small>
           </button>
         ))}
       </div>
       <div className="ops-grid">
         <article className="panel">
-          <div className="panel-title"><h3>Ambientes</h3><span>registry</span></div>
+          <div className="panel-title"><h3>{tx("Ambientes")}</h3><span>registry</span></div>
           <StatList items={[
             { label: "prod", value: apps.filter((app) => app.env === "prod").length },
             { label: "stage", value: apps.filter((app) => app.env === "stage").length },
@@ -2350,22 +2926,22 @@ function Apps({ data }) {
         {selectedApp ? (
           <>
             <div className="api-form single-column-form">
-              <label>Nome<input value={selectedApp.name} onChange={(event) => setSelectedApp((current) => ({ ...current, name: event.target.value }))} /></label>
+              <label>{tx("Nome")}<input value={selectedApp.name} onChange={(event) => setSelectedApp((current) => ({ ...current, name: event.target.value }))} /></label>
               <label>URL<input value={selectedApp.url} onChange={(event) => setSelectedApp((current) => ({ ...current, url: event.target.value }))} /></label>
-              <label>Detalhe<input value={selectedApp.detail} onChange={(event) => setSelectedApp((current) => ({ ...current, detail: event.target.value }))} /></label>
-              <label>Ambiente<input value={selectedApp.env} onChange={(event) => setSelectedApp((current) => ({ ...current, env: event.target.value }))} /></label>
+              <label>{tx("Detalhe")}<input value={selectedApp.detail} onChange={(event) => setSelectedApp((current) => ({ ...current, detail: event.target.value }))} /></label>
+              <label>{tx("Ambiente")}<input value={selectedApp.env} onChange={(event) => setSelectedApp((current) => ({ ...current, env: event.target.value }))} /></label>
             </div>
             <div className="api-editor-actions">
               <button className="primary-button" type="button" onClick={async () => {
                 await saveAppConfig(selectedApp);
                 setApps((current) => current.map((app) => (app.id === selectedApp.id ? selectedApp : app)));
-              }}>Salvar link</button>
-              <button className="ghost-button" type="button" onClick={() => window.open(selectedApp.url, "_blank", "noopener")}>Abrir</button>
+              }}>{tx("Salvar link")}</button>
+              <button className="ghost-button" type="button" onClick={() => window.open(selectedApp.url, "_blank", "noopener")}>{tx("Abrir")}</button>
               <button className="danger-button" type="button" onClick={async () => {
                 await deleteAppConfig(selectedApp);
                 setApps((current) => current.filter((app) => app.id !== selectedApp.id));
                 setSelectedApp(null);
-              }}>Excluir</button>
+              }}>{tx("Excluir")}</button>
             </div>
           </>
         ) : null}
@@ -2375,6 +2951,7 @@ function Apps({ data }) {
 }
 
 function Docs({ data }) {
+  const { tx } = useI18n();
   const [docs, setDocs] = useState(data.docs);
   const [selectedDoc, setSelectedDoc] = useState(null);
 
@@ -2428,33 +3005,33 @@ function Docs({ data }) {
 
   return (
     <section className="view is-active">
-      <SectionHead eyebrow="§07 / knowledge base" title="Documentacao viva para agentes">
+      <SectionHead eyebrow="§07 / knowledge base" title={tx("Documentacao viva para agentes")}>
         <div className="section-actions">
-          <button className="ghost-button" type="button" onClick={syncDocs}>Sincronizar</button>
-          <button className="primary-button" type="button" onClick={createDocDraft}>Novo doc</button>
+          <button className="ghost-button" type="button" onClick={syncDocs}>{tx("Sincronizar")}</button>
+          <button className="primary-button" type="button" onClick={createDocDraft}>{tx("Novo doc")}</button>
         </div>
       </SectionHead>
       <div className="docs-grid">
         {docs.map((doc) => (
           <button className="panel doc-panel" key={doc.id ?? doc.title} type="button" onClick={() => setSelectedDoc(doc)}>
-            <h3>{doc.title}</h3>
-            <p>{doc.body}</p>
+            <h3>{tx(doc.title)}</h3>
+            <p>{tx(doc.body)}</p>
             <div className="card-metrics">
-              <b>{doc.coverage}% cobertura</b>
+              <b>{doc.coverage}% {tx("cobertura")}</b>
               <i style={{ width: `${doc.coverage}%` }}></i>
-              <em>{doc.updated}</em>
+              <em>{tx(doc.updated)}</em>
             </div>
-            {docText(doc) ? <span className="doc-content-badge">texto disponivel</span> : null}
+            {docText(doc) ? <span className="doc-content-badge">{tx("texto disponivel")}</span> : null}
           </button>
         ))}
       </div>
       <div className="ops-grid">
         <article className="panel">
-          <div className="panel-title"><h3>Checklist documental</h3><span>coverage</span></div>
+          <div className="panel-title"><h3>{tx("Checklist documental")}</h3><span>coverage</span></div>
           <div className="terminal">
-            <p><span>runbooks</span> incidentes e rollback cobertos</p>
-            <p><span>agents</span> falta politica de memoria por agente</p>
-            <p><span>system</span> tokens visuais sincronizados</p>
+            <p><span>runbooks</span> {tx("incidentes e rollback cobertos")}</p>
+            <p><span>agents</span> {tx("falta politica de memoria por agente")}</p>
+            <p><span>system</span> {tx("tokens visuais sincronizados")}</p>
           </div>
         </article>
       </div>
@@ -2468,19 +3045,19 @@ function Docs({ data }) {
               conteudo: docText(selectedDoc) ? "texto" : "sem texto",
             }} />
             <div className="api-form single-column-form">
-              <label>Titulo<input value={selectedDoc.title} onChange={(event) => setSelectedDoc((current) => ({ ...current, title: event.target.value }))} /></label>
-              <label>Resumo<input value={selectedDoc.body} onChange={(event) => setSelectedDoc((current) => ({ ...current, body: event.target.value }))} /></label>
-              <label>Fonte<input value={selectedDoc.source ?? ""} onChange={(event) => setSelectedDoc((current) => ({ ...current, source: event.target.value }))} /></label>
-              <label>Cobertura %<input type="number" value={selectedDoc.coverage ?? 0} onChange={(event) => setSelectedDoc((current) => ({ ...current, coverage: Number(event.target.value) }))} /></label>
-              <label className="doc-content-field">Conteudo em texto<textarea value={docText(selectedDoc)} onChange={(event) => setSelectedDoc((current) => ({ ...current, content: event.target.value }))} placeholder="Markdown, runbook, briefing ou texto livre." /></label>
+              <label>{tx("Titulo")}<input value={selectedDoc.title} onChange={(event) => setSelectedDoc((current) => ({ ...current, title: event.target.value }))} /></label>
+              <label>{tx("Resumo")}<input value={selectedDoc.body} onChange={(event) => setSelectedDoc((current) => ({ ...current, body: event.target.value }))} /></label>
+              <label>{tx("Fonte")}<input value={selectedDoc.source ?? ""} onChange={(event) => setSelectedDoc((current) => ({ ...current, source: event.target.value }))} /></label>
+              <label>{tx("Cobertura")} %<input type="number" value={selectedDoc.coverage ?? 0} onChange={(event) => setSelectedDoc((current) => ({ ...current, coverage: Number(event.target.value) }))} /></label>
+              <label className="doc-content-field">{tx("Conteudo em texto")}<textarea value={docText(selectedDoc)} onChange={(event) => setSelectedDoc((current) => ({ ...current, content: event.target.value }))} placeholder={tx("Markdown, runbook, briefing ou texto livre.")} /></label>
             </div>
             <article className="doc-text-preview">
-              <div className="panel-title compact"><h3>Preview do conteudo</h3><span>{docText(selectedDoc) ? `${docText(selectedDoc).length} chars` : "vazio"}</span></div>
-              {docText(selectedDoc) ? <pre>{docText(selectedDoc)}</pre> : <p>Sem conteudo em texto para exibir.</p>}
+              <div className="panel-title compact"><h3>{tx("Preview do conteudo")}</h3><span>{docText(selectedDoc) ? `${docText(selectedDoc).length} chars` : tx("vazio")}</span></div>
+              {docText(selectedDoc) ? <pre>{docText(selectedDoc)}</pre> : <p>{tx("Sem conteudo em texto para exibir.")}</p>}
             </article>
             <div className="api-editor-actions">
-              <button className="primary-button" type="button" onClick={saveSelectedDoc}>Salvar doc</button>
-              <button className="danger-button" type="button" onClick={deleteSelectedDoc}>Excluir</button>
+              <button className="primary-button" type="button" onClick={saveSelectedDoc}>{tx("Salvar doc")}</button>
+              <button className="danger-button" type="button" onClick={deleteSelectedDoc}>{tx("Excluir")}</button>
             </div>
           </>
         ) : null}
@@ -2726,18 +3303,19 @@ function skillUsageSummary(skill, doc) {
 }
 
 function AdminHero({ eyebrow, title, description, stats = [], children }) {
+  const { tx } = useI18n();
   return (
     <div className="admin-hero">
       <div>
-        <p className="eyebrow">{eyebrow}</p>
-        <h2>{title}</h2>
-        {description ? <p>{description}</p> : null}
+        <p className="eyebrow">{tx(eyebrow)}</p>
+        <h2>{tx(title)}</h2>
+        {description ? <p>{tx(description)}</p> : null}
       </div>
       <div className="admin-hero-stats">
         {stats.map((stat) => (
           <div key={stat.label}>
-            <span>{stat.label}</span>
-            <b>{stat.value}</b>
+            <span>{tx(stat.label)}</span>
+            <b>{tx(stat.value)}</b>
           </div>
         ))}
       </div>
@@ -2747,6 +3325,7 @@ function AdminHero({ eyebrow, title, description, stats = [], children }) {
 }
 
 function StructuredFilePanel({ file, titlePrefix = "arquivo", inline = false }) {
+  const { tx } = useI18n();
   const [draft, setDraft] = useState(file?.content ?? "");
   const [fields, setFields] = useState([]);
   const [mode, setMode] = useState("fields");
@@ -2800,7 +3379,7 @@ function StructuredFilePanel({ file, titlePrefix = "arquivo", inline = false }) 
   if (!file) {
     return (
       <article className="panel management-detail empty">
-        <p>Selecione um item para visualizar e editar.</p>
+        <p>{tx("Selecione um item para visualizar e editar.")}</p>
       </article>
     );
   }
@@ -2814,28 +3393,28 @@ function StructuredFilePanel({ file, titlePrefix = "arquivo", inline = false }) 
         chars: draft.length,
       }} />
       <div className="detail-toolbar">
-        {kind === "md" || kind === "markdown" ? <button className={mode === "read" ? "primary-button" : "ghost-button"} type="button" onClick={() => setMode("read")}>Leitura</button> : null}
-        {canUseFields ? <button className={mode === "fields" ? "primary-button" : "ghost-button"} type="button" onClick={() => setMode("fields")}>Campos</button> : null}
-	        <button className={mode === "raw" ? "primary-button" : "ghost-button"} type="button" onClick={() => setMode("raw")}>Texto bruto</button>
+        {kind === "md" || kind === "markdown" ? <button className={mode === "read" ? "primary-button" : "ghost-button"} type="button" onClick={() => setMode("read")}>{tx("Leitura")}</button> : null}
+        {canUseFields ? <button className={mode === "fields" ? "primary-button" : "ghost-button"} type="button" onClick={() => setMode("fields")}>{tx("Campos")}</button> : null}
+	        <button className={mode === "raw" ? "primary-button" : "ghost-button"} type="button" onClick={() => setMode("raw")}>{tx("Texto bruto")}</button>
       </div>
       {mode === "read" ? (
         <div className="document-reader">
           <aside>
-            <span>Sumario</span>
-            {outline.length ? outline.map((item) => <b key={item}>{item}</b>) : <b>Sem titulos detectados</b>}
+            <span>{tx("Sumario")}</span>
+            {outline.length ? outline.map((item) => <b key={item}>{item}</b>) : <b>{tx("Sem titulos detectados")}</b>}
           </aside>
           <div className="document-copy">
             {previewBlocks.length ? previewBlocks.map((block, index) => (
               /^#{1,4}\s+/.test(block) ? <h4 key={`${block}-${index}`}>{block.replace(/^#{1,4}\s+/, "")}</h4> : <p key={`${block}-${index}`}>{block}</p>
-            )) : <p>Arquivo vazio.</p>}
+            )) : <p>{tx("Arquivo vazio.")}</p>}
           </div>
         </div>
       ) : mode === "fields" && canUseFields ? (
         <>
           {fields.length > 12 ? (
             <div className="field-editor-toolbar">
-              <input className="okami-search" placeholder="filtrar campos..." value={fieldQuery} onChange={(event) => setFieldQuery(event.target.value)} />
-              <span>{visibleFields.length}/{fields.length} campos</span>
+              <input className="okami-search" placeholder={tx("filtrar campos...")} value={fieldQuery} onChange={(event) => setFieldQuery(event.target.value)} />
+              <span>{visibleFields.length}/{fields.length} {tx("campos")}</span>
             </div>
           ) : null}
           <div className="field-editor">
@@ -2851,12 +3430,12 @@ function StructuredFilePanel({ file, titlePrefix = "arquivo", inline = false }) 
         </>
       ) : (
         <div className="api-form single-column-form">
-	          <label>Conteudo do arquivo<textarea value={draft} onChange={(event) => setDraft(event.target.value)} /></label>
+	          <label>{tx("Conteudo do arquivo")}<textarea value={draft} onChange={(event) => setDraft(event.target.value)} /></label>
         </div>
       )}
       <div className="api-editor-actions">
-	        <button className="primary-button" type="button" onClick={saveFile}>Salvar arquivo</button>
-        {status ? <span className="inline-status">{status}</span> : null}
+	        <button className="primary-button" type="button" onClick={saveFile}>{tx("Salvar arquivo")}</button>
+        {status ? <span className="inline-status">{tx(status)}</span> : null}
       </div>
     </>
   );
@@ -2864,7 +3443,7 @@ function StructuredFilePanel({ file, titlePrefix = "arquivo", inline = false }) 
   if (inline) {
     return (
       <article className="panel management-detail">
-        <div className="panel-title"><h3>{file.name}</h3><span>{titlePrefix}</span></div>
+        <div className="panel-title"><h3>{file.name}</h3><span>{tx(titlePrefix)}</span></div>
         {body}
       </article>
     );
@@ -2914,7 +3493,7 @@ const apiKeyProfiles = [
 ];
 
 function Config({ data }) {
-  const { t } = useI18n();
+  const { t, tx } = useI18n();
   const [authStatus, setAuthStatus] = useState(null);
   const [keys, setKeys] = useState([]);
   const [tokenDraft, setTokenDraft] = useState(() => getMissionApiToken());
@@ -3103,9 +3682,9 @@ function Config({ data }) {
       />
 
       <nav className="config-hub-nav" aria-label="Atalhos de agentes">
-        <button type="button" onClick={() => document.getElementById("config-hermes")?.scrollIntoView({ behavior: "smooth", block: "start" })}>Servidor dos agentes</button>
-        <button type="button" onClick={() => document.getElementById("config-agents")?.scrollIntoView({ behavior: "smooth", block: "start" })}>Agentes conectados</button>
-        <button type="button" onClick={() => document.getElementById("config-access")?.scrollIntoView({ behavior: "smooth", block: "start" })}>Acesso avancado</button>
+        <button type="button" onClick={() => document.getElementById("config-hermes")?.scrollIntoView({ behavior: "smooth", block: "start" })}>{tx("Servidor dos agentes")}</button>
+        <button type="button" onClick={() => document.getElementById("config-agents")?.scrollIntoView({ behavior: "smooth", block: "start" })}>{tx("Agentes conectados")}</button>
+        <button type="button" onClick={() => document.getElementById("config-access")?.scrollIntoView({ behavior: "smooth", block: "start" })}>{tx("Acesso avancado")}</button>
       </nav>
 
       <section className="config-hub-section" id="config-hermes">
@@ -3117,16 +3696,16 @@ function Config({ data }) {
       </section>
 
       <details className="panel config-access-panel config-access-details" id="config-access">
-        <summary>Acesso e keys (avancado)</summary>
+        <summary>{tx("Acesso e keys (avancado)")}</summary>
         <div className="config-access-main">
           <div>
-            <div className="panel-title"><h3>Acesso do painel</h3><span>{canBootstrap ? "primeiro acesso" : "acesso"}</span></div>
+            <div className="panel-title"><h3>{tx("Acesso do painel")}</h3><span>{tx(canBootstrap ? "primeiro acesso" : "acesso")}</span></div>
             <p className="management-summary">
-              O painel prepara esse acesso automaticamente ao conectar servidor ou agente. A key aparece aqui apenas como backup.
+              {tx("O painel prepara esse acesso automaticamente ao conectar servidor ou agente. A key aparece aqui apenas como backup.")}
             </p>
           </div>
           <button className="primary-button config-primary-action" disabled={busyAction === "owner"} type="button" onClick={generateOwnerKey}>
-            {busyAction === "owner" ? "Preparando..." : "Criar backup de acesso"}
+            {tx(busyAction === "owner" ? "Preparando..." : "Criar backup de acesso")}
           </button>
         </div>
 
@@ -3141,57 +3720,57 @@ function Config({ data }) {
             }} />
           </div>
           <div className="config-status-card">
-            <h4>O que ela libera</h4>
+            <h4>{tx("O que ela libera")}</h4>
             <div className="runtime-chip-list">
               {ownerApiScopes.map((scope) => <span key={scope}>{scope}</span>)}
             </div>
-            <p className="management-summary">Este e o acesso completo do dono do dashboard. Para agentes, prefira o botao Conectar agente abaixo.</p>
+            <p className="management-summary">{tx("Este e o acesso completo do dono do dashboard. Para agentes, prefira o botao Conectar agente abaixo.")}</p>
           </div>
         </div>
 
         {createdToken ? (
           <div className="config-key-output">
-            <label>Key criada agora (backup)<textarea readOnly value={createdToken} /></label>
-            <button className="primary-button" type="button" onClick={copyCreatedToken}>Copiar key</button>
+            <label>{tx("Key criada agora (backup)")}<textarea readOnly value={createdToken} /></label>
+            <button className="primary-button" type="button" onClick={copyCreatedToken}>{tx("Copiar key")}</button>
           </div>
         ) : null}
 
-        {status ? <p className="api-status-strip tone-dirty">{status}</p> : null}
+        {status ? <p className="api-status-strip tone-dirty">{tx(status)}</p> : null}
 
         <details className="config-advanced">
-          <summary>Avancado: colar key existente ou gerar uma key manual</summary>
+          <summary>{tx("Avancado: colar key existente ou gerar uma key manual")}</summary>
           <div className="config-advanced-grid">
             <article>
-              <div className="panel-title"><h3>Vincular key existente</h3><span>navegador</span></div>
+              <div className="panel-title"><h3>{tx("Vincular key existente")}</h3><span>{tx("navegador")}</span></div>
               <div className="api-form single-column-form">
                 <label>Okami API Key<input value={tokenDraft} onChange={(event) => setTokenDraft(event.target.value)} placeholder="okami_key_..." /></label>
               </div>
               <div className="api-editor-actions">
-                <button className="primary-button" type="button" onClick={saveToken}>Vincular key</button>
-                <button className="ghost-button" type="button" onClick={clearToken}>Remover deste navegador</button>
-                <button className="ghost-button" type="button" onClick={refreshAuth}>Recarregar status</button>
+                <button className="primary-button" type="button" onClick={saveToken}>{tx("Vincular key")}</button>
+                <button className="ghost-button" type="button" onClick={clearToken}>{tx("Remover deste navegador")}</button>
+                <button className="ghost-button" type="button" onClick={refreshAuth}>{tx("Recarregar status")}</button>
               </div>
             </article>
 
             <article>
-              <div className="panel-title"><h3>Key manual</h3><span>suporte</span></div>
+              <div className="panel-title"><h3>{tx("Key manual")}</h3><span>{tx("suporte")}</span></div>
               <div className="api-form single-column-form">
-                <label>Perfil<select value={advancedProfile} onChange={(event) => {
+                <label>{tx("Perfil")}<select value={advancedProfile} onChange={(event) => {
                   const profile = apiKeyProfiles.find((item) => item.id === event.target.value) ?? apiKeyProfiles[0];
                   setAdvancedProfile(profile.id);
                   setAdvancedName(profile.name);
                 }}>
-                  {apiKeyProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.label}</option>)}
+                  {apiKeyProfiles.map((profile) => <option key={profile.id} value={profile.id}>{tx(profile.label)}</option>)}
                 </select></label>
-                <label>Nome da key<input value={advancedName} onChange={(event) => setAdvancedName(event.target.value)} /></label>
+                <label>{tx("Nome da key")}<input value={advancedName} onChange={(event) => setAdvancedName(event.target.value)} /></label>
               </div>
-              <p className="management-summary">{advancedProfileData.detail}</p>
+              <p className="management-summary">{tx(advancedProfileData.detail)}</p>
               <div className="runtime-chip-list">
                 {advancedProfileData.scopes.map((scope) => <span key={scope}>{scope}</span>)}
               </div>
               <div className="api-editor-actions">
                 <button className="primary-button" disabled={!canCreateManagedKey || busyAction === "advanced"} type="button" onClick={generateAdvancedKey}>
-                  {busyAction === "advanced" ? "Gerando..." : "Gerar key manual"}
+                  {tx(busyAction === "advanced" ? "Gerando..." : "Gerar key manual")}
                 </button>
               </div>
             </article>
@@ -3199,19 +3778,19 @@ function Config({ data }) {
         </details>
 
         <article className="config-key-list">
-          <div className="panel-title"><h3>Acessos cadastrados</h3><span>{keys.length}</span></div>
+          <div className="panel-title"><h3>{tx("Acessos cadastrados")}</h3><span>{keys.length}</span></div>
           <div className="data-table api-key-table">
-            <div><span>nome</span><span>prefixo</span><span>scopes</span><span>ultimo uso</span><span>acao</span></div>
+            <div><span>{tx("nome")}</span><span>{tx("prefixo")}</span><span>scopes</span><span>{tx("ultimo uso")}</span><span>{tx("acao")}</span></div>
             {keys.length ? keys.map((key) => (
               <div key={key.id}>
                 <b>{key.name}</b>
                 <span>{key.tokenPrefix}</span>
                 <span>{key.scopes?.join(", ")}</span>
-                <span>{key.lastUsedAt ?? "nunca"}</span>
-                <button className="danger-button" disabled={key.revokedAt || !hasAdminKey} type="button" onClick={() => revokeKey(key.id)}>Revogar</button>
+                <span>{tx(key.lastUsedAt ?? "nunca")}</span>
+                <button className="danger-button" disabled={key.revokedAt || !hasAdminKey} type="button" onClick={() => revokeKey(key.id)}>{tx("Revogar")}</button>
               </div>
             )) : (
-              <div><b>Nenhuma key listada</b><span>vincule uma key admin para listar</span><span>-</span><span>-</span><span>-</span></div>
+              <div><b>{tx("Nenhuma key listada")}</b><span>{tx("vincule uma key admin para listar")}</span><span>-</span><span>-</span><span>-</span></div>
             )}
           </div>
         </article>
@@ -3301,7 +3880,7 @@ function createRuntimeDraft(seed = {}) {
 }
 
 function AgentRuntimes({ data, embedded = false, ensurePanelAccess = async () => true }) {
-  const { t } = useI18n();
+  const { t, tx } = useI18n();
   const [localRuntimes, setLocalRuntimes] = useState([]);
   const runtimes = useMemo(() => mergeRuntimeList(normalizeAgentRuntimes(data), localRuntimes), [data, localRuntimes]);
   const [selectedRuntimeId, setSelectedRuntimeId] = useState(runtimes[0]?.id ?? "hermes");
@@ -3427,7 +4006,7 @@ function AgentRuntimes({ data, embedded = false, ensurePanelAccess = async () =>
 	      {embedded ? (
 	        <SectionHead eyebrow={t("section.config.eyebrow")} title={t("section.config.title")}>
 	          <select className="okami-select" value={selectedRuntimeId} onChange={(event) => setSelectedRuntimeId(event.target.value)}>
-	            {runtimes.map((runtime) => <option key={runtime.id} value={runtime.id}>{runtime.name}</option>)}
+	            {runtimes.map((runtime) => <option key={runtime.id} value={runtime.id}>{tx(runtime.name)}</option>)}
 	          </select>
 	        </SectionHead>
 	      ) : (
@@ -3443,47 +4022,47 @@ function AgentRuntimes({ data, embedded = false, ensurePanelAccess = async () =>
 	          ]}
         >
           <select className="okami-select" value={selectedRuntimeId} onChange={(event) => setSelectedRuntimeId(event.target.value)}>
-            {runtimes.map((runtime) => <option key={runtime.id} value={runtime.id}>{runtime.name}</option>)}
+            {runtimes.map((runtime) => <option key={runtime.id} value={runtime.id}>{tx(runtime.name)}</option>)}
           </select>
         </AdminHero>
 	      )}
 	      <article className="panel runtime-register-panel">
-	        <div className="panel-title"><h3>Conectar novo agente</h3><span>automatico</span></div>
+	        <div className="panel-title"><h3>{tx("Conectar novo agente")}</h3><span>{tx("automatico")}</span></div>
 	        <p className="management-summary">
-	          O painel cria a key do agente, guarda o segredo no cofre e tenta preparar o arquivo de acesso no workspace remoto. O usuario nao precisa colar key em arquivo.
+	          {tx("O painel cria a key do agente, guarda o segredo no cofre e tenta preparar o arquivo de acesso no workspace remoto. O usuario nao precisa colar key em arquivo.")}
 	        </p>
 	        <div className="api-form runtime-register-form">
-	          <label>Identificador<input value={runtimeDraft.id} onChange={(event) => updateRuntimeDraft("id", event.target.value)} placeholder="opencode" /></label>
-	          <label>Nome<input value={runtimeDraft.name} onChange={(event) => updateRuntimeDraft("name", event.target.value)} placeholder="OpenCode" /></label>
-	          <label>Tipo<input value={runtimeDraft.family} onChange={(event) => updateRuntimeDraft("family", event.target.value)} placeholder="coding-cli" /></label>
-	          <label>Comando de teste<input value={runtimeDraft.command} onChange={(event) => updateRuntimeDraft("command", event.target.value)} placeholder="opencode status" /></label>
-	          <label>Pasta do agente<input value={runtimeDraft.home} onChange={(event) => updateRuntimeDraft("home", event.target.value)} placeholder="~/.agents/workspaces/opencode" /></label>
-	          <label>Arquivo principal<input value={runtimeDraft.configPath} onChange={(event) => updateRuntimeDraft("configPath", event.target.value)} placeholder="~/.agents/registry.json" /></label>
+	          <label>{tx("Identificador")}<input value={runtimeDraft.id} onChange={(event) => updateRuntimeDraft("id", event.target.value)} placeholder="opencode" /></label>
+	          <label>{tx("Nome")}<input value={runtimeDraft.name} onChange={(event) => updateRuntimeDraft("name", event.target.value)} placeholder="OpenCode" /></label>
+	          <label>{tx("Tipo")}<input value={runtimeDraft.family} onChange={(event) => updateRuntimeDraft("family", event.target.value)} placeholder="coding-cli" /></label>
+	          <label>{tx("Comando de teste")}<input value={runtimeDraft.command} onChange={(event) => updateRuntimeDraft("command", event.target.value)} placeholder="opencode status" /></label>
+	          <label>{tx("Pasta do agente")}<input value={runtimeDraft.home} onChange={(event) => updateRuntimeDraft("home", event.target.value)} placeholder="~/.agents/workspaces/opencode" /></label>
+	          <label>{tx("Arquivo principal")}<input value={runtimeDraft.configPath} onChange={(event) => updateRuntimeDraft("configPath", event.target.value)} placeholder="~/.agents/registry.json" /></label>
 	          <label>Workspace<input value={runtimeDraft.workspacePath} onChange={(event) => updateRuntimeDraft("workspacePath", event.target.value)} placeholder="~/.agents/workspaces/opencode" /></label>
-	          <label>Nome interno da key<input value={runtimeDraft.suggestedKeyName} onChange={(event) => updateRuntimeDraft("suggestedKeyName", event.target.value)} /></label>
+	          <label>{tx("Nome interno da key")}<input value={runtimeDraft.suggestedKeyName} onChange={(event) => updateRuntimeDraft("suggestedKeyName", event.target.value)} /></label>
 	        </div>
 	        <div className="api-editor-actions">
 	          <button className="primary-button" disabled={connectingRuntimeId === normalizeToken(runtimeDraft.id)} type="button" onClick={connectRuntimeDraft}>
-	            {connectingRuntimeId === normalizeToken(runtimeDraft.id) ? "Conectando..." : "Conectar agente"}
+	            {tx(connectingRuntimeId === normalizeToken(runtimeDraft.id) ? "Conectando..." : "Conectar agente")}
 	          </button>
-	          <button className="ghost-button" type="button" onClick={() => setRuntimeDraft(createRuntimeDraft())}>Limpar</button>
-	          {runtimeStatus ? <span className="inline-status">{runtimeStatus}</span> : null}
+	          <button className="ghost-button" type="button" onClick={() => setRuntimeDraft(createRuntimeDraft())}>{tx("Limpar")}</button>
+	          {runtimeStatus ? <span className="inline-status">{tx(runtimeStatus)}</span> : null}
 	        </div>
 	      </article>
 	      <div className="config-workbench agent-runtime-workbench">
 	        <aside className="panel config-profile-rail">
-	          <div className="panel-title"><h3>Agentes</h3><span>{runtimes.length}</span></div>
+	          <div className="panel-title"><h3>{tx("Agentes")}</h3><span>{runtimes.length}</span></div>
 	          <div className="tab-list">
 	            {runtimes.map((runtime) => (
 	              <button className={runtime.id === selectedRuntimeId ? "is-active" : ""} key={runtime.id} type="button" onClick={() => setSelectedRuntimeId(runtime.id)}>
-	                <b>{runtime.name}</b>
-                <span>{runtime.status ?? "unknown"} · {runtime.family ?? "agent"}</span>
+	                <b>{tx(runtime.name)}</b>
+                <span>{tx(runtime.status ?? "unknown")} · {tx(runtime.family ?? "agent")}</span>
               </button>
             ))}
           </div>
 	        </aside>
 	        <aside className="panel management-list config-file-rail">
-	          <div className="panel-title"><h3>Arquivos do agente</h3><span>{runtimeConfigs.length}</span></div>
+	          <div className="panel-title"><h3>{tx("Arquivos do agente")}</h3><span>{runtimeConfigs.length}</span></div>
 	          <div className="tab-list">
             {runtimeConfigs.length ? runtimeConfigs.map((file) => (
               <button className={file.path === selectedFile?.path ? "is-active" : ""} key={file.path} type="button" onClick={() => setSelectedPath(file.path)}>
@@ -3492,15 +4071,15 @@ function AgentRuntimes({ data, embedded = false, ensurePanelAccess = async () =>
               </button>
 	            )) : (
 	              <button className="is-active" type="button">
-	                <b>Sem arquivo</b>
-	                <span>defina um arquivo principal para este agente</span>
+	                <b>{tx("Sem arquivo")}</b>
+	                <span>{tx("defina um arquivo principal para este agente")}</span>
 	              </button>
 	            )}
 	          </div>
 	        </aside>
 	        <article className="panel management-detail agent-runtime-detail">
-	          <div className="panel-title"><h3>{selectedRuntime?.name ?? "Agente"}</h3><span>{selectedRuntime?.family ?? "agent"}</span></div>
-	          <p className="management-summary">{selectedRuntime?.summary ?? "Agente sem descricao cadastrada."}</p>
+	          <div className="panel-title"><h3>{tx(selectedRuntime?.name ?? "Agente")}</h3><span>{tx(selectedRuntime?.family ?? "agent")}</span></div>
+	          <p className="management-summary">{tx(selectedRuntime?.summary ?? "Agente sem descricao cadastrada.")}</p>
 	          <ObjectFacts data={{
 	            status: selectedRuntime?.status ?? "unknown",
 	            acesso: selectedRuntime?.apiKey?.injectionStatus ?? "pendente",
@@ -3514,42 +4093,42 @@ function AgentRuntimes({ data, embedded = false, ensurePanelAccess = async () =>
 	          <div className="runtime-link-row">
 	            {selectedRuntime?.docsUrl ? <a className="ghost-button" href={selectedRuntime.docsUrl} rel="noreferrer" target="_blank">Docs</a> : null}
 	            {selectedRuntime?.repoUrl ? <a className="ghost-button" href={selectedRuntime.repoUrl} rel="noreferrer" target="_blank">Repo</a> : null}
-	            <span>key interna: {selectedRuntime?.suggestedKeyName ?? `${selectedRuntime?.id ?? "agent"}-key`}</span>
+	            <span>{tx("key interna")}: {tx(selectedRuntime?.suggestedKeyName ?? `${selectedRuntime?.id ?? "agent"}-key`)}</span>
 	          </div>
 	          <div className="api-editor-actions">
 	            <button className="primary-button" disabled={!selectedRuntime || connectingRuntimeId === selectedRuntime.id} type="button" onClick={() => connectRuntime(selectedRuntime)}>
-	              {connectingRuntimeId === selectedRuntime?.id ? "Conectando..." : selectedRuntime?.apiKey ? "Renovar acesso do agente" : "Conectar agente"}
+	              {tx(connectingRuntimeId === selectedRuntime?.id ? "Conectando..." : selectedRuntime?.apiKey ? "Renovar acesso do agente" : "Conectar agente")}
 	            </button>
-	            <button className="ghost-button" type="button" onClick={() => setRuntimeDraft(createRuntimeDraft(selectedRuntime))}>Usar como base</button>
-	            <button className="danger-button" type="button" onClick={deleteSelectedRuntime}>Remover agente externo</button>
+	            <button className="ghost-button" type="button" onClick={() => setRuntimeDraft(createRuntimeDraft(selectedRuntime))}>{tx("Usar como base")}</button>
+	            <button className="danger-button" type="button" onClick={deleteSelectedRuntime}>{tx("Remover agente externo")}</button>
 	          </div>
 	          <div className="agent-runtime-sections">
             <section>
-              <div className="panel-title compact"><h3>Capacidades</h3><span>{selectedRuntime?.capabilities?.length ?? 0}</span></div>
+              <div className="panel-title compact"><h3>{tx("Capacidades")}</h3><span>{selectedRuntime?.capabilities?.length ?? 0}</span></div>
               <div className="runtime-chip-list">
-                {(selectedRuntime?.capabilities?.length ? selectedRuntime.capabilities : ["metadata flexivel"]).map((item) => <span key={item}>{item}</span>)}
+                {(selectedRuntime?.capabilities?.length ? selectedRuntime.capabilities : ["metadata flexivel"]).map((item) => <span key={item}>{tx(item)}</span>)}
               </div>
             </section>
 	            <section>
-	              <div className="panel-title compact"><h3>Permissoes</h3><span>key do agente</span></div>
+	              <div className="panel-title compact"><h3>{tx("Permissoes")}</h3><span>{tx("key do agente")}</span></div>
 	              <div className="runtime-chip-list">
 	                {(selectedRuntime?.recommendedScopes ?? ["read"]).map((scope) => <span key={scope}>{scope}</span>)}
 	              </div>
 	            </section>
 	            <section>
-	              <div className="panel-title compact"><h3>Pendencias</h3><span>{selectedRuntime?.setup?.length ?? 0}</span></div>
+	              <div className="panel-title compact"><h3>{tx("Pendencias")}</h3><span>{selectedRuntime?.setup?.length ?? 0}</span></div>
 	              <div className="runtime-list">
-	                {(selectedRuntime?.setup?.length ? selectedRuntime.setup : ["Cadastrar comando de teste e arquivo principal"]).map((item) => <p key={item}>{item}</p>)}
+	                {(selectedRuntime?.setup?.length ? selectedRuntime.setup : ["Cadastrar comando de teste e arquivo principal"]).map((item) => <p key={item}>{tx(item)}</p>)}
 	              </div>
 	            </section>
             <section>
-              <div className="panel-title compact"><h3>Comandos</h3><span>{selectedRuntime?.commands?.length ?? 0}</span></div>
+              <div className="panel-title compact"><h3>{tx("Comandos")}</h3><span>{selectedRuntime?.commands?.length ?? 0}</span></div>
               <div className="runtime-list">
                 {(selectedRuntime?.commands?.length ? selectedRuntime.commands : [{ label: "Health", command: `${selectedRuntime?.command ?? "agent"} status` }]).map((item) => (
                   <p key={`${item.label}-${item.command}`}>
                     <b>{item.label}</b>
                     <code>{item.command}</code>
-                    <button className="ghost-button" type="button" onClick={() => runRuntimeCommand(item.command)}>Executar</button>
+                    <button className="ghost-button" type="button" onClick={() => runRuntimeCommand(item.command)}>{tx("Executar")}</button>
                   </p>
                 ))}
               </div>
@@ -3557,19 +4136,19 @@ function AgentRuntimes({ data, embedded = false, ensurePanelAccess = async () =>
 	          </div>
 	          {commandOutput ? <pre className="okami-pre runtime-command-output">{commandOutput}</pre> : null}
 	          <div className="runtime-instance-strip">
-	            <div className="panel-title compact"><h3>Instancias</h3><span>{selectedRuntime?.instances?.length ?? 0}</span></div>
+	            <div className="panel-title compact"><h3>{tx("Instancias")}</h3><span>{selectedRuntime?.instances?.length ?? 0}</span></div>
             <div>
 	              {(selectedRuntime?.instances?.length ? selectedRuntime.instances : [{ id: "empty", name: "Sem instancia detectada", role: "configure este agente", status: "idle", workspace: selectedRuntime?.workspacePath ?? "-" }]).map((instance) => (
                 <article key={instance.id ?? instance.name}>
-                  <b>{instance.name}</b>
-                  <span>{instance.status ?? "unknown"} · {instance.role ?? "agent"}</span>
+                  <b>{tx(instance.name)}</b>
+                  <span>{tx(instance.status ?? "unknown")} · {tx(instance.role ?? "agent")}</span>
                   <small>{instance.workspace ?? selectedRuntime?.workspacePath ?? "-"}</small>
                 </article>
               ))}
             </div>
 	          </div>
 	          <div className="runtime-file-panel">
-	            <div className="panel-title compact"><h3>Editar arquivo do agente</h3><span>{selectedFile ? fileKind(selectedFile) : "sem arquivo"}</span></div>
+	            <div className="panel-title compact"><h3>{tx("Editar arquivo do agente")}</h3><span>{tx(selectedFile ? fileKind(selectedFile) : "sem arquivo")}</span></div>
 	            <StructuredFilePanel file={selectedFile} titlePrefix={`${selectedRuntime?.name ?? "agente"} arquivo`} />
 	          </div>
         </article>
@@ -3579,7 +4158,7 @@ function AgentRuntimes({ data, embedded = false, ensurePanelAccess = async () =>
 }
 
 function Profiles({ data }) {
-  const { t } = useI18n();
+  const { t, tx } = useI18n();
   const docs = data.hermes?.profileDocs ?? [];
   const agents = data.agents ?? [];
   const groupedDocs = docs.reduce((groups, doc) => {
@@ -3615,18 +4194,18 @@ function Profiles({ data }) {
       />
       <div className="profile-workbench">
         <aside className="panel management-list">
-          <div className="panel-title"><h3>Agentes</h3><span>{agents.length}</span></div>
+          <div className="panel-title"><h3>{tx("Agentes")}</h3><span>{agents.length}</span></div>
           <div className="tab-list">
             {agents.map((agent) => (
               <button className={(agent.id ?? agent.name) === selectedAgentId ? "is-active" : ""} key={agent.id ?? agent.name} type="button" onClick={() => setSelectedAgentId(agent.id ?? agent.name)}>
                 <b>{agent.name}</b>
-                <span>{agent.status} · {(groupedDocs[agent.id] ?? groupedDocs[agent.name?.toLowerCase()] ?? []).length} docs</span>
+                <span>{tx(agent.status)} · {(groupedDocs[agent.id] ?? groupedDocs[agent.name?.toLowerCase()] ?? []).length} docs</span>
               </button>
             ))}
           </div>
         </aside>
         <aside className="panel profile-file-browser">
-          <div className="panel-title"><h3>Arquivos do perfil</h3><span>{selectedFiles.length}</span></div>
+          <div className="panel-title"><h3>{tx("Arquivos do perfil")}</h3><span>{selectedFiles.length}</span></div>
           <div className="file-rail">
             {selectedFiles.map((file) => (
               <button className={file.path === selectedFile?.path ? "is-active" : ""} key={file.path} type="button" onClick={() => setSelectedPath(file.path)}>
@@ -3637,8 +4216,8 @@ function Profiles({ data }) {
           </div>
         </aside>
         <article className="panel management-detail">
-          <div className="panel-title"><h3>{selectedAgent?.name ?? "Perfil"}</h3><span>{selectedFiles.length} arquivos</span></div>
-          <p className="management-summary">{selectedAgent?.currentTask ?? "sem tarefa ativa"}</p>
+          <div className="panel-title"><h3>{selectedAgent?.name ?? tx("Perfil")}</h3><span>{tx(`${selectedFiles.length} arquivos`)}</span></div>
+          <p className="management-summary">{tx(selectedAgent?.currentTask ?? "sem tarefa ativa")}</p>
           <StructuredFilePanel file={selectedFile} titlePrefix="profile md" />
         </article>
       </div>
@@ -3647,7 +4226,7 @@ function Profiles({ data }) {
 }
 
 function Skills({ data }) {
-  const { t } = useI18n();
+  const { t, tx } = useI18n();
   const skillDocs = data.hermes?.skillDocs ?? [];
   const usageSkills = data.hermes?.analytics?.skills?.length
     ? data.hermes.analytics.skills
@@ -3753,13 +4332,13 @@ function Skills({ data }) {
             {skills.map((skill) => (
               <button className={skill.name === selectedSkill?.name ? "is-active" : ""} key={skill.name} type="button" onClick={() => setSelectedSkillName(skill.name)}>
                 <b>{skill.name}</b>
-                <span>{skill.hasDoc ? "arquivo real" : "uso sem arquivo"} · {skill.use_count ?? 0} uses · {listText(skill.profiles)}</span>
+                <span>{tx(skill.hasDoc ? "arquivo real" : "uso sem arquivo")} · {skill.use_count ?? 0} uses · {listText(skill.profiles)}</span>
               </button>
             ))}
           </div>
         </aside>
         <aside className="panel profile-file-browser">
-          <div className="panel-title"><h3>Arquivos</h3><span>{selectedDocs.length}</span></div>
+          <div className="panel-title"><h3>{tx("Arquivos")}</h3><span>{selectedDocs.length}</span></div>
           <div className="file-rail">
             {selectedDocs.length ? selectedDocs.map((doc) => (
               <button className={doc.path === selectedDoc?.path ? "is-active" : ""} key={doc.path} type="button" onClick={() => setSelectedDocPath(doc.path)}>
@@ -3768,14 +4347,14 @@ function Skills({ data }) {
               </button>
             )) : (
               <button className="is-active" type="button">
-                <b>Uso agregado</b>
+                <b>{tx("Uso agregado")}</b>
                 <span>analytics + .usage.json</span>
               </button>
             )}
           </div>
         </aside>
         <article className="panel management-detail">
-          <div className="panel-title"><h3>{selectedSkill?.name ?? "Skill"}</h3><span>{selectedDocs.length ? "conteudo" : "uso"}</span></div>
+          <div className="panel-title"><h3>{selectedSkill?.name ?? "Skill"}</h3><span>{tx(selectedDocs.length ? "conteudo" : "uso")}</span></div>
           <ObjectFacts data={{
             use: selectedSkill?.use_count ?? 0,
             views: selectedSkill?.view_count ?? 0,
@@ -3784,17 +4363,17 @@ function Skills({ data }) {
           }} />
           {selectedDoc ? (
             <>
-              {!selectedDocs.length ? <p className="management-summary">Nao encontrei SKILL.md para esta skill. Exibindo o registro real agregado de uso do Hermes para voce decidir se cria uma definicao formal.</p> : null}
+              {!selectedDocs.length ? <p className="management-summary">{tx("Nao encontrei SKILL.md para esta skill. Exibindo o registro real agregado de uso do Hermes para voce decidir se cria uma definicao formal.")}</p> : null}
               {selectedDoc.source?.includes("usage") ? (
                 <div className="skill-definition-panel">
                   <div>
-                    <span>Registro real</span>
+                    <span>{tx("Registro real")}</span>
                     <h3>{selectedSkill?.name}</h3>
-                    <p>Esta skill tem uso real no Hermes, mas o coletor encontrou apenas o registro `.usage.json`. O conteúdo abaixo é uma leitura humana do uso; para editar comportamento, crie o `SKILL.md` no caminho sugerido.</p>
+                    <p>{tx("Esta skill tem uso real no Hermes, mas o coletor encontrou apenas o registro `.usage.json`. O conteúdo abaixo é uma leitura humana do uso; para editar comportamento, crie o `SKILL.md` no caminho sugerido.")}</p>
                   </div>
                   <div className="skill-summary-grid">
                     {skillUsageSummary(selectedSkill, selectedDoc).map((item) => (
-                      <p key={item.label}><span>{item.label}</span><b>{item.value}</b></p>
+                      <p key={item.label}><span>{tx(item.label)}</span><b>{tx(item.value)}</b></p>
                     ))}
                   </div>
                 </div>
@@ -3808,8 +4387,8 @@ function Skills({ data }) {
               }} />
               <div className="document-reader skill-reader">
                 <aside>
-                  <span>Sumario</span>
-                  {markdownOutline(skillDraft).length ? markdownOutline(skillDraft).map((item) => <b key={item}>{item}</b>) : <b>Sem headings</b>}
+                  <span>{tx("Sumario")}</span>
+                  {markdownOutline(skillDraft).length ? markdownOutline(skillDraft).map((item) => <b key={item}>{item}</b>) : <b>{tx("Sem headings")}</b>}
                 </aside>
                 <div className="document-copy">
                   {markdownPreviewBlocks(skillDraft).map((block, index) => (
@@ -3818,11 +4397,11 @@ function Skills({ data }) {
                 </div>
               </div>
               <div className="api-form single-column-form compact-editor">
-                <label>Editar conteudo<textarea value={skillDraft} onChange={(event) => setSkillDraft(event.target.value)} /></label>
+                <label>{tx("Editar conteudo")}<textarea value={skillDraft} onChange={(event) => setSkillDraft(event.target.value)} /></label>
               </div>
               <div className="api-editor-actions">
-                <button className="primary-button" type="button" onClick={saveSkillDoc}>Salvar arquivo</button>
-                {skillStatus ? <span className="inline-status">{skillStatus}</span> : null}
+                <button className="primary-button" type="button" onClick={saveSkillDoc}>{tx("Salvar arquivo")}</button>
+                {skillStatus ? <span className="inline-status">{tx(skillStatus)}</span> : null}
               </div>
             </>
           ) : null}
@@ -3833,7 +4412,7 @@ function Skills({ data }) {
 }
 
 function Cron({ data }) {
-  const { t } = useI18n();
+  const { t, tx } = useI18n();
   const jobs = data.hermes?.jobs?.length ? data.hermes.jobs : [];
   const [selectedId, setSelectedId] = useState(jobs[0]?.id ?? "");
   const selectedJob = jobs.find((job) => job.id === selectedId) ?? jobs[0];
@@ -3905,24 +4484,24 @@ function Cron({ data }) {
           {selectedJob?.source === "crontab" ? (
             <>
               <div className="cron-builder">
-                <label><span>Minuto</span><input value={cronFields.minute} onChange={(event) => updateCronField("minute", event.target.value)} /></label>
-                <label><span>Hora</span><input value={cronFields.hour} onChange={(event) => updateCronField("hour", event.target.value)} /></label>
-                <label><span>Dia</span><input value={cronFields.dayOfMonth} onChange={(event) => updateCronField("dayOfMonth", event.target.value)} /></label>
-                <label><span>Mes</span><input value={cronFields.month} onChange={(event) => updateCronField("month", event.target.value)} /></label>
-                <label><span>Semana</span><input value={cronFields.dayOfWeek} onChange={(event) => updateCronField("dayOfWeek", event.target.value)} /></label>
-                <label className="wide"><span>Comando</span><input value={cronFields.command} onChange={(event) => updateCronField("command", event.target.value)} /></label>
+                <label><span>{tx("Minuto")}</span><input value={cronFields.minute} onChange={(event) => updateCronField("minute", event.target.value)} /></label>
+                <label><span>{tx("Hora")}</span><input value={cronFields.hour} onChange={(event) => updateCronField("hour", event.target.value)} /></label>
+                <label><span>{tx("Dia")}</span><input value={cronFields.dayOfMonth} onChange={(event) => updateCronField("dayOfMonth", event.target.value)} /></label>
+                <label><span>{tx("Mes")}</span><input value={cronFields.month} onChange={(event) => updateCronField("month", event.target.value)} /></label>
+                <label><span>{tx("Semana")}</span><input value={cronFields.dayOfWeek} onChange={(event) => updateCronField("dayOfWeek", event.target.value)} /></label>
+                <label className="wide"><span>{tx("Comando")}</span><input value={cronFields.command} onChange={(event) => updateCronField("command", event.target.value)} /></label>
               </div>
-              <div className="cron-preview"><span>linha final</span><code>{cronLineFromFields(cronFields)}</code></div>
+              <div className="cron-preview"><span>{tx("linha final")}</span><code>{cronLineFromFields(cronFields)}</code></div>
               <div className="api-editor-actions">
-                <button className="primary-button" type="button" onClick={saveCron}>Salvar cron</button>
-                {status ? <span className="inline-status">{status}</span> : null}
+                <button className="primary-button" type="button" onClick={saveCron}>{tx("Salvar cron")}</button>
+                {status ? <span className="inline-status">{tx(status)}</span> : null}
               </div>
             </>
           ) : selectedJob ? (
             <div className="systemd-editor">
               <div className="cron-systemd-note">
                 <b>{selectedJob.unit}</b>
-                <p>Timer systemd detectado. O Mission Control salva um override em /etc/systemd/system com OnCalendar, recarrega o daemon e reinicia o timer.</p>
+                <p>{tx("Timer systemd detectado. O Mission Control salva um override em /etc/systemd/system com OnCalendar, recarrega o daemon e reinicia o timer.")}</p>
                 <code>{selectedJob.raw}</code>
               </div>
               <div className="cron-builder systemd-builder">
@@ -3934,15 +4513,15 @@ function Cron({ data }) {
                   ["Seg-Sex 08:30", "Mon..Fri *-*-* 08:30:00"],
                   ["Semanal", "Mon *-*-* 09:00:00"],
                   ["Mensal", "*-*-01 09:00:00"],
-                ].map(([label, value]) => <button className="ghost-button" key={value} type="button" onClick={() => setSystemdCalendar(value)}>{label}</button>)}
+                ].map(([label, value]) => <button className="ghost-button" key={value} type="button" onClick={() => setSystemdCalendar(value)}>{tx(label)}</button>)}
               </div>
               <div className="api-editor-actions">
-                <button className="primary-button" type="button" onClick={saveSystemdTimer}>Salvar timer</button>
-                {status ? <span className="inline-status">{status}</span> : null}
+                <button className="primary-button" type="button" onClick={saveSystemdTimer}>{tx("Salvar timer")}</button>
+                {status ? <span className="inline-status">{tx(status)}</span> : null}
               </div>
             </div>
           ) : null}
-          <pre className="okami-pre">{data.hermes?.jobRaw || "Sem saida coletada."}</pre>
+          <pre className="okami-pre">{data.hermes?.jobRaw || tx("Sem saida coletada.")}</pre>
         </article>
       </div>
     </section>
@@ -3950,7 +4529,7 @@ function Cron({ data }) {
 }
 
 function Logs({ data }) {
-  const { t } = useI18n();
+  const { t, tx } = useI18n();
   const logs = data.hermes?.logLines?.length ? data.hermes.logLines : data.activity?.map((item) => `${item.actor}: ${item.message}`) ?? [];
   const events = data.hermes?.analytics?.events ?? [];
   const [query, setQuery] = useState("");
@@ -3975,14 +4554,14 @@ function Logs({ data }) {
           { label: "Filtro", value: query || "todos" },
         ]}
       />
-      <div className="ok-filter-bar" role="search" aria-label="Filtros de logs">
+      <div className="ok-filter-bar" role="search" aria-label={tx("Filtros de logs")}>
         <label className="ok-filter-bar__field ok-filter-bar__field--search">
-          <span className="ok-filter-bar__label">Buscar</span>
+          <span className="ok-filter-bar__label">{tx("Buscar")}</span>
           <span className="ok-filter-bar__input-wrap">
             <span className="ok-filter-bar__icon" aria-hidden="true">⌕</span>
             <input
               type="search"
-              placeholder="termos em logs e eventos…"
+              placeholder={tx("termos em logs e eventos…")}
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
@@ -3990,14 +4569,14 @@ function Logs({ data }) {
               <button
                 type="button"
                 className="ok-filter-bar__clear"
-                aria-label="Limpar busca"
+                aria-label={tx("Limpar busca")}
                 onClick={() => setQuery("")}
               >✕</button>
             ) : null}
           </span>
         </label>
         <div className="ok-filter-bar__field ok-filter-bar__field--pills">
-          <span className="ok-filter-bar__label">Severidade</span>
+          <span className="ok-filter-bar__label">{tx("Severidade")}</span>
           <div className="ok-filter-bar__pills">
             {[
               ["todos",  "todos",  logs.length],
@@ -4012,7 +4591,7 @@ function Logs({ data }) {
                 type="button"
                 onClick={() => setToneFilter(key)}
               >
-                <span>{label}</span>
+                <span>{tx(label)}</span>
                 <small>{count}</small>
               </button>
             ))}
@@ -4020,12 +4599,12 @@ function Logs({ data }) {
         </div>
         <div className="ok-filter-bar__result">
           <span>{parsedLogs.length}</span>
-          <small>de {logs.length} logs</small>
+          <small>{tx("de")} {logs.length} logs</small>
         </div>
       </div>
       <div className="logs-layout">
         <article className="panel">
-          <div className="panel-title"><h3>Logs recentes</h3><span>{parsedLogs.length} lines</span></div>
+          <div className="panel-title"><h3>{tx("Logs recentes")}</h3><span>{parsedLogs.length} lines</span></div>
           <div className="readable-log-list">
             {parsedLogs.map((log, index) => (
               <div className={`tone-${log.tone}`} key={`${log.message}-${index}`}>
@@ -4034,7 +4613,7 @@ function Logs({ data }) {
                 <em>{log.tone}</em>
                 <article>
                   <strong>{log.format}</strong>
-                  <p>{log.message}</p>
+                  <p>{tx(log.message)}</p>
                   {log.details.length ? (
                     <ul>
                       {log.details.slice(0, 4).map((detail) => <li key={detail}>{detail}</li>)}
@@ -4042,7 +4621,7 @@ function Logs({ data }) {
                   ) : null}
                   {log.raw && log.raw !== log.message ? (
                     <details>
-                      <summary>ver bruto</summary>
+                      <summary>{tx("ver bruto")}</summary>
                       <pre>{log.raw}</pre>
                     </details>
                   ) : null}
@@ -4052,7 +4631,7 @@ function Logs({ data }) {
           </div>
         </article>
         <article className="panel">
-          <div className="panel-title"><h3>Eventos state.db</h3><span>{filteredEvents.length} messages</span></div>
+          <div className="panel-title"><h3>{tx("Eventos state.db")}</h3><span>{filteredEvents.length} messages</span></div>
           <div className="readable-event-list">
             {filteredEvents.slice(0, 36).map((event, index) => (
               <div key={`${event.id ?? index}-${event.created_at}`}>
@@ -4061,11 +4640,11 @@ function Logs({ data }) {
                   <span>{recordTime(event) || event.tool_name || "state.db"}</span>
                 </header>
                 <small>{event.type ?? event.role ?? event.tool_name ?? "state.db"}</small>
-                <p>{summarizeRecord(event).slice(0, 260)}</p>
+                <p>{tx(summarizeRecord(event).slice(0, 260))}</p>
               </div>
             ))}
           </div>
-          <div className="api-editor-actions"><button className="primary-button" type="button" onClick={() => window.localStorage.setItem("okami.logs.query", query)}>Salvar filtro</button></div>
+          <div className="api-editor-actions"><button className="primary-button" type="button" onClick={() => window.localStorage.setItem("okami.logs.query", query)}>{tx("Salvar filtro")}</button></div>
         </article>
       </div>
     </section>
@@ -4073,7 +4652,7 @@ function Logs({ data }) {
 }
 
 function Sessions({ data }) {
-  const { t } = useI18n();
+  const { t, tx } = useI18n();
   const sessions = data.hermes?.sessions?.length ? data.hermes.sessions : data.hermes?.analytics?.recent ?? [];
   const [query, setQuery] = useState("");
   const [profileFilter, setProfileFilter] = useState("todos");
@@ -4097,11 +4676,11 @@ function Sessions({ data }) {
     const toolTotal = items.reduce((sum, session) => sum + Number(session.tool_call_count ?? 0), 0);
     return (
       <article className={`panel data-table-panel session-section tone-${tone}`}>
-        <div className="panel-title"><h3>{title}</h3><span>{items.length} registros</span></div>
+        <div className="panel-title"><h3>{tx(title)}</h3><span>{tx(`${items.length} registros`)}</span></div>
         <div className="session-section-stats">
           <span>{formatTokenValue(tokenTotal)}</span>
           <span>{toolTotal} tools</span>
-          <span>{items[0]?.profile ?? "sem perfil"}</span>
+          <span>{tx(items[0]?.profile ?? "sem perfil")}</span>
         </div>
         <div className="session-card-list">
           {items.map((session) => (
@@ -4110,7 +4689,7 @@ function Sessions({ data }) {
               <div className="session-row-main">
                 <header>
                   <b>{session.title ?? session.profile ?? "default"}</b>
-                  <em className={`session-pill tone-${sessionStatus(session)}`}>{sessionStatus(session)}</em>
+                  <em className={`session-pill tone-${sessionStatus(session)}`}>{tx(sessionStatus(session))}</em>
                 </header>
                 <span>{session.profile ?? "default"} · {session.model ?? "unknown"} · {session.source ?? "cli"}</span>
                 <p>{session.id}</p>
@@ -4139,9 +4718,9 @@ function Sessions({ data }) {
           { label: "Total", value: sessions.length },
         ]}
       />
-      <div className="ok-filter-bar" role="search" aria-label="Filtros de sessão">
+      <div className="ok-filter-bar" role="search" aria-label={tx("Filtros de sessão")}>
         <label className="ok-filter-bar__field ok-filter-bar__field--search">
-          <span className="ok-filter-bar__label">Buscar</span>
+          <span className="ok-filter-bar__label">{tx("Buscar")}</span>
           <span className="ok-filter-bar__input-wrap">
             <span className="ok-filter-bar__icon" aria-hidden="true">⌕</span>
             <input
@@ -4154,21 +4733,21 @@ function Sessions({ data }) {
               <button
                 type="button"
                 className="ok-filter-bar__clear"
-                aria-label="Limpar busca"
+                aria-label={tx("Limpar busca")}
                 onClick={() => setQuery("")}
               >✕</button>
             ) : null}
           </span>
         </label>
         <label className="ok-filter-bar__field">
-          <span className="ok-filter-bar__label">Perfil</span>
+          <span className="ok-filter-bar__label">{tx("Perfil")}</span>
           <select value={profileFilter} onChange={(event) => setProfileFilter(event.target.value)}>
-            {profiles.map((profile) => <option key={profile} value={profile}>{profile}</option>)}
+            {profiles.map((profile) => <option key={profile} value={profile}>{tx(profile)}</option>)}
           </select>
         </label>
         <div className="ok-filter-bar__result">
           <span>{filtered.length}</span>
-          <small>de {sessions.length} sessões</small>
+          <small>{tx("de")} {sessions.length} {tx("sessões")}</small>
         </div>
       </div>
       <div className="sessions-workspace">
@@ -4177,11 +4756,11 @@ function Sessions({ data }) {
           <SessionList title="Inativas" items={inactive} tone="inactive" />
         </div>
         <aside className="panel session-side-panel">
-          <div className="panel-title"><h3>{selectedSession?.title ?? "Detalhe da sessao"}</h3><span>{selectedSession ? selectedSession.status : "selecione"}</span></div>
+          <div className="panel-title"><h3>{tx(selectedSession?.title ?? "Detalhe da sessao")}</h3><span>{tx(selectedSession ? selectedSession.status : "selecione")}</span></div>
           {selectedSession ? (
             <>
               <div className="session-focus">
-                <span className={`session-pill tone-${sessionStatus(selectedSession)}`}>{sessionStatus(selectedSession)}</span>
+                <span className={`session-pill tone-${sessionStatus(selectedSession)}`}>{tx(sessionStatus(selectedSession))}</span>
                 <h3>{selectedSession.title ?? selectedSession.source ?? selectedSession.id}</h3>
                 <p>{selectedSession.id}</p>
                 <div className="session-token-meter">
@@ -4194,7 +4773,7 @@ function Sessions({ data }) {
                 <div><span>Profile</span><b>{selectedSession.profile ?? "default"}</b></div>
                 <div><span>Model</span><b>{selectedSession.model ?? "-"}</b></div>
                 <div><span>Tokens</span><b>{formatTokenValue(selectedSession.tokens ?? 0)}</b></div>
-                <div><span>Duração</span><b>{sessionDuration(selectedSession)}</b></div>
+                <div><span>{tx("Duração")}</span><b>{sessionDuration(selectedSession)}</b></div>
               </div>
               <div className="session-breakdown">
                 {sessionTokenParts(selectedSession).map((part) => (
@@ -4207,28 +4786,28 @@ function Sessions({ data }) {
               </div>
               <div className="session-timeline">
                 <div><span>Started</span><b>{recordTime({ started_at: selectedSession.started_at })}</b></div>
-                <div><span>Ended</span><b>{selectedSession.ended_at ? recordTime({ started_at: selectedSession.ended_at }) : "ativa"}</b></div>
+                <div><span>Ended</span><b>{tx(selectedSession.ended_at ? recordTime({ started_at: selectedSession.ended_at }) : "ativa")}</b></div>
               </div>
               <div className="session-readable">
-                <p><b>Fonte</b><span>{selectedSession.source ?? "cli"}</span></p>
-                <p><b>Mensagens</b><span>{selectedSession.message_count ?? 0}</span></p>
+                <p><b>{tx("Fonte")}</b><span>{selectedSession.source ?? "cli"}</span></p>
+                <p><b>{tx("Mensagens")}</b><span>{selectedSession.message_count ?? 0}</span></p>
                 <p><b>Tool calls</b><span>{selectedSession.tool_call_count ?? 0}</span></p>
                 <p><b>Input</b><span>{formatTokenValue(selectedSession.input_tokens ?? 0)}</span></p>
                 <p><b>Output</b><span>{formatTokenValue(selectedSession.output_tokens ?? 0)}</span></p>
                 <p><b>Cache</b><span>{formatTokenValue(selectedSession.cache_read_tokens ?? 0)}</span></p>
-                <p><b>Custo</b><span>{selectedSession.actual_cost_usd ?? selectedSession.estimated_cost_usd ?? 0}</span></p>
+                <p><b>{tx("Custo")}</b><span>{selectedSession.actual_cost_usd ?? selectedSession.estimated_cost_usd ?? 0}</span></p>
               </div>
             </>
-          ) : <p className="management-summary">Clique em uma sessao para abrir o detalhe aqui, sem modal.</p>}
+          ) : <p className="management-summary">{tx("Clique em uma sessao para abrir o detalhe aqui, sem modal.")}</p>}
         </aside>
       </div>
-      <div className="api-editor-actions"><button className="primary-button" type="button" onClick={() => window.localStorage.setItem("okami.sessions.filters", JSON.stringify({ query, profileFilter }))}>Salvar filtros</button></div>
+      <div className="api-editor-actions"><button className="primary-button" type="button" onClick={() => window.localStorage.setItem("okami.sessions.filters", JSON.stringify({ query, profileFilter }))}>{tx("Salvar filtros")}</button></div>
     </section>
   );
 }
 
 function Hermes({ data, embedded = false, ensurePanelAccess = async () => true }) {
-  const { t } = useI18n();
+  const { t, tx } = useI18n();
   const toast = useToast();
   const [config, setConfig] = useState(() => {
     try {
@@ -4509,32 +5088,32 @@ function Hermes({ data, embedded = false, ensurePanelAccess = async () => true }
 		    <section className={embedded ? "config-embedded-block hermes-embedded" : "view is-active"}>
 		      <SectionHead eyebrow={embedded ? t("section.hermes.eyebrow") : `§08 / ${t("section.hermes.eyebrow")}`} title={embedded ? t("section.hermes.embeddedTitle") : t("section.hermes.title")}>
 		        <button className="primary-button" disabled={connectBusy} onClick={connectServer} type="button">
-		          {connectBusy ? "Conectando..." : "Conectar servidor"}
+		          {tx(connectBusy ? "Conectando..." : "Conectar servidor")}
 		        </button>
 		      </SectionHead>
 
 		      <div className="hermes-grid">
 		        <div className="settings-panel panel">
-		          <div className="panel-title full-row"><h3>Conexao SSH do servidor</h3><span>agentes remotos</span></div>
+		          <div className="panel-title full-row"><h3>{tx("Conexao SSH do servidor")}</h3><span>{tx("agentes remotos")}</span></div>
 		          <label>SSH host<input value={config.sshHost} onChange={(event) => updateHermesConfig("sshHost", event.target.value)} /></label>
 		          <label>SSH user<input value={config.sshUser} onChange={(event) => updateHermesConfig("sshUser", event.target.value)} /></label>
 		          <label>SSH port<input type="number" value={config.sshPort} onChange={(event) => updateHermesConfig("sshPort", Number(event.target.value))} /></label>
-		          <label>Pasta base dos agentes<input value={config.hermesHome} onChange={(event) => updateHermesConfig("hermesHome", event.target.value)} /></label>
-		          <label>Metodo de auth<select value={config.sshAuthMethod} onChange={(event) => updateHermesConfig("sshAuthMethod", event.target.value)}><option value="key">SSH key</option><option value="password">Senha SSH</option></select></label>
+		          <label>{tx("Pasta base dos agentes")}<input value={config.hermesHome} onChange={(event) => updateHermesConfig("hermesHome", event.target.value)} /></label>
+		          <label>{tx("Metodo de auth")}<select value={config.sshAuthMethod} onChange={(event) => updateHermesConfig("sshAuthMethod", event.target.value)}><option value="key">SSH key</option><option value="password">{tx("Senha SSH")}</option></select></label>
 	          <details className="config-advanced full-row">
-	            <summary>Opcoes avancadas</summary>
+	            <summary>{tx("Opcoes avancadas")}</summary>
 	            <div className="api-form runtime-register-form">
 	              <label>Key ref<input value={config.sshKeyPath} readOnly /></label>
-	              <label>Executor de comandos<select value={config.terminalBackend} onChange={(event) => updateHermesConfig("terminalBackend", event.target.value)}><option>ssh</option><option>local</option><option>docker</option><option>modal</option><option>daytona</option><option>vercel_sandbox</option><option>singularity</option></select></label>
-	              <label>Modo de roteamento<select value={config.routingMode} onChange={(event) => updateHermesConfig("routingMode", event.target.value)}><option>Custo + qualidade</option><option>Menor latencia</option><option>Modelo fixo</option></select></label>
-	              <label>Orcamento diario<input value={config.dailyBudget} onChange={(event) => updateHermesConfig("dailyBudget", event.target.value)} /></label>
+	              <label>{tx("Executor de comandos")}<select value={config.terminalBackend} onChange={(event) => updateHermesConfig("terminalBackend", event.target.value)}><option>ssh</option><option>local</option><option>docker</option><option>modal</option><option>daytona</option><option>vercel_sandbox</option><option>singularity</option></select></label>
+	              <label>{tx("Modo de roteamento")}<select value={config.routingMode} onChange={(event) => updateHermesConfig("routingMode", event.target.value)}><option value="Custo + qualidade">{tx("Custo + qualidade")}</option><option value="Menor latencia">{tx("Menor latencia")}</option><option value="Modelo fixo">{tx("Modelo fixo")}</option></select></label>
+	              <label>{tx("Orcamento diario")}<input value={config.dailyBudget} onChange={(event) => updateHermesConfig("dailyBudget", event.target.value)} /></label>
 	              <label className="toggle"><input type="checkbox" checked={config.persistentShell} onChange={(event) => updateHermesConfig("persistentShell", event.target.checked)} /> Persistent shell SSH</label>
-	              <label className="toggle"><input type="checkbox" checked={config.auditTrail} onChange={(event) => updateHermesConfig("auditTrail", event.target.checked)} /> Registrar auditoria</label>
+	              <label className="toggle"><input type="checkbox" checked={config.auditTrail} onChange={(event) => updateHermesConfig("auditTrail", event.target.checked)} /> {tx("Registrar auditoria")}</label>
 	            </div>
 	          </details>
 	          <div className="api-editor-actions full-row">
 	            <button className="primary-button" disabled={connectBusy} onClick={connectServer} type="button">
-	              {connectBusy ? "Conectando..." : "Conectar servidor"}
+	              {tx(connectBusy ? "Conectando..." : "Conectar servidor")}
 	            </button>
 	          </div>
 	          <div
@@ -4547,35 +5126,35 @@ function Hermes({ data, embedded = false, ensurePanelAccess = async () => true }
             role="status"
             aria-live="polite"
           >
-            {status.message}
+            {tx(status.message)}
           </div>
 	        </div>
 
 		        <article className="panel ssh-key-panel">
-		          <div className="panel-title"><h3>Credencial SSH</h3><span>cofre seguro</span></div>
+		          <div className="panel-title"><h3>{tx("Credencial SSH")}</h3><span>{tx("cofre seguro")}</span></div>
 	          <div className="key-vault">
 	            {config.sshAuthMethod === "key" ? (
 	              <>
-		                <label className="file-drop">Chave privada SSH<input onChange={selectKeyFile} type="file" /><small>{selectedKeyFile ? `Selecionada: ${selectedKeyFile.name}` : "id_ed25519, id_rsa, .pem ou .key"}</small></label>
-	                <label>Passphrase opcional<input type="password" value={keyDraft.passphrase} onChange={(event) => setKeyDraft((current) => ({ ...current, passphrase: event.target.value }))} /></label>
+		                <label className="file-drop">{tx("Chave privada SSH")}<input onChange={selectKeyFile} type="file" /><small>{selectedKeyFile ? `${tx("Selecionada")}: ${selectedKeyFile.name}` : "id_ed25519, id_rsa, .pem ou .key"}</small></label>
+	                <label>{tx("Passphrase opcional")}<input type="password" value={keyDraft.passphrase} onChange={(event) => setKeyDraft((current) => ({ ...current, passphrase: event.target.value }))} /></label>
 	              </>
 	            ) : (
 	              <>
 	                <div className="security-warning">
-	                  <b>Senha SSH e menos segura</b>
-	                  <span>Use apenas para teste. Para producao, prefira chave SSH com permissao limitada.</span>
+	                  <b>{tx("Senha SSH e menos segura")}</b>
+	                  <span>{tx("Use apenas para teste. Para producao, prefira chave SSH com permissao limitada.")}</span>
 	                </div>
-	                <label>Senha SSH<input autoComplete="new-password" type="password" value={passwordDraft} onChange={(event) => setPasswordDraft(event.target.value)} /></label>
+	                <label>{tx("Senha SSH")}<input autoComplete="new-password" type="password" value={passwordDraft} onChange={(event) => setPasswordDraft(event.target.value)} /></label>
 	              </>
 	            )}
 	            <details className="config-advanced">
-	              <summary>Cofre e fingerprint</summary>
+	              <summary>{tx("Cofre e fingerprint")}</summary>
 	              <div className="key-facts">
-		                <span>metodo</span><b>{config.sshAuthMethod}</b>
+		                <span>{tx("metodo")}</span><b>{config.sshAuthMethod}</b>
 		                <span>storage</span><b>{config.sshKeyStorage}</b>
 		                <span>fingerprint</span><b>{config.sshKeyFingerprint}</b>
-		                <span>password ref</span><b>{config.sshPasswordRef || "nao configurado"}</b>
-		                <span>navegador</span><b>nao persiste private key nem senha</b>
+		                <span>password ref</span><b>{tx(config.sshPasswordRef || "nao configurado")}</b>
+		                <span>{tx("navegador")}</span><b>{tx("nao persiste private key nem senha")}</b>
 		              </div>
 	            </details>
 	          </div>
@@ -4583,22 +5162,22 @@ function Hermes({ data, embedded = false, ensurePanelAccess = async () => true }
 	      </div>
 
 	      <details className="config-advanced">
-	        <summary>Detalhes tecnicos da conexao SSH</summary>
+	        <summary>{tx("Detalhes tecnicos da conexao SSH")}</summary>
 	        <div className="ops-grid">
 	          <article className="panel">
-	            <div className="panel-title"><h3>Feeds do dashboard</h3><span>fontes de dados</span></div>
+	            <div className="panel-title"><h3>{tx("Feeds do dashboard")}</h3><span>{tx("fontes de dados")}</span></div>
 	            <div className="storage-list">
 	              {config.storage.map((item) => (
 	                <div key={item.label}>
 	                  <b>{item.label}</b>
 	                  <code>{item.path}</code>
-	                  <span>{item.detail}</span>
+	                  <span>{tx(item.detail)}</span>
 	                </div>
 	              ))}
 	            </div>
 	          </article>
 	          <article className="panel">
-	            <div className="panel-title"><h3>Variaveis SSH</h3><span>ambiente remoto</span></div>
+	            <div className="panel-title"><h3>{tx("Variaveis SSH")}</h3><span>{tx("ambiente remoto")}</span></div>
 	            <div className="policy-list">
 	              {config.requiredEnv.map((env) => (
 	                <div key={env.key}>
@@ -4610,13 +5189,13 @@ function Hermes({ data, embedded = false, ensurePanelAccess = async () => true }
 	            </div>
 	          </article>
 	          <article className="panel">
-	            <div className="panel-title"><h3>Politicas</h3><span>seguranca</span></div>
+	            <div className="panel-title"><h3>{tx("Politicas")}</h3><span>{tx("seguranca")}</span></div>
 	            <div className="policy-list">
 	              {config.policies.map((policy) => (
 	                <div key={policy.name}>
 	                  <span>{policy.enabled ? "on" : "off"}</span>
 	                  <b>{policy.name}</b>
-	                  <em>{policy.impact}</em>
+	                  <em>{tx(policy.impact)}</em>
 	                </div>
 	              ))}
 	            </div>
@@ -4624,7 +5203,7 @@ function Hermes({ data, embedded = false, ensurePanelAccess = async () => true }
 	        </div>
 
 	        <article className="panel routes-panel">
-	          <div className="panel-title"><h3>Rotas internas do dashboard</h3><span>{config.routes.length} endpoints</span></div>
+	          <div className="panel-title"><h3>{tx("Rotas internas do dashboard")}</h3><span>{config.routes.length} endpoints</span></div>
 	          <div className="route-groups">
 	            {Object.entries(routeGroups).map(([group, routes]) => (
 	              <section key={group}>
@@ -4645,16 +5224,16 @@ function Hermes({ data, embedded = false, ensurePanelAccess = async () => true }
 
 	        <div className="ops-grid">
 	          <article className="panel">
-	            <div className="panel-title"><h3>Roteamento</h3><span>modelos</span></div>
+	            <div className="panel-title"><h3>{tx("Roteamento")}</h3><span>{tx("modelos")}</span></div>
 	            <StatList items={config.routing} />
 	          </article>
 	          <article className="panel">
-	            <div className="panel-title"><h3>Base documental</h3><span>agentes</span></div>
+	            <div className="panel-title"><h3>{tx("Base documental")}</h3><span>{tx("agentes")}</span></div>
 	            <div className="terminal">
-	              <p><span>config</span> ~/.hermes/config.yaml para terminal, modelos e display</p>
-	              <p><span>ssh</span> TERMINAL_SSH_HOST e TERMINAL_SSH_USER sao obrigatorios</p>
-	              <p><span>kanban</span> ~/.hermes/kanban.db e a fonte canonica do board</p>
-	              <p><span>api-server</span> /v1/runs e /health/detailed alimentam runs e activity</p>
+	              <p><span>config</span> {tx("~/.hermes/config.yaml para terminal, modelos e display")}</p>
+	              <p><span>ssh</span> {tx("TERMINAL_SSH_HOST e TERMINAL_SSH_USER sao obrigatorios")}</p>
+	              <p><span>kanban</span> {tx("~/.hermes/kanban.db e a fonte canonica do board")}</p>
+	              <p><span>api-server</span> {tx("/v1/runs e /health/detailed alimentam runs e activity")}</p>
 	            </div>
 	          </article>
 	        </div>
@@ -4664,7 +5243,7 @@ function Hermes({ data, embedded = false, ensurePanelAccess = async () => true }
 	}
 
 function Cli({ data }) {
-  const { t } = useI18n();
+  const { t, tx } = useI18n();
   const [hostStatus, setHostStatus] = useState("");
 
   async function verifyHost() {
@@ -4680,31 +5259,31 @@ function Cli({ data }) {
   return (
     <section className="view is-active">
       <SectionHead eyebrow={`§09 / ${t("section.cli.eyebrow")}`} title={t("section.cli.title")}>
-        <button className="ghost-button" type="button" onClick={verifyHost}>Verificar host</button>
+        <button className="ghost-button" type="button" onClick={verifyHost}>{tx("Verificar host")}</button>
       </SectionHead>
       <div className="cli-grid">
         {data.cliTools.map((tool) => (
           <article className="panel cli-card" key={tool.name}>
             <h3>{tool.name}</h3>
-            <p>{tool.status} · {tool.agents} agentes · ultimo run {tool.lastRun}</p>
+            <p>{tx(`${tool.status} · ${tool.agents} agentes · ultimo run ${tool.lastRun}`)}</p>
             <code>{tool.command} --version // {tool.version}</code>
           </article>
         ))}
       </div>
       <div className="ops-grid">
         <article className="panel">
-          <div className="panel-title"><h3>Politica recomendada</h3><span>guardrails</span></div>
+          <div className="panel-title"><h3>{tx("Politica recomendada")}</h3><span>{tx("guardrails")}</span></div>
           <div className="terminal">
-            <p><span>workspace</span> um diretorio isolado por agente</p>
-            <p><span>quota</span> limite diario por CLI e por agente</p>
-            <p><span>audit</span> registrar comando, cwd, diff e exit code</p>
+            <p><span>workspace</span> {tx("um diretorio isolado por agente")}</p>
+            <p><span>quota</span> {tx("limite diario por CLI e por agente")}</p>
+            <p><span>audit</span> {tx("registrar comando, cwd, diff e exit code")}</p>
           </div>
         </article>
       </div>
       {hostStatus ? (
         <article className="panel cli-status-panel">
-          <div className="panel-title"><h3>Status do host</h3><span>ssh</span></div>
-          <pre>{hostStatus}</pre>
+          <div className="panel-title"><h3>{tx("Status do host")}</h3><span>ssh</span></div>
+          <pre>{tx(hostStatus)}</pre>
         </article>
       ) : null}
     </section>
@@ -4756,6 +5335,9 @@ export default function App() {
     },
     t(key) {
       return translations[language]?.[key] ?? translations[DEFAULT_LANGUAGE]?.[key] ?? key;
+    },
+    tx(value) {
+      return translateUiText(value, language);
     },
   }), [language]);
 

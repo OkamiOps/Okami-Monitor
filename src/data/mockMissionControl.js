@@ -508,7 +508,7 @@ function createDemoAgentRuntimes(tick) {
       dashboardUrl: "privado via SSH",
       summary: "Agente principal do Okami com state.db, kanban.db, sessoes, skills e logs coletados via SSH.",
       recommendedScopes: ["read", "ssh", "kanban", "logs"],
-      suggestedKeyName: "agente-principal",
+      suggestedKeyName: "main-agent",
       capabilities: ["state.db + sessions", "kanban.db", "profile docs", "skills usage", "logs remotos"],
       setup: ["Configurar SSH dos agentes", "Testar comando de status", "Mapear profiles em ~/.hermes/profiles"],
       apiKey: {
