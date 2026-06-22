@@ -1,22 +1,73 @@
-import { mockMissionControl } from "../data/mockMissionControl";
+import { createDemoMissionControl } from "../data/mockMissionControl";
 
-// Em produção assume `same-origin` por padrão (proxy via functions/api) para
-// não ficar preso no mock quando o build não define VITE_OKAMI_API_BASE_URL.
-// Veja a nota em useMissionControl.js.
+// Usa `/api` por padrão em dev e produção. Em dev, vite.config.js faz proxy
+// para a API local; em produção, functions/api/[[path]].js faz o proxy.
 const rawApiBaseUrl = import.meta.env.VITE_OKAMI_API_BASE_URL
-  ?? (import.meta.env.PROD ? "same-origin" : undefined);
+  ?? "same-origin";
 const API_BASE_URL = rawApiBaseUrl === "same-origin"
   ? ""
   : rawApiBaseUrl?.replace(/\/$/, "");
-const API_TOKEN = import.meta.env.VITE_OKAMI_API_TOKEN;
+const ENV_API_TOKEN = import.meta.env.VITE_OKAMI_API_TOKEN;
+const API_TOKEN_STORAGE_KEY = "okami.api.token";
 
 export function isMissionApiConfigured() {
   return rawApiBaseUrl === "same-origin" || Boolean(API_BASE_URL);
 }
 
+export function isMissionApiSameOrigin() {
+  return rawApiBaseUrl === "same-origin";
+}
+
+export function isMissionApiLocalDev() {
+  if (!API_BASE_URL) return false;
+  try {
+    const url = new URL(API_BASE_URL, window.location.origin);
+    return ["localhost", "127.0.0.1", "::1", "[::1]"].includes(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+export function getMissionApiToken() {
+  try {
+    return window.localStorage.getItem(API_TOKEN_STORAGE_KEY) || ENV_API_TOKEN || "";
+  } catch {
+    return ENV_API_TOKEN || "";
+  }
+}
+
+export function saveMissionApiToken(token) {
+  try {
+    if (token) {
+      window.localStorage.setItem(API_TOKEN_STORAGE_KEY, token);
+    } else {
+      window.localStorage.removeItem(API_TOKEN_STORAGE_KEY);
+    }
+    window.dispatchEvent(new CustomEvent("okami-api-token-change"));
+  } catch {}
+}
+
+export function clearMissionApiToken() {
+  saveMissionApiToken("");
+}
+
+export function canUseMissionStream() {
+  return isMissionApiSameOrigin() && import.meta.env.PROD;
+}
+
+export function canFetchMissionState() {
+  if (isMissionApiSameOrigin() || isMissionApiLocalDev()) return true;
+  return Boolean(getMissionApiToken() || ENV_API_TOKEN);
+}
+
+export function authHeaders(extra = {}) {
+  const token = getMissionApiToken();
+  return token ? { ...extra, Authorization: `Bearer ${token}` } : extra;
+}
+
 async function request(path, options = {}) {
   if (!isMissionApiConfigured()) {
-    return { data: null, source: "mock", error: null };
+    return { data: null, source: "demo", error: null };
   }
 
   const headers = {
@@ -24,9 +75,7 @@ async function request(path, options = {}) {
     ...options.headers,
   };
 
-  if (API_TOKEN) {
-    headers.Authorization = `Bearer ${API_TOKEN}`;
-  }
+  Object.assign(headers, authHeaders());
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
@@ -51,18 +100,90 @@ async function request(path, options = {}) {
   };
 }
 
+async function publicRequest(path, options = {}) {
+  if (!isMissionApiConfigured()) {
+    return { data: null, source: "demo", error: null };
+  }
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+  if (!response.ok) {
+    let detail = response.statusText;
+    try {
+      const body = await response.json();
+      detail = body.error ?? body.message ?? detail;
+    } catch {
+      detail = await response.text().catch(() => detail);
+    }
+    throw new Error(`API ${response.status}: ${detail}`);
+  }
+
+  return {
+    data: await response.json(),
+    source: "api",
+    error: null,
+  };
+}
+
+export async function getAuthStatus() {
+  const result = await publicRequest("/api/auth/status");
+  return result.data ?? {
+    configured: Boolean(getMissionApiToken()),
+    staticTokenConfigured: Boolean(ENV_API_TOKEN),
+    proxyConfigured: rawApiBaseUrl === "same-origin",
+    localDevTrusted: false,
+    keyCount: 0,
+    bootstrapAvailable: false,
+  };
+}
+
+export async function bootstrapApiKey(name) {
+  const result = await publicRequest("/api/auth/bootstrap", {
+    method: "POST",
+    body: JSON.stringify({ name }),
+  });
+  if (result.data?.token) saveMissionApiToken(result.data.token);
+  return result.data;
+}
+
+export async function listApiKeys() {
+  const result = await request("/api/auth/keys");
+  return result.data?.keys ?? [];
+}
+
+export async function createApiKey({ name, scopes }) {
+  const result = await request("/api/auth/keys", {
+    method: "POST",
+    body: JSON.stringify({ name, scopes }),
+  });
+  return result.data;
+}
+
+export async function revokeApiKey(id) {
+  const result = await request(`/api/auth/keys/${id}`, {
+    method: "DELETE",
+  });
+  return result.data;
+}
+
 export async function getMissionControlState() {
   try {
     const result = await request("/api/mission-control/state");
     return {
-      data: result.data ?? mockMissionControl,
+      data: result.data ?? createDemoMissionControl(),
       source: result.source,
       error: null,
     };
   } catch (error) {
     return {
-      data: mockMissionControl,
-      source: "mock",
+      data: createDemoMissionControl(),
+      source: "demo",
       error,
     };
   }
@@ -77,6 +198,11 @@ export async function saveHermesConfig(config) {
   return result.data ?? { saved: true, config };
 }
 
+export async function getHermesConfig() {
+  const result = await request("/api/hermes/config");
+  return result.data;
+}
+
 export async function testHermesSshConnection(config) {
   const result = await request("/api/hermes/ssh/test", {
     method: "POST",
@@ -84,11 +210,11 @@ export async function testHermesSshConnection(config) {
   });
 
   return result.data ?? {
-    ok: Boolean(config.sshHost && config.sshUser),
-    latency: 146,
-    source: "mock",
+    ok: false,
+    latency: 0,
+    source: "demo",
     message: config.sshHost && config.sshUser
-      ? "Mock OK: pre-validacao local. Configure VITE_OKAMI_API_BASE_URL para testar a VPS de verdade."
+      ? "A API local nao respondeu. Rode npm run dev:all para testar SSH de verdade."
       : "Informe host e usuario SSH.",
   };
 }
@@ -101,8 +227,8 @@ export async function saveHermesSshPassword({ host, user, port, password }) {
 
   return result.data ?? {
     passwordRef: `vault://ssh-password/${Date.now()}`,
-    storage: "mock local only",
-    source: "mock",
+    storage: "demo local only",
+    source: "demo",
   };
 }
 
@@ -115,7 +241,7 @@ export async function uploadHermesSshKey({ name, privateKey, passphrase }) {
   return result.data ?? {
     keyId: `key_${Date.now()}`,
     name,
-    fingerprint: "SHA256:mock-redacted",
+    fingerprint: "SHA256:demo-redacted",
     storage: "encrypted backend vault",
   };
 }
@@ -128,7 +254,7 @@ export async function runHermesCommand(command) {
 
   return result.data ?? {
     exitCode: 0,
-    output: `$ ${command}\nmock: comando preparado para execucao via SSH na VPS`,
+    output: `$ ${command}\ndemo: comando preparado para execucao via SSH na VPS`,
   };
 }
 
@@ -147,7 +273,7 @@ export async function saveHermesCron(original, line) {
     body: JSON.stringify({ original, line }),
   });
 
-  return result.data ?? { saved: true, output: "mock cron saved" };
+  return result.data ?? { saved: true, output: "demo cron saved" };
 }
 
 export async function saveHermesSystemdTimer(unit, onCalendar) {
@@ -156,7 +282,7 @@ export async function saveHermesSystemdTimer(unit, onCalendar) {
     body: JSON.stringify({ unit, onCalendar }),
   });
 
-  return result.data ?? { saved: true, output: "mock systemd timer saved" };
+  return result.data ?? { saved: true, output: "demo systemd timer saved" };
 }
 
 export async function createHermesKanbanTask(task) {
@@ -199,7 +325,7 @@ export async function testApiConnection(api) {
   return result.data ?? {
     healthy: api.status !== "disabled",
     latency: api.latency,
-    message: api.status === "disabled" ? "API desabilitada no mock" : "Conexao validada no mock",
+    message: api.status === "disabled" ? "API desabilitada no demo" : "Conexao validada no demo",
   };
 }
 
@@ -255,4 +381,44 @@ export async function deleteDocConfig(doc) {
   });
 
   return result.data ?? { deleted: true };
+}
+
+export async function saveAgentRuntimeConfig(runtime) {
+  const result = await request(`/api/mission-control/agent-runtimes/${runtime.id}`, {
+    method: "PUT",
+    body: JSON.stringify(runtime),
+  });
+
+  return result.data ?? runtime;
+}
+
+export async function connectAgentRuntime(runtime) {
+  const result = await request(`/api/mission-control/agent-runtimes/${runtime.id}/connect`, {
+    method: "POST",
+    body: JSON.stringify({ runtime }),
+  });
+
+  return result.data ?? {
+    runtime: {
+      ...runtime,
+      status: "key-ready",
+      apiKey: {
+        tokenPrefix: `okami_${runtime.id}`.slice(0, 22),
+        scopes: runtime.recommendedScopes ?? ["read"],
+        injectionStatus: "demo",
+      },
+    },
+    injection: {
+      saved: false,
+      message: "Demo: acesso preparado localmente.",
+    },
+  };
+}
+
+export async function deleteAgentRuntimeConfig(runtime) {
+  const result = await request(`/api/mission-control/agent-runtimes/${runtime.id}`, {
+    method: "DELETE",
+  });
+
+  return result.data ?? { deleted: true, id: runtime.id };
 }

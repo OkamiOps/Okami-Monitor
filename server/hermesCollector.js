@@ -1,4 +1,4 @@
-import { mockMissionControl } from "../src/data/mockMissionControl.js";
+import { createDemoMissionControl, mockMissionControl } from "../src/data/mockMissionControl.js";
 import { sshExec } from "./sshBridge.js";
 
 function redact(value = "") {
@@ -91,6 +91,19 @@ def connect(path):
 def token_expr():
     return "coalesce(input_tokens,0)+coalesce(output_tokens,0)+coalesce(cache_read_tokens,0)+coalesce(cache_write_tokens,0)+coalesce(reasoning_tokens,0)"
 
+def ts_expr(column):
+    return f"""(
+        case
+            when {column} is null then null
+            when typeof({column}) in ('integer','real') then {column}
+            when trim(cast({column} as text)) glob '[0-9]*' then cast({column} as real)
+            else strftime('%s', {column})
+        end
+    )"""
+
+def session_ts_expr():
+    return f"coalesce({ts_expr('ended_at')}, {ts_expr('started_at')})"
+
 def safe_rows(cur, sql, args=()):
     try:
         return [dict(r) for r in cur.execute(sql, args)]
@@ -111,12 +124,33 @@ platforms = []
 days = {}
 hours = {}
 tools = {}
+now = int(time.time())
+range_specs = {
+    '1h': {'seconds': 60 * 60, 'bucket_seconds': 5 * 60, 'label': 'ultima 1h'},
+    '24h': {'seconds': 24 * 60 * 60, 'bucket_seconds': 60 * 60, 'label': 'ultimas 24h'},
+    '7d': {'seconds': 7 * 24 * 60 * 60, 'bucket_seconds': 24 * 60 * 60, 'label': 'ultimos 7 dias'},
+    '30d': {'seconds': 30 * 24 * 60 * 60, 'bucket_seconds': 24 * 60 * 60, 'label': 'ultimos 30 dias'},
+}
+ranges = {
+    key: {
+        'key': key,
+        'label': spec['label'],
+        'seconds': spec['seconds'],
+        'input_tokens': 0,
+        'output_tokens': 0,
+        'tokens': 0,
+        'sessions': 0,
+        'points': {},
+    }
+    for key, spec in range_specs.items()
+}
 
 for db, profile in dbs:
     if not os.path.exists(db):
         continue
     con = connect(db)
     cur = con.cursor()
+    session_ts = session_ts_expr()
     # Guardado: se o schema da tabela sessions divergir, nao derruba todo o
     # analytics — zera o profile e segue (models/days/hours usam safe_rows).
     agg_rows = safe_rows(cur, f"""
@@ -216,12 +250,13 @@ for db, profile in dbs:
                 events.append(row)
 
     for row in safe_rows(cur, f"""
-        select strftime('%Y-%m-%d', (case when typeof(started_at) in ('integer','real') then datetime(started_at, 'unixepoch') else datetime(started_at) end)) bucket,
+        select strftime('%Y-%m-%d', datetime({session_ts}, 'unixepoch')) bucket,
                coalesce(sum(input_tokens),0) input_tokens,
                coalesce(sum(output_tokens),0) output_tokens,
                coalesce(sum({token_expr()}),0) tokens,
                count(*) sessions
         from sessions
+        where {session_ts} is not null
         group by bucket
         order by bucket asc
     """):
@@ -231,18 +266,51 @@ for db, profile in dbs:
             current[key] += row[key] or 0
 
     for row in safe_rows(cur, f"""
-        select strftime('%H', (case when typeof(started_at) in ('integer','real') then datetime(started_at, 'unixepoch') else datetime(started_at) end)) bucket,
+        select strftime('%Y-%m-%dT%H:00:00Z', datetime({session_ts}, 'unixepoch')) bucket,
+               strftime('%d/%m %Hh', datetime({session_ts}, 'unixepoch')) label,
                coalesce(sum(input_tokens),0) input_tokens,
                coalesce(sum(output_tokens),0) output_tokens,
-               coalesce(sum({token_expr()}),0) tokens
+               coalesce(sum({token_expr()}),0) tokens,
+               count(*) sessions
         from sessions
+        where {session_ts} is not null and {session_ts} >= ?
         group by bucket
         order by bucket asc
-    """):
+    """, (now - 24 * 60 * 60,)):
         bucket = row['bucket'] or '00'
-        current = hours.setdefault(bucket, {'bucket': bucket, 'input_tokens': 0, 'output_tokens': 0, 'tokens': 0})
-        for key in ['input_tokens', 'output_tokens', 'tokens']:
+        current = hours.setdefault(bucket, {'bucket': bucket, 'label': row.get('label') or bucket, 'input_tokens': 0, 'output_tokens': 0, 'tokens': 0, 'sessions': 0})
+        for key in ['input_tokens', 'output_tokens', 'tokens', 'sessions']:
             current[key] += row[key] or 0
+
+    for range_key, spec in range_specs.items():
+        start_ts = now - spec['seconds']
+        for row in safe_rows(cur, f"""
+            select {session_ts} ts,
+                   coalesce(input_tokens,0) input_tokens,
+                   coalesce(output_tokens,0) output_tokens,
+                   coalesce({token_expr()},0) tokens
+            from sessions
+            where {session_ts} is not null and {session_ts} >= ?
+        """, (start_ts,)):
+            ts = int(float(row.get('ts') or 0))
+            if ts <= 0:
+                continue
+            bucket_seconds = spec['bucket_seconds']
+            bucket_ts = (ts // bucket_seconds) * bucket_seconds
+            if range_key in ('7d', '30d'):
+                bucket = time.strftime('%Y-%m-%d', time.gmtime(bucket_ts))
+                label = time.strftime('%d/%m', time.gmtime(bucket_ts))
+            else:
+                bucket = time.strftime('%Y-%m-%dT%H:%M:00Z', time.gmtime(bucket_ts))
+                label = time.strftime('%H:%M', time.gmtime(bucket_ts)) if range_key == '1h' else time.strftime('%d/%m %Hh', time.gmtime(bucket_ts))
+            target = ranges[range_key]
+            point = target['points'].setdefault(bucket, {'bucket': bucket, 'label': label, 'input_tokens': 0, 'output_tokens': 0, 'tokens': 0, 'sessions': 0})
+            for field in ['input_tokens', 'output_tokens', 'tokens']:
+                value = row.get(field) or 0
+                target[field] += value
+                point[field] += value
+            target['sessions'] += 1
+            point['sessions'] += 1
 
     for row in safe_rows(cur, "select tool_name name, count(*) calls from messages where tool_name is not null and tool_name!='' group by tool_name"):
         tools[row['name']] = tools.get(row['name'], 0) + row['calls']
@@ -273,14 +341,22 @@ for row in skills.values():
     row['profiles'] = sorted(row['profiles'])
     skills_out.append(row)
 
+ranges_out = {}
+for key, row in ranges.items():
+    ranges_out[key] = {
+        **{k: v for k, v in row.items() if k != 'points'},
+        'points': sorted(row['points'].values(), key=lambda item: item.get('bucket') or ''),
+    }
+
 print(json.dumps({
     'profiles': profiles,
     'recent': sorted(recent, key=lambda x: x.get('ended_at') or x.get('started_at') or 0, reverse=True)[:30],
     'models': models,
     'modelDays': {name: list(days.values()) for name, days in model_days.items()},
     'platforms': platforms,
-    'days': list(days.values()),
-    'hours': list(hours.values()),
+    'days': sorted(days.values(), key=lambda x: x.get('bucket') or ''),
+    'hours': sorted(hours.values(), key=lambda x: x.get('bucket') or ''),
+    'ranges': ranges_out,
     'tools': sorted([{'name': k, 'calls': v} for k, v in tools.items()], key=lambda x: x['calls'], reverse=True)[:30],
     'skills': sorted(skills_out, key=lambda x: (x['use_count'], x['patch_count']), reverse=True)[:40],
     'events': sorted(events, key=lambda x: x.get('created_at') or '', reverse=True)[:160],
@@ -331,6 +407,40 @@ for pattern in ['config.yaml', 'config.yml', '.env', 'settings.json', 'profiles/
             'type': os.path.splitext(path)[1].lstrip('.') or 'env',
             'content': safe_read(path, redact=os.path.basename(path) == '.env'),
         })
+
+for item in [
+    ('openclaw', '~/.openclaw/openclaw.json', 'gateway'),
+    ('openclaw', '~/.openclaw/workspace/AGENTS.md', 'workspace'),
+    ('openclaw', '~/.openclaw/workspace/SOUL.md', 'workspace'),
+    ('openhuman', '~/.openhuman/config.toml', 'runtime'),
+    ('openhuman', '~/.openhuman/vault/memory.md', 'vault'),
+    ('claude', '~/.claude/settings.json', 'global'),
+    ('codex', '~/.codex/config.toml', 'global'),
+    ('custom', '~/.agents/registry.json', 'global'),
+]:
+    runtime, raw_path, profile = item
+    path = os.path.expanduser(raw_path)
+    if not os.path.isfile(path):
+        continue
+    configs.append({
+        'name': os.path.basename(path),
+        'path': raw_path,
+        'runtime': runtime,
+        'profile': profile,
+        'type': os.path.splitext(path)[1].lstrip('.') or 'text',
+        'content': safe_read(path, redact=os.path.basename(path) in ['.env', 'auth.json']),
+    })
+
+agent_registry = []
+registry_path = os.path.expanduser('~/.agents/registry.json')
+if os.path.isfile(registry_path):
+    try:
+        with open(registry_path, 'r', errors='replace') as handle:
+            registry_data = json.load(handle)
+        rows = registry_data.get('runtimes') if isinstance(registry_data, dict) else registry_data
+        agent_registry = rows if isinstance(rows, list) else []
+    except Exception:
+        agent_registry = []
 
 profile_docs = []
 seen_profile_paths = set()
@@ -443,7 +553,7 @@ for root in [base]:
             'content': safe_read(path),
         })
 
-print(json.dumps({'configs': configs[:40], 'profileDocs': profile_docs[:120], 'skillDocs': skill_docs[:160]}, ensure_ascii=False))
+print(json.dumps({'configs': configs[:80], 'profileDocs': profile_docs[:120], 'skillDocs': skill_docs[:160], 'agentRegistry': agent_registry[:80]}, ensure_ascii=False))
 PY`;
   return parseJson(await tryExec(config, store, command, "{}"), { configs: [], profileDocs: [], skillDocs: [] });
 }
@@ -526,6 +636,94 @@ function normalizeAgentId(value = "") {
     .replace(/^-|-$/g, "");
 }
 
+function runtimeExecutable(command = "") {
+  return String(command).trim().split(/\s+/)[0] || "";
+}
+
+function normalizeRuntimeId(value = "") {
+  return normalizeAgentId(value).slice(0, 80);
+}
+
+function normalizeRuntimeConfig(runtime, source = "registry") {
+  const id = normalizeRuntimeId(runtime.id || runtime.name || runtime.command);
+  if (!id) return null;
+  const command = String(runtime.command || `${id} status`).trim().replace(/[\r\n;&|`$<>]/g, "").slice(0, 160);
+  const configPath = String(runtime.configPath || runtime.config || "~/.agents/registry.json").slice(0, 260);
+  const home = String(runtime.home || runtime.root || `~/.agents/workspaces/${id}`).slice(0, 260);
+  const workspacePath = String(runtime.workspacePath || runtime.workspace || home).slice(0, 260);
+  const configs = Array.isArray(runtime.configs) && runtime.configs.length
+    ? runtime.configs
+    : [{
+      name: configPath.split("/").pop() || "registry.json",
+      path: configPath,
+      runtime: id,
+      profile: "global",
+      type: configPath.split(".").pop() || "text",
+      content: "",
+    }];
+
+  return {
+    id,
+    name: String(runtime.name || id).slice(0, 120),
+    family: String(runtime.family || runtime.type || "custom").slice(0, 80),
+    status: String(runtime.status || "registered").slice(0, 80),
+    command,
+    home,
+    configPath,
+    workspacePath,
+    dashboardUrl: String(runtime.dashboardUrl || runtime.url || "custom").slice(0, 240),
+    docsUrl: runtime.docsUrl,
+    repoUrl: runtime.repoUrl,
+    summary: String(runtime.summary || "Runtime externo registrado no Okami Mission Control.").slice(0, 500),
+    recommendedScopes: Array.isArray(runtime.recommendedScopes) ? runtime.recommendedScopes : (Array.isArray(runtime.scopes) ? runtime.scopes : ["read"]),
+    suggestedKeyName: String(runtime.suggestedKeyName || `${id}-agent`).slice(0, 80),
+    capabilities: Array.isArray(runtime.capabilities) ? runtime.capabilities.slice(0, 20) : ["health command", "workspace", "config registrada"],
+    setup: Array.isArray(runtime.setup) ? runtime.setup.slice(0, 20) : ["Instalar runtime no host", "Validar comando de health", "Criar Okami API Key"],
+    commands: Array.isArray(runtime.commands) && runtime.commands.length
+      ? runtime.commands.slice(0, 12)
+      : [{ label: "Health", command }],
+    configs: configs.slice(0, 12).map((config) => ({
+      ...config,
+      runtime: config.runtime || id,
+      name: String(config.name || String(config.path || configPath).split("/").pop() || "config").slice(0, 120),
+      path: String(config.path || configPath).slice(0, 260),
+      profile: String(config.profile || "global").slice(0, 80),
+      type: String(config.type || "text").slice(0, 30),
+      content: String(config.content || "").slice(0, 20000),
+    })),
+    instances: Array.isArray(runtime.instances) ? runtime.instances.slice(0, 20) : [],
+    source,
+  };
+}
+
+function runtimesFromRegistry(items = [], source = "registry") {
+  return (Array.isArray(items) ? items : [])
+    .map((runtime) => normalizeRuntimeConfig(runtime, source))
+    .filter(Boolean);
+}
+
+function mergeAgentRuntimes(...runtimeLists) {
+  const byId = new Map();
+  runtimeLists.flat().forEach((runtime) => {
+    if (!runtime?.id) return;
+    const current = byId.get(runtime.id) ?? {};
+    byId.set(runtime.id, {
+      ...current,
+      ...runtime,
+      configs: runtime.configs?.length ? runtime.configs : current.configs,
+      instances: runtime.instances?.length ? runtime.instances : current.instances,
+      commands: runtime.commands?.length ? runtime.commands : current.commands,
+      capabilities: runtime.capabilities?.length ? runtime.capabilities : current.capabilities,
+      setup: runtime.setup?.length ? runtime.setup : current.setup,
+    });
+  });
+  return [...byId.values()];
+}
+
+function registryCommandExecutables(runtimes = []) {
+  return [...new Set(runtimes.map((runtime) => runtimeExecutable(runtime.command)).filter(Boolean))];
+}
+
 function buildRealAgents(analytics, kanban) {
   const tasks = Object.values(kanban).flat();
   const profileRows = (analytics.profiles ?? []).filter((profile) => profile.profile !== "default");
@@ -605,6 +803,43 @@ function buildRealAgents(analytics, kanban) {
         status: task.status,
         priority: task.priority,
       })),
+    };
+  });
+}
+
+function buildRealAgentRuntimes(base, realAgents, config, cliRaw, hermesFiles, registryRuntimes = []) {
+  const installed = new Set((cliRaw || "")
+    .split("\n")
+    .filter(Boolean)
+    .map((line) => {
+      const [command, status] = line.split("|");
+      return status === "installed" ? command : "";
+    })
+    .filter(Boolean));
+  const configByRuntime = new Map();
+  (hermesFiles.configs ?? []).forEach((file) => {
+    const runtime = file.runtime || (String(file.path).includes(".hermes") ? "hermes" : null);
+    if (!runtime) return;
+    configByRuntime.set(runtime, [...(configByRuntime.get(runtime) ?? []), file]);
+  });
+
+  const baseRuntimes = base.agentRuntimes ?? [];
+  const normalizedRegistry = runtimesFromRegistry(registryRuntimes, "remote-registry");
+  return mergeAgentRuntimes(baseRuntimes, normalizedRegistry).map((runtime) => {
+    const executable = runtimeExecutable(runtime.command);
+    const configs = configByRuntime.get(runtime.id) ?? runtime.configs ?? [];
+    const instances = realAgents.filter((agent) => {
+      const haystack = `${agent.id} ${agent.name} ${agent.tool} ${agent.role}`.toLowerCase();
+      if (runtime.id === "hermes") return haystack.includes("hermes");
+      return haystack.includes(runtime.id) || (executable && haystack.includes(executable));
+    });
+    return {
+      ...runtime,
+      status: runtime.id === "hermes"
+        ? (config.sshHost ? "connected" : runtime.status)
+        : (installed.has(executable) ? "installed" : runtime.status),
+      configs,
+      instances: instances.length ? instances : runtime.instances ?? [],
     };
   });
 }
@@ -774,6 +1009,8 @@ function parseCliTools(raw, analytics) {
     node: "Node.js",
     python3: "Python",
     hermes: "Hermes CLI",
+    openclaw: "OpenClaw",
+    openhuman: "OpenHuman",
   };
 
   return raw.split("\n").filter(Boolean).map((line) => {
@@ -887,7 +1124,7 @@ def collect_db(db, board_slug, board_name):
             body = row.get('body') or row.get('description') or row.get('notes') or ''
             if not str(title).strip() and not str(body).strip():
                 continue
-            out.append({**row, '_table': table, '_board': board_name, '_board_slug': board_slug})
+            out.append({**row, '_table': table, '_board': board_name, '_board_slug': board_slug, '_board_db': db})
     con.close()
 
 # Board "Default" = kanban.db na raiz do ~/.hermes.
@@ -956,6 +1193,21 @@ function resolveBoardName(item, field, boardsMap) {
   return boardsMap?.[key] ?? key;
 }
 
+function normalizeBoardSlug(value) {
+  const raw = String(value || "default").trim();
+  if (!raw || raw === "Default") return "default";
+  return raw.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "default";
+}
+
+function taskBoardSlug(task) {
+  return normalizeBoardSlug(task?.boardSlug ?? task?.raw?._board_slug ?? task?.raw?.board_slug ?? (task?.board === "Default" ? "default" : task?.board));
+}
+
+function kanbanDetailKey(task) {
+  const id = String(task?.id ?? task?.task_id ?? "");
+  return id ? `${taskBoardSlug(task)}::${id}` : "";
+}
+
 function parseKanbanJson(raw) {
   if (!raw) return null;
   try {
@@ -996,6 +1248,7 @@ function parseKanbanJson(raw) {
       const column = statusLabels[normalized]
         ?? Object.entries(statusLabels).find(([key]) => normalized.includes(key))?.[1]
         ?? (item.status ?? item.column ?? "Triage");
+      const boardSlug = normalizeBoardSlug(item._board_slug ?? item.board_slug ?? item.boardSlug ?? (item._board === "Default" ? "default" : null));
 
       if (!board[column]) board[column] = [];
       board[column].push({
@@ -1007,6 +1260,8 @@ function parseKanbanJson(raw) {
         owner: item.assignee ?? item.owner ?? "Hermes",
         estimate: item.updated_at ?? item.updatedAt ?? item.created_at ?? item.createdAt ?? "sync",
         board: resolveBoardName(item, boardField, boardsMap),
+        boardSlug,
+        boardDbPath: item._board_db ?? item.board_db ?? item.boardDbPath,
         body: item.body ?? item.description ?? item.notes ?? "",
         description: item.description ?? item.body ?? item.notes ?? "",
         raw: item,
@@ -1024,22 +1279,23 @@ function parseKanbanJson(raw) {
 }
 
 async function collectKanbanDetails(config, store, tasks) {
-  const taskIds = tasks.map((task) => task.id).filter(Boolean).slice(0, 40);
-  if (!taskIds.length) return {};
-  const idsJson = shellQuote(JSON.stringify(taskIds));
-  const command = `TASK_IDS=${idsJson} python3 - <<'PY'
-import json, os, sqlite3
+  const taskRefs = tasks
+    .map((task) => ({
+      id: String(task.id ?? ""),
+      boardSlug: taskBoardSlug(task),
+      boardDbPath: task.boardDbPath ?? task.raw?._board_db,
+    }))
+    .filter((task) => task.id)
+    .slice(0, 80);
+  if (!taskRefs.length) return {};
+  const hermesHome = config.hermesHome || "~/.hermes";
+  const refsJson = shellQuote(JSON.stringify(taskRefs));
+  const command = `TASK_REFS=${refsJson} python3 - <<'PY'
+import glob, json, os, sqlite3
 
-ids = set(json.loads(os.environ.get('TASK_IDS', '[]')))
-db = os.path.expanduser('~/.hermes/kanban.db')
-out = {task_id: {'comments': [], 'runHistory': [], 'workLog': []} for task_id in ids}
-if not os.path.exists(db):
-    print(json.dumps(out))
-    raise SystemExit
-
-con = sqlite3.connect(db)
-con.row_factory = sqlite3.Row
-cur = con.cursor()
+refs = json.loads(os.environ.get('TASK_REFS', '[]'))
+base = os.path.expanduser(${pythonString(hermesHome)})
+out = {}
 
 def rows(sql, args=()):
     try:
@@ -1047,31 +1303,73 @@ def rows(sql, args=()):
     except Exception:
         return []
 
-tables = [row['name'] for row in rows("select name from sqlite_master where type='table'")]
-for table in tables:
-    cols = [row['name'] for row in rows(f"pragma table_info({table})")]
-    if not cols:
+def norm(value):
+    raw = str(value or 'default').strip()
+    if not raw or raw == 'Default':
+        return 'default'
+    return ''.join(ch if ch.isalnum() else '-' for ch in raw.lower()).strip('-') or 'default'
+
+def qident(value):
+    return '"' + str(value).replace('"', '""') + '"'
+
+def board_db_paths():
+    found = {'default': os.path.join(base, 'kanban.db')}
+    for bdir in sorted(glob.glob(os.path.join(base, 'kanban', 'boards', '*'))):
+        found[norm(os.path.basename(bdir))] = os.path.join(bdir, 'kanban.db')
+    return found
+
+db_by_slug = board_db_paths()
+refs_by_slug = {}
+for ref in refs:
+    task_id = str(ref.get('id') or '')
+    if not task_id:
         continue
-    match_cols = [col for col in ['task_id', 'taskId', 'id'] if col in cols]
-    if not match_cols:
+    slug = norm(ref.get('boardSlug'))
+    key = f'{slug}::{task_id}'
+    out.setdefault(key, {'comments': [], 'runHistory': [], 'workLog': []})
+    refs_by_slug.setdefault(slug, []).append((task_id, key))
+
+for slug, pairs in refs_by_slug.items():
+    db = db_by_slug.get(slug)
+    if not db or not os.path.exists(db):
         continue
-    order_col = next((col for col in ['created_at', 'updated_at', 'started_at', 'timestamp', 'id'] if col in cols), match_cols[0])
-    for task_id in ids:
-        found = []
-        for col in match_cols:
-            found += rows(f"select * from {table} where {col}=? order by {order_col} desc limit 12", (task_id,))
-        if not found:
-            continue
-        key = 'workLog'
+    try:
+        con = sqlite3.connect('file:' + db + '?mode=ro', uri=True)
+    except Exception:
+        continue
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+    tables = [row['name'] for row in rows("select name from sqlite_master where type='table'")]
+    for table in tables:
         lower = table.lower()
+        if not any(token in lower for token in ['comment', 'event', 'log', 'history', 'run', 'attempt']):
+            continue
+        cols = [row['name'] for row in rows(f"pragma table_info({qident(table)})")]
+        if not cols:
+            continue
+        match_cols = [col for col in ['task_id', 'taskId'] if col in cols]
+        if not match_cols:
+            continue
+        order_col = next((col for col in ['created_at', 'updated_at', 'started_at', 'timestamp', 'id'] if col in cols), match_cols[0])
+        detail_key = 'workLog'
         if 'comment' in lower:
-            key = 'comments'
+            detail_key = 'comments'
         elif 'run' in lower or 'attempt' in lower or 'execution' in lower:
-            key = 'runHistory'
-        elif 'event' in lower or 'log' in lower or 'history' in lower:
-            key = 'workLog'
-        out.setdefault(task_id, {'comments': [], 'runHistory': [], 'workLog': []})
-        out[task_id][key].extend([{**row, '_table': table} for row in found])
+            detail_key = 'runHistory'
+        for task_id, out_key in pairs:
+            seen = set()
+            found = []
+            for col in match_cols:
+                for row in rows(f"select * from {qident(table)} where {qident(col)}=? order by {qident(order_col)} desc limit 16", (task_id,)):
+                    row_key = json.dumps(row, sort_keys=True, ensure_ascii=False)
+                    if row_key in seen:
+                        continue
+                    seen.add(row_key)
+                    found.append(row)
+            if found:
+                out.setdefault(out_key, {'comments': [], 'runHistory': [], 'workLog': []})
+                out[out_key][detail_key].extend([{**row, '_table': table, '_board_slug': slug} for row in found])
+    con.close()
 
 for value in out.values():
     for key in ['comments', 'runHistory', 'workLog']:
@@ -1084,30 +1382,35 @@ PY`;
 }
 
 function attachKanbanDetails(kanban, details) {
-  // collectKanbanDetails só lê o kanban.db raiz (board Default). Os ids reiniciam
-  // em cada board, então só enriquecemos tasks do Default para não colar
-  // comentários/runs de uma task em outra de mesmo id em outro board.
   return Object.fromEntries(Object.entries(kanban).map(([column, tasks]) => [
     column,
     tasks.map((task) => {
-      const isDefaultBoard = !task.board || task.board === "Default";
+      const detail = details[kanbanDetailKey(task)] ?? details[task.id] ?? {};
       return {
         ...task,
-        comments: isDefaultBoard ? details[task.id]?.comments ?? [] : [],
-        runHistory: isDefaultBoard ? details[task.id]?.runHistory ?? [] : [],
-        workLog: isDefaultBoard ? details[task.id]?.workLog ?? [] : [],
+        comments: detail.comments ?? [],
+        runHistory: detail.runHistory ?? [],
+        workLog: detail.workLog ?? [],
       };
     }),
   ]));
 }
 
 export async function collectHermesState(config, store) {
+  const demoBase = createDemoMissionControl();
+  const localRegistryRuntimes = runtimesFromRegistry(await store.getRegistry("agentRuntimes", []), "backend-registry");
   if (!config.sshHost || !config.sshUser) {
-    return mockMissionControl;
+    return {
+      ...demoBase,
+      agentRuntimes: mergeAgentRuntimes(demoBase.agentRuntimes, localRegistryRuntimes),
+    };
   }
 
   const hermesHome = config.hermesHome || "~/.hermes";
   const quotedHome = shellPath(hermesHome);
+  const runtimeExecutables = registryCommandExecutables(localRegistryRuntimes);
+  const cliCommands = ["codex", "claude", "gh", "node", "python3", "hermes", "openclaw", "openhuman", ...runtimeExecutables]
+    .filter((item, index, all) => item && all.indexOf(item) === index);
   const [hostInfo, configYaml, statusText, envKeys, logs, kanbanRaw, analytics, cliRaw, hermesFiles, hermesJobs] = await Promise.all([
     tryExec(config, store, "printf '%s|' \"$(hostname)\"; whoami; command -v hermes || true"),
     tryExec(config, store, `test -f ${quotedHome}/config.yaml && sed -n '1,220p' ${quotedHome}/config.yaml || true`),
@@ -1116,16 +1419,13 @@ export async function collectHermesState(config, store) {
     tryExec(config, store, `test -d ${quotedHome}/logs && find ${quotedHome}/logs -maxdepth 1 -type f | head -5 | xargs tail -n 20 2>/dev/null || true`),
     collectKanbanRaw(config, store),
     collectAnalytics(config, store),
-    tryExec(config, store, "for c in codex claude gh node python3 hermes; do if command -v \"$c\" >/dev/null 2>&1; then printf '%s|installed|' \"$c\"; \"$c\" --version 2>&1 | head -1; else printf '%s|missing|not installed\\n' \"$c\"; fi; done"),
+    tryExec(config, store, `for c in ${cliCommands.map(shellQuote).join(" ")}; do if command -v "$c" >/dev/null 2>&1; then printf '%s|installed|' "$c"; "$c" --version 2>&1 | head -1; else printf '%s|missing|not installed\\n' "$c"; fi; done`),
     collectHermesFiles(config, store, hermesHome),
     collectHermesJobs(config, store),
   ]);
 
   const parsedKanban = parseKanbanJson(kanbanRaw) ?? mockMissionControl.kanban;
-  // Detalhes (comments/runs/workLog) só existem no kanban.db raiz → só busca para
-  // o board Default; os outros boards têm seus próprios ids e dbs.
-  const defaultBoardTasks = Object.values(parsedKanban).flat().filter((task) => !task.board || task.board === "Default");
-  const kanbanDetailMap = await collectKanbanDetails(config, store, defaultBoardTasks);
+  const kanbanDetailMap = await collectKanbanDetails(config, store, Object.values(parsedKanban).flat());
   const kanban = attachKanbanDetails(parsedKanban, kanbanDetailMap);
   const totalProfile = (analytics.profiles ?? []).find((profile) => profile.profile === "default")
     ?? (analytics.profiles ?? []).reduce((sum, profile) => ({
@@ -1140,6 +1440,11 @@ export async function collectHermesState(config, store) {
     }), {});
   const realModels = buildRealModels(analytics);
   const realAgents = buildRealAgents(analytics, kanban);
+  const remoteRegistryRuntimes = runtimesFromRegistry(hermesFiles.agentRegistry ?? [], "remote-registry");
+  const realAgentRuntimes = mergeAgentRuntimes(
+    buildRealAgentRuntimes(demoBase, realAgents, config, cliRaw, hermesFiles, remoteRegistryRuntimes),
+    localRegistryRuntimes,
+  );
   const realSkills = buildRealSkills(analytics);
   const realSubscriptions = buildRealSubscriptions(analytics);
   const realApiKeys = buildRealApiKeys(`${configYaml}\n${envKeys}`, statusText);
@@ -1164,7 +1469,7 @@ export async function collectHermesState(config, store) {
   const blockedTasks = Object.values(kanban).flat().filter((task) => String(task.meta).includes("blocked")).length;
 
   return {
-    ...mockMissionControl,
+    ...demoBase,
     status: {
       label: hermesInstalled ? "Hermes conectado" : "VPS conectada",
       detail: `${config.sshUser}@${config.sshHost} · ${hostName}`,
@@ -1196,8 +1501,9 @@ export async function collectHermesState(config, store) {
     models: realModels.length ? realModels : mockMissionControl.models,
     activity: buildRealActivity(analytics, logLines),
     skills: realSkills,
-    subscriptions: realSubscriptions.length ? realSubscriptions : mockMissionControl.subscriptions,
+    subscriptions: realSubscriptions.length ? realSubscriptions : demoBase.subscriptions,
     agents: realAgents,
+    agentRuntimes: realAgentRuntimes,
     apiKeys: mergedApiKeys.length ? mergedApiKeys : mockMissionControl.apiKeys,
     apps: buildRealApps(config, null, registryApps),
     docs: buildRealDocs(analytics, statusText, registryDocs),

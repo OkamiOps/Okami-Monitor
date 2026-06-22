@@ -1,29 +1,33 @@
 import { useEffect, useState } from "react";
-import { getMissionControlState } from "./apiClient";
-import { mockMissionControl } from "../data/mockMissionControl";
+import { canFetchMissionState, canUseMissionStream, getMissionControlState } from "./apiClient";
+import { createDemoMissionControl } from "../data/mockMissionControl";
 
 const DEFAULT_POLL_INTERVAL = 8000;
-// Em build de produção (ex.: Cloudflare Pages) assumimos `same-origin` por
-// padrão: o frontend chama /api no mesmo domínio, onde functions/api/[[path]].js
-// faz o proxy pro backend real usando os segredos de runtime (OKAMI_BACKEND_URL
-// etc.). Sem isto, o Pages buildava sem VITE_OKAMI_API_BASE_URL e o app ficava
-// preso no mock mesmo com os segredos configurados. Em dev mantém mock por
-// padrão (defina VITE_OKAMI_API_BASE_URL pra conectar localmente).
+// Usa `/api` por padrão em dev e produção. Em dev, vite.config.js encaminha
+// para a API local; em produção, functions/api/[[path]].js faz o proxy usando
+// os segredos de runtime.
 const rawApiBaseUrl = import.meta.env.VITE_OKAMI_API_BASE_URL
-  ?? (import.meta.env.PROD ? "same-origin" : undefined);
+  ?? "same-origin";
 const API_BASE_URL = rawApiBaseUrl === "same-origin"
   ? ""
   : rawApiBaseUrl?.replace(/\/$/, "");
 const API_CONFIGURED = rawApiBaseUrl === "same-origin" || Boolean(API_BASE_URL);
 
 export function useMissionControl() {
+  const [authVersion, setAuthVersion] = useState(0);
   const [state, setState] = useState({
-    data: mockMissionControl,
-    source: "mock",
+    data: createDemoMissionControl(),
+    source: "demo",
     error: null,
     loading: true,
     lastSync: null,
   });
+
+  useEffect(() => {
+    const updateAuthVersion = () => setAuthVersion((current) => current + 1);
+    window.addEventListener("okami-api-token-change", updateAuthVersion);
+    return () => window.removeEventListener("okami-api-token-change", updateAuthVersion);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -38,7 +42,7 @@ export function useMissionControl() {
     const applyData = (data, sourceTag = "api") => {
       if (!active) return;
       setState({
-        data: data ?? mockMissionControl,
+        data: data ?? createDemoMissionControl(),
         source: sourceTag,
         error: null,
         loading: false,
@@ -76,15 +80,31 @@ export function useMissionControl() {
     }
 
     function startStream() {
-      if (!API_CONFIGURED) {
-        // Sem backend configurado — usa só mock.
+      if (!API_CONFIGURED || !canFetchMissionState()) {
+        // Sem backend/token utilizavel — usa demo vivo local sem gerar 503 no console.
+        const pollInterval = Number(import.meta.env.VITE_OKAMI_POLL_INTERVAL_MS) || DEFAULT_POLL_INTERVAL;
         setState({
-          data: mockMissionControl,
-          source: "mock",
+          data: createDemoMissionControl(),
+          source: "demo",
           error: null,
           loading: false,
           lastSync: new Date().toISOString(),
         });
+        pollIntervalId = window.setInterval(() => {
+          if (!active) return;
+          setState({
+            data: createDemoMissionControl(),
+            source: "demo",
+            error: null,
+            loading: false,
+            lastSync: new Date().toISOString(),
+          });
+        }, pollInterval);
+        return;
+      }
+
+      if (!canUseMissionStream()) {
+        startPollingFallback();
         return;
       }
 
@@ -136,7 +156,7 @@ export function useMissionControl() {
         pollIntervalId = null;
       }
     };
-  }, []);
+  }, [authVersion]);
 
   return state;
 }

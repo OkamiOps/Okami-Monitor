@@ -1,23 +1,25 @@
-import React, { useEffect, useMemo, useState } from "react";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useMissionControl } from "./lib/useMissionControl";
 import { useToast } from "./components/Toast";
 import { MarkdownLite } from "./components/MarkdownLite";
 import { PixelOfficeCanvas } from "./PixelOfficeCanvas";
 import {
+  bootstrapApiKey,
+  clearMissionApiToken,
+  connectAgentRuntime,
+  createApiKey,
   deleteApiConfig,
   deleteAppConfig,
+  deleteAgentRuntimeConfig,
   deleteDocConfig,
+  getAuthStatus,
+  getHermesConfig,
+  getMissionApiToken,
   createHermesKanbanTask,
   isMissionApiConfigured,
+  isMissionApiLocalDev,
+  listApiKeys,
+  revokeApiKey,
   rotateApiSecret,
   runHermesCommand,
   saveApiConfig,
@@ -26,6 +28,7 @@ import {
   saveHermesCron,
   saveHermesFile,
   saveHermesConfig,
+  saveMissionApiToken,
   saveHermesSystemdTimer,
   saveHermesSshPassword,
   testApiConnection,
@@ -48,6 +51,7 @@ const ITEM_ACCENTS = {
   sessions: "magenta",
   cron:     "success",
   config:   "orange",
+  agents:   "success",
   skills:   "cyan",
   logs:     "magenta",
   hermes:   "success",
@@ -74,10 +78,9 @@ const navGroups = [
       ["profiles", "♙", "Perfis"],
       ["sessions", "◉", "Sessions"],
       ["cron",     "◷", "Cron"],
-      ["config",   "≡", "Config"],
+      ["config",   "≡", "Agentes"],
       ["skills",   "✦", "Skills"],
       ["logs",     "≋", "Logs"],
-      ["hermes",   "◇", "Hermes"],
     ],
   },
   {
@@ -94,6 +97,200 @@ const navGroups = [
 const navItems = navGroups.flatMap((g) =>
   g.items.map(([id, icon, label]) => [id, icon, label, ITEM_ACCENTS[id] || "cyan"]),
 );
+
+const LANGUAGE_STORAGE_KEY = "okami.ui.language";
+const DEFAULT_LANGUAGE = "pt-BR";
+
+const translations = {
+  "pt-BR": {
+    "lang.pt": "PT-BR",
+    "lang.en": "EN",
+    "lang.selector": "Idioma",
+    "nav.group.OPERAÇÃO": "OPERAÇÃO",
+    "nav.group.DADOS": "DADOS",
+    "nav.group.EXTRA": "EXTRA",
+    "nav.overview": "Overview",
+    "nav.usage": "Usage",
+    "nav.kanban": "Kanban",
+    "nav.office": "Office",
+    "nav.pixel": "Pixel",
+    "nav.profiles": "Perfis",
+    "nav.sessions": "Sessions",
+    "nav.cron": "Cron",
+    "nav.config": "Agentes",
+    "nav.skills": "Skills",
+    "nav.logs": "Logs",
+    "nav.apps": "Apps",
+    "nav.cli": "CLIs",
+    "nav.docs": "Docs",
+    "status.sync": "SYNC",
+    "status.online": "SISTEMAS ONLINE",
+    "status.demo": "DEMO LIVE",
+    "button.closeMenu": "Fechar menu",
+    "button.openMenu": "Abrir menu",
+    "button.close": "Fechar",
+    "button.newAgent": "Novo agente",
+    "warning.apiFallback": "API da VPS indisponivel. Exibindo demo vivo ate a conexao estabilizar.",
+    "overview.eyebrow": "command deck",
+    "overview.title": "Operacao Hermes em tempo real",
+    "overview.periodFilters": "Filtros de periodo",
+    "overview.tokens.title": "Uso de tokens",
+    "overview.tokens.subtitle": "input / output",
+    "overview.models.title": "Modelos",
+    "overview.models.subtitle": "roteador",
+    "overview.activity.title": "Atividade recente",
+    "overview.activity.subtitle": "live feed",
+    "overview.skills.title": "Skills ativas",
+    "overview.skills.subtitle": "fila",
+    "overview.health.title": "Saude dos servicos",
+    "overview.health.subtitle": "uptime",
+    "overview.queue.title": "Fila de agentes",
+    "overview.queue.subtitle": "workload",
+    "overview.incidents.title": "Incidentes",
+    "overview.incidents.subtitle": "watchlist",
+    "metric.ssh": "SSH",
+    "metric.tokens": "Tokens",
+    "metric.sessions": "Sessions",
+    "metric.kanban": "Kanban",
+    "metric.messages": "mensagens",
+    "metric.blocks": "bloqueios",
+    "metric.period": "periodo",
+    "range.1h": "ultima 1h",
+    "range.24h": "ultimas 24h",
+    "range.7d": "ultimos 7 dias",
+    "range.30d": "ultimos 30 dias",
+    "section.usage.eyebrow": "subscription control",
+    "section.usage.title": "Uso e custo das assinaturas",
+    "section.office.eyebrow": "agent floor",
+    "section.office.title": "Workstations dos agentes",
+    "section.pixel.eyebrow": "pixel ops",
+    "section.pixel.title": "Pixel Office dos agentes Hermes",
+    "section.kanban.eyebrow": "execution board",
+    "section.kanban.title": "Kanban operacional dos agentes",
+    "section.config.eyebrow": "agentes",
+    "section.config.title": "Agentes",
+    "section.hermes.eyebrow": "servidor dos agentes",
+    "section.hermes.title": "Servidor dos agentes",
+    "section.hermes.embeddedTitle": "Conexao SSH dos agentes",
+    "section.profiles.eyebrow": "agent profiles",
+    "section.profiles.title": "Perfis, soul, identity e agents.md",
+    "section.skills.eyebrow": "skills registry",
+    "section.skills.title": "Skills disponiveis no Hermes",
+    "section.cron.eyebrow": "automation",
+    "section.cron.title": "Crons e timers ativados",
+    "section.logs.eyebrow": "observability",
+    "section.logs.title": "Logs e eventos do Hermes",
+    "section.sessions.eyebrow": "state.db",
+    "section.sessions.title": "Sessoes ativas e inativas",
+    "section.cli.eyebrow": "coding tools",
+    "section.cli.title": "Codex CLI e Claude Code no ambiente Hermes",
+  },
+  en: {
+    "lang.pt": "PT-BR",
+    "lang.en": "EN",
+    "lang.selector": "Language",
+    "nav.group.OPERAÇÃO": "OPERATION",
+    "nav.group.DADOS": "DATA",
+    "nav.group.EXTRA": "EXTRA",
+    "nav.overview": "Overview",
+    "nav.usage": "Usage",
+    "nav.kanban": "Kanban",
+    "nav.office": "Office",
+    "nav.pixel": "Pixel",
+    "nav.profiles": "Profiles",
+    "nav.sessions": "Sessions",
+    "nav.cron": "Cron",
+    "nav.config": "Agents",
+    "nav.skills": "Skills",
+    "nav.logs": "Logs",
+    "nav.apps": "Apps",
+    "nav.cli": "CLIs",
+    "nav.docs": "Docs",
+    "status.sync": "SYNC",
+    "status.online": "SYSTEMS ONLINE",
+    "status.demo": "LIVE DEMO",
+    "button.closeMenu": "Close menu",
+    "button.openMenu": "Open menu",
+    "button.close": "Close",
+    "button.newAgent": "New agent",
+    "warning.apiFallback": "VPS API unavailable. Showing live demo until the connection stabilizes.",
+    "overview.eyebrow": "command deck",
+    "overview.title": "Hermes operation in real time",
+    "overview.periodFilters": "Period filters",
+    "overview.tokens.title": "Token usage",
+    "overview.tokens.subtitle": "input / output",
+    "overview.models.title": "Models",
+    "overview.models.subtitle": "router",
+    "overview.activity.title": "Recent activity",
+    "overview.activity.subtitle": "live feed",
+    "overview.skills.title": "Active skills",
+    "overview.skills.subtitle": "queue",
+    "overview.health.title": "Service health",
+    "overview.health.subtitle": "uptime",
+    "overview.queue.title": "Agent queue",
+    "overview.queue.subtitle": "workload",
+    "overview.incidents.title": "Incidents",
+    "overview.incidents.subtitle": "watchlist",
+    "metric.ssh": "SSH",
+    "metric.tokens": "Tokens",
+    "metric.sessions": "Sessions",
+    "metric.kanban": "Kanban",
+    "metric.messages": "messages",
+    "metric.blocks": "blocks",
+    "metric.period": "period",
+    "range.1h": "last 1h",
+    "range.24h": "last 24h",
+    "range.7d": "last 7 days",
+    "range.30d": "last 30 days",
+    "section.usage.eyebrow": "subscription control",
+    "section.usage.title": "Subscription usage and cost",
+    "section.office.eyebrow": "agent floor",
+    "section.office.title": "Agent workstations",
+    "section.pixel.eyebrow": "pixel ops",
+    "section.pixel.title": "Hermes agent Pixel Office",
+    "section.kanban.eyebrow": "execution board",
+    "section.kanban.title": "Agent operational Kanban",
+    "section.config.eyebrow": "agents",
+    "section.config.title": "Agents",
+    "section.hermes.eyebrow": "agent server",
+    "section.hermes.title": "Agent server",
+    "section.hermes.embeddedTitle": "Agent SSH connection",
+    "section.profiles.eyebrow": "agent profiles",
+    "section.profiles.title": "Profiles, soul, identity and agents.md",
+    "section.skills.eyebrow": "skills registry",
+    "section.skills.title": "Available Hermes skills",
+    "section.cron.eyebrow": "automation",
+    "section.cron.title": "Active crons and timers",
+    "section.logs.eyebrow": "observability",
+    "section.logs.title": "Hermes logs and events",
+    "section.sessions.eyebrow": "state.db",
+    "section.sessions.title": "Active and inactive sessions",
+    "section.cli.eyebrow": "coding tools",
+    "section.cli.title": "Codex CLI and Claude Code in Hermes",
+  },
+};
+
+const I18nContext = createContext({
+  language: DEFAULT_LANGUAGE,
+  setLanguage: () => {},
+  t: (key) => translations[DEFAULT_LANGUAGE][key] ?? key,
+});
+
+function normalizeLanguage(value) {
+  return value === "en" ? "en" : DEFAULT_LANGUAGE;
+}
+
+function initialLanguage() {
+  if (typeof window === "undefined") return DEFAULT_LANGUAGE;
+  const stored = window.localStorage?.getItem(LANGUAGE_STORAGE_KEY);
+  if (stored) return normalizeLanguage(stored);
+  const browser = window.navigator?.language?.toLowerCase() ?? "";
+  return browser.startsWith("en") ? "en" : DEFAULT_LANGUAGE;
+}
+
+function useI18n() {
+  return useContext(I18nContext);
+}
 
 // Ordem oficial das colunas do Kanban:
 //   Linha 1: Backlog · Todo · In Progress · Blocked  (fluxo principal)
@@ -163,20 +360,6 @@ function chartRowsFromLines(labels, lines) {
   });
 }
 
-function ChartTooltip({ active, payload, label, formatValue }) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="chart-tooltip recharts-okami-tooltip">
-      <span>{label}</span>
-      {payload.map((item) => (
-        <b style={{ "--tooltip-tone": item.color }} key={item.dataKey}>
-          <i></i>{item.name}: {formatValue(Number(item.value ?? 0), item)}
-        </b>
-      ))}
-    </div>
-  );
-}
-
 function OkamiAreaChart({
   className = "",
   labels = [],
@@ -185,42 +368,61 @@ function OkamiAreaChart({
   formatAxis = (value) => formatTokenValue(Number(value)).replace(" tokens", ""),
 }) {
   const rows = useMemo(() => chartRowsFromLines(labels, lines), [labels, lines]);
+  const pointCount = Math.max(1, rows.length);
+  const normalizedLines = lines.map((line) => ({
+    ...line,
+    values: Array.from({ length: pointCount }, (_, index) => Number(rows[index]?.[line.key] ?? 0)),
+  }));
+  const max = Math.max(1, ...normalizedLines.flatMap((line) => line.values));
+  const axisIndexes = pointCount <= 6
+    ? rows.map((_, index) => index)
+    : [0, Math.floor((pointCount - 1) / 2), pointCount - 1];
+  const yTicks = [0, 0.5, 1].map((ratio) => ({
+    y: 238 - ratio * 190,
+    label: formatAxis(max * ratio),
+  }));
 
   return (
     <div className={`okami-chart ${className}`.trim()}>
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={rows} margin={{ top: 18, right: 18, bottom: 8, left: 0 }}>
-          <defs>
-            {lines.map((line) => (
-              <linearGradient id={`chart-${line.key}`} x1="0" x2="0" y1="0" y2="1" key={line.key}>
-                <stop offset="0%" stopColor={line.color} stopOpacity={0.28} />
-                <stop offset="74%" stopColor={line.color} stopOpacity={0.04} />
-                <stop offset="100%" stopColor={line.color} stopOpacity={0} />
-              </linearGradient>
-            ))}
-          </defs>
-          <CartesianGrid stroke="rgba(255,255,255,.075)" vertical={false} />
-          <XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={18} tick={{ fill: "rgba(238,243,255,.48)", fontSize: 10, fontFamily: "monospace" }} />
-          <YAxis tickLine={false} axisLine={false} width={48} tickFormatter={(value) => formatAxis(value)} tick={{ fill: "rgba(238,243,255,.42)", fontSize: 10, fontFamily: "monospace" }} />
-          <Tooltip cursor={{ stroke: "rgba(238,243,255,.3)", strokeDasharray: "4 6" }} content={<ChartTooltip formatValue={formatValue} />} />
-          {lines.map((line) => (
-            <Area
-              activeDot={{ r: 5, strokeWidth: 2, stroke: "#06070b", fill: line.color }}
-              dataKey={line.key}
-              dot={false}
-              fill={`url(#chart-${line.key})`}
-              fillOpacity={1}
-              key={line.key}
-              name={line.label}
-              stroke={line.color}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={3}
-              type="monotone"
-            />
+      <svg className="okami-chart-svg" viewBox="0 0 780 270" role="img" aria-label="Grafico de uso">
+        <defs>
+          {normalizedLines.map((line) => (
+            <linearGradient id={`chart-${line.key}`} x1="0" x2="0" y1="0" y2="1" key={line.key}>
+              <stop offset="0%" stopColor={line.color} stopOpacity="0.28" />
+              <stop offset="74%" stopColor={line.color} stopOpacity="0.04" />
+              <stop offset="100%" stopColor={line.color} stopOpacity="0" />
+            </linearGradient>
           ))}
-        </AreaChart>
-      </ResponsiveContainer>
+        </defs>
+        <g transform="translate(44 8)">
+          {[48, 96, 144, 192, 230].map((y) => (
+            <line className="okami-chart-grid" key={y} x1="0" x2="720" y1={y} y2={y} />
+          ))}
+          {yTicks.map((tick) => (
+            <text className="okami-chart-axis-label" key={tick.y} x="-10" y={tick.y} textAnchor="end">{tick.label}</text>
+          ))}
+          {axisIndexes.map((index) => {
+            const x = pointCount === 1 ? 0 : (index / (pointCount - 1)) * 720;
+            return <text className="okami-chart-axis-label" key={`${rows[index]?.label}-${index}`} x={x} y="258" textAnchor="middle">{rows[index]?.label}</text>;
+          })}
+          {normalizedLines.map((line) => {
+            const path = pathFromSeriesWithMax(line.values, max);
+            const areaPath = `${path} L 720 230 L 0 230 Z`;
+            const lastValue = line.values.at(-1) ?? 0;
+            const lastPoint = pointForIndex(line.values, line.values.length - 1, max);
+            return (
+              <g key={line.key}>
+                <path d={areaPath} fill={`url(#chart-${line.key})`} />
+                <path className="okami-chart-line" d={path} stroke={line.color} />
+                <circle cx={lastPoint.x} cy={lastPoint.y} r="5" fill="#06070b" stroke={line.color} strokeWidth="3" />
+                <text className="okami-chart-value" x={Math.min(710, lastPoint.x + 10)} y={Math.max(18, lastPoint.y - 8)}>
+                  {line.label}: {formatValue(lastValue, line)}
+                </text>
+              </g>
+            );
+          })}
+        </g>
+      </svg>
     </div>
   );
 }
@@ -263,6 +465,14 @@ function formatCurrency(value) {
   return `$${Math.round(Number(value) || 0)}`;
 }
 
+function formatCompactValue(value) {
+  const number = Number(value) || 0;
+  if (number >= 1_000_000_000) return `${(number / 1_000_000_000).toFixed(1)}B`;
+  if (number >= 1_000_000) return `${(number / 1_000_000).toFixed(1)}M`;
+  if (number >= 1_000) return `${(number / 1_000).toFixed(1)}k`;
+  return String(Math.round(number));
+}
+
 function formatTokenValue(value) {
   if (typeof value === "string") return value;
   const number = Number(value) || 0;
@@ -294,8 +504,52 @@ function buildDailyWindow(days, windowSize) {
   return window;
 }
 
+const RANGE_LABELS = {
+  "1h": "ultima 1h",
+  "24h": "ultimas 24h",
+  "7d": "ultimos 7 dias",
+  "30d": "ultimos 30 dias",
+};
+
+function tokensToChartUnit(value) {
+  const number = Number(value) || 0;
+  if (number <= 0) return 0;
+  return Math.max(1, Math.round(number / 1000));
+}
+
+function seriesFromRangeData(rangeData, range) {
+  if (!rangeData || !Array.isArray(rangeData.points)) return null;
+  const points = rangeData.points;
+  const label = rangeData.label ?? RANGE_LABELS[range] ?? range;
+  const totalTokens = Number(rangeData.tokens ?? points.reduce((sum, point) => sum + Number(point.tokens || 0), 0));
+  if (!points.length) {
+    return {
+      input: [0],
+      output: [0],
+      total: [0],
+      labels: ["agora"],
+      label,
+      totalTokens,
+      totalInputTokens: Number(rangeData.input_tokens ?? 0),
+      totalOutputTokens: Number(rangeData.output_tokens ?? 0),
+    };
+  }
+  return {
+    input: points.map((point) => tokensToChartUnit(point.input_tokens)),
+    output: points.map((point) => tokensToChartUnit(point.output_tokens)),
+    total: points.map((point) => tokensToChartUnit(point.tokens)),
+    labels: points.map((point) => formatBucketLabel(point, point.bucket)),
+    label,
+    totalTokens,
+    totalInputTokens: Number(rangeData.input_tokens ?? points.reduce((sum, point) => sum + Number(point.input_tokens || 0), 0)),
+    totalOutputTokens: Number(rangeData.output_tokens ?? points.reduce((sum, point) => sum + Number(point.output_tokens || 0), 0)),
+  };
+}
+
 function seriesFromAnalytics(data, range) {
   const analytics = data.hermes?.analytics ?? {};
+  const rangeSeries = seriesFromRangeData(analytics.ranges?.[range], range);
+  if (rangeSeries) return rangeSeries;
   if (range === "1h") {
     const lastHour = (analytics.hours ?? []).slice(-1);
     const fallbackInput = data.tokenSeries.input?.slice(-2) ?? [];
@@ -422,6 +676,7 @@ function actionTone(action) {
 }
 
 function DetailModal({ title, eyebrow, children, onClose }) {
+  const { t } = useI18n();
   useEffect(() => {
     if (!title) return;
     const onKey = (event) => { if (event.key === "Escape") onClose?.(); };
@@ -447,7 +702,7 @@ function DetailModal({ title, eyebrow, children, onClose }) {
             <h3>{title}</h3>
           </div>
           <button className="ok-btn ok-btn--ghost ok-btn--sm" type="button" onClick={onClose}>
-            Fechar ✕
+            {t("button.close")} ✕
           </button>
         </div>
         {children}
@@ -707,9 +962,10 @@ function PixelAgentMonitor({ agent, tasks = [] }) {
 }
 
 function Sidebar({ activeView, setActiveView, status, open, setOpen }) {
+  const { t } = useI18n();
   const isHealthy = Boolean(status?.healthy);
   return (
-    <aside className={`sidebar ${open ? "is-open" : ""}`} aria-label="Navegacao principal">
+    <aside className={`sidebar ${open ? "is-open" : ""}`} aria-label={t("button.openMenu")}>
       <div className="brand-row">
         <button
           className="brand"
@@ -728,7 +984,7 @@ function Sidebar({ activeView, setActiveView, status, open, setOpen }) {
             <small>Mission Control</small>
           </span>
         </button>
-        <button className="sidebar-close" type="button" onClick={() => setOpen(false)} aria-label="Fechar menu">
+        <button className="sidebar-close" type="button" onClick={() => setOpen(false)} aria-label={t("button.closeMenu")}>
           ×
         </button>
       </div>
@@ -740,7 +996,7 @@ function Sidebar({ activeView, setActiveView, status, open, setOpen }) {
             <div className="nav-section" key={group.label}>
               <div className="nav-section__head">
                 <span className="nav-section__bar" aria-hidden="true" />
-                <span className="nav-section__label">{group.label}</span>
+                <span className="nav-section__label">{t(`nav.group.${group.label}`)}</span>
               </div>
               {group.items.map(([id, icon, label]) => {
                 globalIdx += 1;
@@ -761,7 +1017,7 @@ function Sidebar({ activeView, setActiveView, status, open, setOpen }) {
                   >
                     <span className="nav-item__num">{num}</span>
                     <span className="nav-item__icon" aria-hidden="true">{icon}</span>
-                    <span className="nav-item__label">{label}</span>
+                    <span className="nav-item__label">{t(`nav.${id}`) ?? label}</span>
                   </button>
                 );
               })}
@@ -784,11 +1040,34 @@ function Sidebar({ activeView, setActiveView, status, open, setOpen }) {
   );
 }
 
+function LanguageToggle() {
+  const { language, setLanguage, t } = useI18n();
+  return (
+    <div className="language-toggle" aria-label={t("lang.selector")}>
+      {[
+        ["pt-BR", t("lang.pt")],
+        ["en", t("lang.en")],
+      ].map(([value, label]) => (
+        <button
+          className={language === value ? "is-active" : ""}
+          key={value}
+          onClick={() => setLanguage(value)}
+          type="button"
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function Topbar({ source, loading, lastSync, setOpen, setActiveView, onOpenGateway }) {
+  const { language, t } = useI18n();
   const isLive = source === "api";
+  const modeLabel = loading ? t("status.sync") : isLive ? t("status.online") : t("status.demo");
   return (
     <header className="topbar">
-      <button id="menuToggle" className="mobile-menu" type="button" onClick={() => setOpen(true)} aria-label="Abrir menu">
+      <button id="menuToggle" className="mobile-menu" type="button" onClick={() => setOpen(true)} aria-label={t("button.openMenu")}>
         ☰
       </button>
       <div className="topbar__title">
@@ -801,7 +1080,7 @@ function Topbar({ source, loading, lastSync, setOpen, setActiveView, onOpenGatew
             className={`ok-status-badge ${isLive ? "ok-status-badge--online" : "ok-status-badge--warning"}`}
             style={{ marginLeft: "var(--ok-s-2)" }}
           >
-            {loading ? "SYNC" : isLive ? "SISTEMAS ONLINE" : "MOCK DATA"}
+            {modeLabel}
           </span>
         </p>
         <h1 className="ok-hero-title">
@@ -810,13 +1089,14 @@ function Topbar({ source, loading, lastSync, setOpen, setActiveView, onOpenGatew
       </div>
       <div className="top-actions">
         <span className="sync-time">
-          {lastSync ? new Date(lastSync).toLocaleTimeString("pt-BR") : "--:--"}
+          {lastSync ? new Date(lastSync).toLocaleTimeString(language) : "--:--"}
         </span>
+        <LanguageToggle />
         <button className="ok-btn ok-btn--ghost" type="button" onClick={onOpenGateway}>
           Gateway
         </button>
         <button className="ok-btn ok-btn--primary" type="button" onClick={() => setActiveView("pixel")}>
-          Novo agente →
+          {t("button.newAgent")} →
         </button>
       </div>
     </header>
@@ -934,14 +1214,50 @@ function SectionHead({ eyebrow, title, children, className = "" }) {
 }
 
 function Overview({ data }) {
+  const { t } = useI18n();
   const [range, setRange] = useState("24h");
   const selectedSeries = useMemo(() => seriesFromAnalytics(data, range), [data, range]);
-  const periodTokens = [...selectedSeries.input, ...selectedSeries.output].reduce((sum, value) => sum + Number(value || 0), 0) * 1000;
+  const periodTokens = selectedSeries.totalTokens
+    ?? [...selectedSeries.input, ...selectedSeries.output].reduce((sum, value) => sum + Number(value || 0), 0) * 1000;
+  const periodInputTokens = selectedSeries.totalInputTokens
+    ?? selectedSeries.input.reduce((sum, value) => sum + Number(value || 0), 0) * 1000;
+  const periodOutputTokens = selectedSeries.totalOutputTokens
+    ?? selectedSeries.output.reduce((sum, value) => sum + Number(value || 0), 0) * 1000;
+  const rangeLabel = t(`range.${range}`);
+  const overviewMetrics = useMemo(() => data.metrics.map((metric) => {
+    const key = String(metric.label ?? "").toLowerCase();
+    if (key.includes("tokens")) {
+      return {
+        ...metric,
+        label: t("metric.tokens"),
+        value: formatCompactValue(periodTokens),
+        delta: `${range.toUpperCase()} · ${formatCompactValue(periodInputTokens)} in · ${formatCompactValue(periodOutputTokens)} out`,
+      };
+    }
+    if (key === "sessions") {
+      return {
+        ...metric,
+        label: t("metric.sessions"),
+        delta: String(metric.delta ?? "").replace(/mensagens/i, t("metric.messages")),
+      };
+    }
+    if (key === "kanban") {
+      return {
+        ...metric,
+        label: t("metric.kanban"),
+        delta: String(metric.delta ?? "").replace(/bloqueios/i, t("metric.blocks")),
+      };
+    }
+    if (key === "ssh") {
+      return { ...metric, label: t("metric.ssh") };
+    }
+    return metric;
+  }), [data.metrics, periodInputTokens, periodOutputTokens, periodTokens, range, t]);
 
   return (
     <section className="view is-active">
-      <SectionHead eyebrow="§01 / command deck" title="Operacao Hermes em tempo real">
-        <div className="filters" aria-label="Filtros de periodo">
+      <SectionHead eyebrow={`§01 / ${t("overview.eyebrow")}`} title={t("overview.title")}>
+        <div className="filters" aria-label={t("overview.periodFilters")}>
           {["1h", "24h", "7d", "30d"].map((item) => (
             <button className={range === item ? "is-active" : ""} onClick={() => setRange(item)} type="button" key={item}>{item}</button>
           ))}
@@ -949,7 +1265,7 @@ function Overview({ data }) {
       </SectionHead>
 
       <div className="metric-grid">
-        {data.metrics.map((metric) => (
+        {overviewMetrics.map((metric) => (
           <article className={`metric-card ${metric.hot ? "hot" : ""}`} key={metric.label}>
             <span>{metric.label}</span>
             <strong>{metric.value}</strong>
@@ -959,15 +1275,15 @@ function Overview({ data }) {
         <article className="metric-card period-card">
           <span>{range}</span>
           <strong>{formatTokenValue(periodTokens)}</strong>
-          <small>{selectedSeries.label}</small>
+          <small>{rangeLabel}</small>
         </article>
       </div>
 
       <div className="dashboard-grid">
         <article className="panel usage-panel">
           <div className="panel-title">
-            <h3>Uso de tokens</h3>
-            <span>{selectedSeries.label} · input / output</span>
+            <h3>{t("overview.tokens.title")}</h3>
+            <span>{rangeLabel} · {t("overview.tokens.subtitle")}</span>
           </div>
           <OkamiAreaChart
             className="line-chart"
@@ -975,7 +1291,7 @@ function Overview({ data }) {
             lines={[
               { key: "input", label: "input", values: selectedSeries.input, color: "var(--ok-orange)" },
               { key: "output", label: "output", values: selectedSeries.output, color: "var(--ok-cyan)" },
-              { key: "total", label: "total", values: selectedSeries.input.map((value, index) => Number(value || 0) + Number(selectedSeries.output[index] || 0)), color: "var(--ok-magenta)" },
+              { key: "total", label: "total", values: selectedSeries.total ?? selectedSeries.input.map((value, index) => Number(value || 0) + Number(selectedSeries.output[index] || 0)), color: "var(--ok-magenta)" },
             ]}
             formatValue={(value) => formatTokenValue(value * 1000)}
             formatAxis={(value) => formatTokenValue(Number(value) * 1000).replace(" tokens", "")}
@@ -984,8 +1300,8 @@ function Overview({ data }) {
 
         <article className="panel">
           <div className="panel-title">
-            <h3>Modelos</h3>
-            <span>roteador</span>
+            <h3>{t("overview.models.title")}</h3>
+            <span>{t("overview.models.subtitle")}</span>
           </div>
           <div className="model-list">
             {data.models.map((model) => (
@@ -1000,8 +1316,8 @@ function Overview({ data }) {
 
         <article className="panel">
           <div className="panel-title">
-            <h3>Atividade recente</h3>
-            <span>live feed</span>
+            <h3>{t("overview.activity.title")}</h3>
+            <span>{t("overview.activity.subtitle")}</span>
           </div>
           <ol className="activity-list">
             {data.activity.map((event) => (
@@ -1016,8 +1332,8 @@ function Overview({ data }) {
 
         <article className="panel">
           <div className="panel-title">
-            <h3>Skills ativas</h3>
-            <span>fila</span>
+            <h3>{t("overview.skills.title")}</h3>
+            <span>{t("overview.skills.subtitle")}</span>
           </div>
           <div className="skill-list">
             {data.skills.map((skill) => <span key={skill}>{skill}</span>)}
@@ -1028,8 +1344,8 @@ function Overview({ data }) {
       <div className="ops-grid">
         <article className="panel">
           <div className="panel-title">
-            <h3>Saude dos servicos</h3>
-            <span>uptime</span>
+            <h3>{t("overview.health.title")}</h3>
+            <span>{t("overview.health.subtitle")}</span>
           </div>
           <div className="health-list">
             {data.overview.serviceHealth.map((service) => (
@@ -1043,15 +1359,15 @@ function Overview({ data }) {
         </article>
         <article className="panel">
           <div className="panel-title">
-            <h3>Fila de agentes</h3>
-            <span>workload</span>
+            <h3>{t("overview.queue.title")}</h3>
+            <span>{t("overview.queue.subtitle")}</span>
           </div>
           <StatList items={data.overview.queue} />
         </article>
         <article className="panel">
           <div className="panel-title">
-            <h3>Incidentes</h3>
-            <span>watchlist</span>
+            <h3>{t("overview.incidents.title")}</h3>
+            <span>{t("overview.incidents.subtitle")}</span>
           </div>
           <div className="decision-list">
             {data.overview.incidents.map((incident) => (
@@ -1071,6 +1387,7 @@ function Overview({ data }) {
 }
 
 function Usage({ data }) {
+  const { t } = useI18n();
   const subscriptions = data.subscriptions ?? [];
   const [period, setPeriod] = useState("Semanal");
   const totals = useMemo(() => {
@@ -1106,7 +1423,7 @@ function Usage({ data }) {
 
   return (
     <section className="view is-active">
-      <SectionHead eyebrow="§02 / subscription control" title="Uso e custo das assinaturas">
+      <SectionHead eyebrow={`§02 / ${t("section.usage.eyebrow")}`} title={t("section.usage.title")}>
         <div className="filters" aria-label="Filtros de uso">
           {["Diario", "Semanal", "Mensal"].map((item) => (
             <button className={period === item ? "is-active" : ""} onClick={() => setPeriod(item)} type="button" key={item}>{item}</button>
@@ -1354,6 +1671,7 @@ function SubagentList({ subagents }) {
 }
 
 function Office({ data }) {
+  const { t } = useI18n();
   const [selectedAgentId, setSelectedAgentId] = useState(data.agents[0]?.id);
   const [modal, setModal] = useState(null);
   const selectedAgent = data.agents.find((agent) => agent.id === selectedAgentId) ?? data.agents[0];
@@ -1371,7 +1689,7 @@ function Office({ data }) {
 
   return (
     <section className="view is-active">
-      <SectionHead eyebrow="§03 / agent floor" title="Workstations dos agentes">
+      <SectionHead eyebrow={`§03 / ${t("section.office.eyebrow")}`} title={t("section.office.title")}>
         <button className="ghost-button" type="button" onClick={() => setModal({ type: "external", agent: selectedAgent, task: selectedTask })}>Abrir monitor externo</button>
       </SectionHead>
       <OfficeCommandStrip
@@ -1426,7 +1744,8 @@ function Office({ data }) {
 }
 
 function Pixel({ data, source, loading }) {
-  const realAgents = source === "mock" || loading ? [] : (data.agents ?? []);
+  const { t } = useI18n();
+  const realAgents = loading ? [] : (data.agents ?? []);
   const [selectedAgentId, setSelectedAgentId] = useState(realAgents[0]?.id);
   const [modalAgentId, setModalAgentId] = useState(null);
   const [pixelMode, setPixelMode] = useState("live");
@@ -1477,7 +1796,7 @@ function Pixel({ data, source, loading }) {
 
   return (
     <section className="view is-active">
-      <SectionHead eyebrow="§04 / pixel ops" title="Pixel Office dos agentes Hermes">
+      <SectionHead eyebrow={`§04 / ${t("section.pixel.eyebrow")}`} title={t("section.pixel.title")}>
         <div className="filters">
           <button className={pixelMode === "live" ? "is-active" : ""} onClick={() => setPixelMode("live")} type="button">Live</button>
           <button className={pixelMode === "layout" ? "is-active" : ""} onClick={cycleLayout} type="button">Layout: {layoutVariant}</button>
@@ -1511,8 +1830,8 @@ function Pixel({ data, source, loading }) {
             }} />
             <div className="pixel-task-strip">
               <span>tarefa atual</span>
-              {modalAgentTasks.length ? modalAgentTasks.map((task) => (
-                <button className="pixel-task-card" key={task.id ?? task.title} type="button">
+              {modalAgentTasks.length ? modalAgentTasks.map((task, index) => (
+                <button className="pixel-task-card" key={taskUiKey(task, modalAgent.id, index)} type="button">
                   <b>{task.title}</b>
                   <small>{task.status ?? task.meta ?? "ativo"} · {task.owner ?? modalAgent.name}</small>
                   <em>{task.description ?? task.body ?? task.raw?.description ?? "Sem descricao detalhada no retorno atual."}</em>
@@ -1546,6 +1865,12 @@ function normalizeList(value) {
   }
   if (typeof value === "object") return Object.values(value).flatMap((item) => normalizeList(item));
   return [String(value)];
+}
+
+function taskUiKey(task, scope, index) {
+  const boardKey = task?.boardSlug ?? task?.raw?._board_slug ?? task?.board ?? "board";
+  const taskKey = task?.id ?? task?.task_id ?? task?.title ?? index;
+  return `${boardKey}::${scope ?? task?.status ?? "task"}::${taskKey}::${index}`;
 }
 
 function TaskDetail({ task }) {
@@ -1644,6 +1969,7 @@ function TimelineList({ items, empty }) {
 }
 
 function Kanban({ data }) {
+  const { t } = useI18n();
   const [board, setBoard] = useState(data.kanban);
   const [selectedTask, setSelectedTask] = useState(null);
   const [selectedBoard, setSelectedBoard] = useState(null);
@@ -1733,7 +2059,7 @@ function Kanban({ data }) {
 
   return (
     <section className="view is-active">
-      <SectionHead eyebrow="§04 / execution board" title="Kanban operacional dos agentes">
+      <SectionHead eyebrow={`§04 / ${t("section.kanban.eyebrow")}`} title={t("section.kanban.title")}>
         {boards.length > 1 ? (
           <div className="filters board-selector" aria-label="Selecionar board">
             {boards.map((boardName) => (
@@ -1778,8 +2104,8 @@ function Kanban({ data }) {
               <h3>{column}</h3>
               <span>{tasks.length}</span>
             </div>
-            {tasks.length ? tasks.map((task) => (
-              <button className={`task ${task.hot ? "hot" : ""}`} key={task.id ?? task.title} type="button" onClick={() => setSelectedTask({ ...task, column })}>
+            {tasks.length ? tasks.map((task, index) => (
+              <button className={`task ${task.hot ? "hot" : ""}`} key={taskUiKey(task, column, index)} type="button" onClick={() => setSelectedTask({ ...task, column })}>
                 <div className="task-topline">
                   <em>{task.priority}</em>
                   <small>{task.owner} · {task.estimate}</small>
@@ -2453,17 +2779,19 @@ function StructuredFilePanel({ file, titlePrefix = "arquivo", inline = false }) 
     return String(field.value ?? "").includes("\n") || String(field.value ?? "").length > 96 || /^[{[]/.test(String(field.value ?? "").trim());
   }
 
-  async function saveFile() {
-    if (file.readonly || String(file.path ?? "").includes("#")) {
-      setStatus("Registro somente leitura. Para editar a skill, crie ou abra o SKILL.md correspondente.");
-      return;
-    }
-    setStatus("Salvando via SSH...");
+	  async function saveFile() {
+	    if (file.readonly || String(file.path ?? "").includes("#")) {
+	      setStatus("Este registro e somente leitura. Abra um arquivo editavel do agente para salvar mudancas.");
+	      return;
+	    }
+	    setStatus("Salvando arquivo...");
     const content = mode === "fields" ? fieldsToContent(fields, draft, kind) : draft;
     try {
-      const result = await saveHermesFile(file.path, content);
-      setDraft(content);
-      setStatus(result.saved ? `Salvo em ${result.path || file.path}` : `Falha ao salvar: ${result.error || "sem detalhe"}`);
+	      const result = await saveHermesFile(file.path, content);
+	      setDraft(content);
+	      setStatus(result.saved
+	        ? `Salvo em ${result.path || file.path}${result.message ? ` · ${result.message}` : ""}`
+	        : `Falha ao salvar: ${result.error || "sem detalhe"}`);
     } catch (error) {
       setStatus(`Falha ao salvar: ${error.message}`);
     }
@@ -2488,7 +2816,7 @@ function StructuredFilePanel({ file, titlePrefix = "arquivo", inline = false }) 
       <div className="detail-toolbar">
         {kind === "md" || kind === "markdown" ? <button className={mode === "read" ? "primary-button" : "ghost-button"} type="button" onClick={() => setMode("read")}>Leitura</button> : null}
         {canUseFields ? <button className={mode === "fields" ? "primary-button" : "ghost-button"} type="button" onClick={() => setMode("fields")}>Campos</button> : null}
-        <button className={mode === "raw" ? "primary-button" : "ghost-button"} type="button" onClick={() => setMode("raw")}>Arquivo</button>
+	        <button className={mode === "raw" ? "primary-button" : "ghost-button"} type="button" onClick={() => setMode("raw")}>Texto bruto</button>
       </div>
       {mode === "read" ? (
         <div className="document-reader">
@@ -2523,11 +2851,11 @@ function StructuredFilePanel({ file, titlePrefix = "arquivo", inline = false }) 
         </>
       ) : (
         <div className="api-form single-column-form">
-          <label>Conteudo<textarea value={draft} onChange={(event) => setDraft(event.target.value)} /></label>
+	          <label>Conteudo do arquivo<textarea value={draft} onChange={(event) => setDraft(event.target.value)} /></label>
         </div>
       )}
       <div className="api-editor-actions">
-        <button className="primary-button" type="button" onClick={saveFile}>Salvar via SSH</button>
+	        <button className="primary-button" type="button" onClick={saveFile}>Salvar arquivo</button>
         {status ? <span className="inline-status">{status}</span> : null}
       </div>
     </>
@@ -2553,85 +2881,705 @@ function FileEditorModal({ file, titlePrefix = "arquivo", onClose }) {
   );
 }
 
+const ownerApiScopes = ["admin", "read", "write", "ssh", "kanban", "logs"];
+const apiKeyProfiles = [
+  {
+    id: "readonly",
+    label: "Leitura segura",
+    name: "agent-readonly",
+    scopes: ["read"],
+    detail: "Dashboard, sessoes e consultas sem alterar nada.",
+  },
+  {
+    id: "operator",
+    label: "Agente operador",
+    name: "agent-operator",
+    scopes: ["read", "write", "kanban", "logs"],
+    detail: "Docs, registros, Kanban e logs. Nao executa SSH.",
+  },
+  {
+    id: "runtime",
+    label: "Agente completo",
+    name: "agent-completo",
+    scopes: ["read", "write", "ssh", "kanban", "logs"],
+    detail: "Para agentes que precisam de comandos permitidos pela conexao SSH.",
+  },
+  {
+    id: "admin",
+    label: "Admin reserva",
+    name: "admin-backup",
+    scopes: ownerApiScopes,
+    detail: "Outra key completa para administrar, revogar e recuperar acesso.",
+  },
+];
+
 function Config({ data }) {
-  const files = data.hermes?.configFiles?.length
+  const { t } = useI18n();
+  const [authStatus, setAuthStatus] = useState(null);
+  const [keys, setKeys] = useState([]);
+  const [tokenDraft, setTokenDraft] = useState(() => getMissionApiToken());
+  const keyName = "Minha Okami API Key";
+  const [advancedProfile, setAdvancedProfile] = useState(apiKeyProfiles[0].id);
+  const [advancedName, setAdvancedName] = useState(apiKeyProfiles[0].name);
+  const [createdToken, setCreatedToken] = useState("");
+  const [status, setStatus] = useState("");
+  const [busyAction, setBusyAction] = useState("");
+
+  async function refreshAuth() {
+    if (!isMissionApiConfigured()) {
+      setAuthStatus({ configured: false, bootstrapAvailable: false, keyCount: 0, staticTokenConfigured: false, proxyConfigured: false });
+      setKeys([]);
+      return;
+    }
+
+    try {
+      const nextStatus = await getAuthStatus();
+      setAuthStatus(nextStatus);
+      if (nextStatus.proxyConfigured || nextStatus.staticTokenConfigured || getMissionApiToken()) {
+        try {
+          setKeys(await listApiKeys());
+        } catch {
+          setKeys([]);
+        }
+      } else {
+        setKeys([]);
+      }
+    } catch (error) {
+      setStatus(`Falha ao ler auth: ${error.message}`);
+    }
+  }
+
+  useEffect(() => {
+    refreshAuth();
+  }, []);
+
+  function saveToken() {
+    saveMissionApiToken(tokenDraft.trim());
+    setStatus(tokenDraft.trim() ? "Acesso vinculado a este navegador." : "Acesso removido deste navegador.");
+    refreshAuth();
+  }
+
+  function clearToken() {
+    clearMissionApiToken();
+    setTokenDraft("");
+    setKeys([]);
+    setStatus("Acesso local removido. Prepare ou cole outra key para acessar o servidor.");
+  }
+
+  async function maybeCopyToken(token) {
+    if (!token) return false;
+    try {
+      await navigator.clipboard.writeText(token);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async function generateOwnerKey() {
+    if (!isMissionApiConfigured()) {
+      setStatus("Modo demo ativo. Inicie a API local para preparar um acesso real.");
+      return null;
+    }
+
+    setBusyAction("owner");
+    setStatus("Preparando acesso do painel...");
+    try {
+      const latestStatus = authStatus ?? await getAuthStatus();
+      const name = keyName.trim() || "Minha Okami API Key";
+      let result;
+
+      if (latestStatus?.bootstrapAvailable) {
+        result = await bootstrapApiKey(name);
+      } else if (latestStatus?.localDevTrusted || latestStatus?.proxyConfigured || latestStatus?.staticTokenConfigured || getMissionApiToken()) {
+        result = await createApiKey({ name, scopes: ownerApiScopes });
+        if (result?.token) saveMissionApiToken(result.token);
+      } else {
+        setStatus("Ja existe uma key no servidor. Cole uma key admin existente abaixo para este navegador poder criar novos acessos.");
+        return null;
+      }
+
+      if (!result?.token) {
+        setStatus("O servidor nao retornou uma key nova. Recarregue o status e tente novamente.");
+        return null;
+      }
+
+      setCreatedToken(result.token);
+      setTokenDraft(result.token);
+      const copied = await maybeCopyToken(result.token);
+      setStatus(copied
+        ? "Acesso do painel criado, vinculado a este navegador e copiado."
+        : "Acesso do painel criado e vinculado a este navegador. Guarde a key exibida abaixo como backup.");
+      await refreshAuth();
+      return result;
+    } catch (error) {
+      setStatus(`Falha ao preparar acesso: ${error.message}`);
+      return null;
+    } finally {
+      setBusyAction("");
+    }
+  }
+
+  async function ensurePanelAccess() {
+    if (!isMissionApiConfigured()) return true;
+    if (getMissionApiToken() || authStatus?.localDevTrusted || authStatus?.proxyConfigured || authStatus?.staticTokenConfigured) return true;
+
+    const latestStatus = await getAuthStatus();
+    setAuthStatus(latestStatus);
+    if (latestStatus?.bootstrapAvailable) {
+      const result = await generateOwnerKey();
+      return Boolean(result?.token || getMissionApiToken());
+    }
+
+    setStatus("Para conectar agentes, vincule primeiro uma key admin existente neste navegador.");
+    return false;
+  }
+
+  async function generateAdvancedKey() {
+    const profile = apiKeyProfiles.find((item) => item.id === advancedProfile) ?? apiKeyProfiles[0];
+    const name = advancedName.trim() || profile.name;
+    if (!name) {
+      setStatus("Informe um nome para a key.");
+      return;
+    }
+
+    setBusyAction("advanced");
+    setStatus(`Gerando key ${name}...`);
+    try {
+      const result = await createApiKey({ name, scopes: profile.scopes });
+      setCreatedToken(result.token);
+      const copied = await maybeCopyToken(result.token);
+      setStatus(copied
+        ? `Key ${result.key.name} criada e copiada.`
+        : `Key ${result.key.name} criada. Copie agora; ela nao sera exibida de novo.`);
+      await refreshAuth();
+    } catch (error) {
+      setStatus(`Falha ao gerar key: ${error.message}`);
+    } finally {
+      setBusyAction("");
+    }
+  }
+
+  async function revokeKey(id) {
+    setStatus("Revogando key...");
+    try {
+      await revokeApiKey(id);
+      setStatus("Key revogada.");
+      await refreshAuth();
+    } catch (error) {
+      setStatus(`Falha ao revogar: ${error.message}`);
+    }
+  }
+
+  async function copyCreatedToken() {
+    if (!createdToken) return;
+    try {
+      await navigator.clipboard.writeText(createdToken);
+      setStatus("API key copiada.");
+    } catch {
+      setStatus("Nao consegui copiar automaticamente. Selecione a key manualmente.");
+    }
+  }
+
+  const tokenPreview = tokenDraft ? `${tokenDraft.slice(0, 18)}...${tokenDraft.slice(-8)}` : "nao vinculada";
+  const canBootstrap = authStatus?.bootstrapAvailable;
+  const hasAdminKey = keys.some((key) => key.scopes?.includes("admin") && !key.revokedAt) || authStatus?.localDevTrusted || authStatus?.proxyConfigured || authStatus?.staticTokenConfigured;
+  const canCreateManagedKey = hasAdminKey || Boolean(getMissionApiToken());
+  const advancedProfileData = apiKeyProfiles.find((item) => item.id === advancedProfile) ?? apiKeyProfiles[0];
+  const activeRuntimeCount = (data?.agentRuntimes ?? []).filter((runtime) => !/missing|template|planned/i.test(String(runtime.status))).length;
+
+  return (
+    <section className="view is-active admin-page config-hub">
+      <AdminHero
+        eyebrow={`§08 / ${t("section.config.eyebrow")}`}
+        title={t("section.config.title")}
+        description="Conecte o servidor e os agentes em um unico lugar. O painel prepara as keys automaticamente, sem pedir edicao manual de arquivo."
+        stats={[
+          { label: "Servidor", value: isMissionApiConfigured() ? "api" : "demo" },
+          { label: "Acesso", value: tokenDraft || authStatus?.localDevTrusted || authStatus?.proxyConfigured ? "auto" : "pendente" },
+          { label: "Navegador", value: tokenDraft ? "vinculado" : "sem key" },
+          { label: "Agentes", value: data?.agentRuntimes?.length ?? activeRuntimeCount },
+        ]}
+      />
+
+      <nav className="config-hub-nav" aria-label="Atalhos de agentes">
+        <button type="button" onClick={() => document.getElementById("config-hermes")?.scrollIntoView({ behavior: "smooth", block: "start" })}>Servidor dos agentes</button>
+        <button type="button" onClick={() => document.getElementById("config-agents")?.scrollIntoView({ behavior: "smooth", block: "start" })}>Agentes conectados</button>
+        <button type="button" onClick={() => document.getElementById("config-access")?.scrollIntoView({ behavior: "smooth", block: "start" })}>Acesso avancado</button>
+      </nav>
+
+      <section className="config-hub-section" id="config-hermes">
+        <Hermes data={data} embedded ensurePanelAccess={ensurePanelAccess} />
+      </section>
+
+      <section className="config-hub-section" id="config-agents">
+        <AgentRuntimes data={data} embedded ensurePanelAccess={ensurePanelAccess} />
+      </section>
+
+      <details className="panel config-access-panel config-access-details" id="config-access">
+        <summary>Acesso e keys (avancado)</summary>
+        <div className="config-access-main">
+          <div>
+            <div className="panel-title"><h3>Acesso do painel</h3><span>{canBootstrap ? "primeiro acesso" : "acesso"}</span></div>
+            <p className="management-summary">
+              O painel prepara esse acesso automaticamente ao conectar servidor ou agente. A key aparece aqui apenas como backup.
+            </p>
+          </div>
+          <button className="primary-button config-primary-action" disabled={busyAction === "owner"} type="button" onClick={generateOwnerKey}>
+            {busyAction === "owner" ? "Preparando..." : "Criar backup de acesso"}
+          </button>
+        </div>
+
+        <div className="config-access-grid">
+          <div className="config-status-card">
+            <h4>Status</h4>
+            <ObjectFacts data={{
+              servidor: isMissionApiConfigured() ? "conectado" : "demo",
+              chaves: authStatus?.configured ? "configuradas" : "nenhuma",
+              bootstrap: canBootstrap ? "disponivel" : "indisponivel",
+              navegador: tokenPreview,
+            }} />
+          </div>
+          <div className="config-status-card">
+            <h4>O que ela libera</h4>
+            <div className="runtime-chip-list">
+              {ownerApiScopes.map((scope) => <span key={scope}>{scope}</span>)}
+            </div>
+            <p className="management-summary">Este e o acesso completo do dono do dashboard. Para agentes, prefira o botao Conectar agente abaixo.</p>
+          </div>
+        </div>
+
+        {createdToken ? (
+          <div className="config-key-output">
+            <label>Key criada agora (backup)<textarea readOnly value={createdToken} /></label>
+            <button className="primary-button" type="button" onClick={copyCreatedToken}>Copiar key</button>
+          </div>
+        ) : null}
+
+        {status ? <p className="api-status-strip tone-dirty">{status}</p> : null}
+
+        <details className="config-advanced">
+          <summary>Avancado: colar key existente ou gerar uma key manual</summary>
+          <div className="config-advanced-grid">
+            <article>
+              <div className="panel-title"><h3>Vincular key existente</h3><span>navegador</span></div>
+              <div className="api-form single-column-form">
+                <label>Okami API Key<input value={tokenDraft} onChange={(event) => setTokenDraft(event.target.value)} placeholder="okami_key_..." /></label>
+              </div>
+              <div className="api-editor-actions">
+                <button className="primary-button" type="button" onClick={saveToken}>Vincular key</button>
+                <button className="ghost-button" type="button" onClick={clearToken}>Remover deste navegador</button>
+                <button className="ghost-button" type="button" onClick={refreshAuth}>Recarregar status</button>
+              </div>
+            </article>
+
+            <article>
+              <div className="panel-title"><h3>Key manual</h3><span>suporte</span></div>
+              <div className="api-form single-column-form">
+                <label>Perfil<select value={advancedProfile} onChange={(event) => {
+                  const profile = apiKeyProfiles.find((item) => item.id === event.target.value) ?? apiKeyProfiles[0];
+                  setAdvancedProfile(profile.id);
+                  setAdvancedName(profile.name);
+                }}>
+                  {apiKeyProfiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.label}</option>)}
+                </select></label>
+                <label>Nome da key<input value={advancedName} onChange={(event) => setAdvancedName(event.target.value)} /></label>
+              </div>
+              <p className="management-summary">{advancedProfileData.detail}</p>
+              <div className="runtime-chip-list">
+                {advancedProfileData.scopes.map((scope) => <span key={scope}>{scope}</span>)}
+              </div>
+              <div className="api-editor-actions">
+                <button className="primary-button" disabled={!canCreateManagedKey || busyAction === "advanced"} type="button" onClick={generateAdvancedKey}>
+                  {busyAction === "advanced" ? "Gerando..." : "Gerar key manual"}
+                </button>
+              </div>
+            </article>
+          </div>
+        </details>
+
+        <article className="config-key-list">
+          <div className="panel-title"><h3>Acessos cadastrados</h3><span>{keys.length}</span></div>
+          <div className="data-table api-key-table">
+            <div><span>nome</span><span>prefixo</span><span>scopes</span><span>ultimo uso</span><span>acao</span></div>
+            {keys.length ? keys.map((key) => (
+              <div key={key.id}>
+                <b>{key.name}</b>
+                <span>{key.tokenPrefix}</span>
+                <span>{key.scopes?.join(", ")}</span>
+                <span>{key.lastUsedAt ?? "nunca"}</span>
+                <button className="danger-button" disabled={key.revokedAt || !hasAdminKey} type="button" onClick={() => revokeKey(key.id)}>Revogar</button>
+              </div>
+            )) : (
+              <div><b>Nenhuma key listada</b><span>vincule uma key admin para listar</span><span>-</span><span>-</span><span>-</span></div>
+            )}
+          </div>
+        </article>
+      </details>
+    </section>
+  );
+}
+
+function runtimeMatchesAgent(runtime, agent) {
+  const runtimeId = normalizeToken(runtime?.id);
+  const haystack = `${agent?.id ?? ""} ${agent?.name ?? ""} ${agent?.tool ?? ""} ${agent?.role ?? ""}`.toLowerCase();
+  if (runtimeId === "hermes") return haystack.includes("hermes");
+  if (runtimeId === "codex") return haystack.includes("codex");
+  if (runtimeId === "claude") return haystack.includes("claude");
+  if (runtimeId === "openclaw") return haystack.includes("openclaw");
+  if (runtimeId === "openhuman") return haystack.includes("openhuman");
+  return runtimeId ? haystack.includes(runtimeId) : false;
+}
+
+function normalizeAgentRuntimes(data) {
+  const legacyHermesFiles = data.hermes?.configFiles?.length
     ? data.hermes.configFiles
     : [
       { name: "config.yaml", path: data.hermes?.configPath ?? "~/.hermes/config.yaml", profile: "global", type: "yaml", content: "Aguardando leitura real via SSH." },
       { name: ".env", path: data.hermes?.envPath ?? "~/.hermes/.env", profile: "global", type: "env", content: "Aguardando leitura real via SSH." },
     ];
-  const profiles = Array.from(new Set(files.map((file) => file.profile ?? "global")));
-  const [selectedProfile, setSelectedProfile] = useState(profiles[0] ?? "global");
-  const profileFiles = files.filter((file) => (file.profile ?? "global") === selectedProfile);
-  const [selectedPath, setSelectedPath] = useState(profileFiles[0]?.path ?? null);
-  const selectedFile = profileFiles.find((file) => file.path === selectedPath) ?? profileFiles[0] ?? null;
-  const profileCounts = profiles.map((profile) => ({
-    profile,
-    count: files.filter((file) => (file.profile ?? "global") === profile).length,
-  }));
+	  const baseRuntimes = data.agentRuntimes?.length ? data.agentRuntimes : [{
+	    id: "hermes",
+	    name: "Agente principal",
+	    family: "orchestrator",
+	    status: data.hermes?.sshStatus?.status ?? "needs-ssh",
+	    command: "hermes",
+	    home: data.hermes?.hermesHome ?? "~/.hermes",
+	    configPath: data.hermes?.configPath ?? "~/.hermes/config.yaml",
+	    workspacePath: `${data.hermes?.hermesHome ?? "~/.hermes"}/profiles`,
+	    dashboardUrl: data.hermes?.localDashboard ?? "privado via SSH",
+	    summary: "Agente principal detectado a partir da conexao SSH dos agentes.",
+	    recommendedScopes: ["read", "ssh", "kanban", "logs"],
+	    suggestedKeyName: "hermes-runtime",
+	    capabilities: ["state.db", "kanban.db", "profiles", "logs"],
+		    setup: ["Conectar servidor", "Ler arquivos remotos", "Conectar agentes"],
+	    configs: legacyHermesFiles,
+	    instances: data.agents ?? [],
+	  }];
+
+  return baseRuntimes.map((runtime) => {
+    const isHermes = runtime.id === "hermes";
+    const configs = isHermes && legacyHermesFiles.length ? legacyHermesFiles : runtime.configs ?? [];
+    const derivedInstances = (data.agents ?? []).filter((agent) => runtimeMatchesAgent(runtime, agent));
+    return {
+      ...runtime,
+      configs,
+      instances: derivedInstances.length ? derivedInstances : runtime.instances ?? [],
+      recommendedScopes: runtime.recommendedScopes ?? ["read"],
+      capabilities: runtime.capabilities ?? [],
+      setup: runtime.setup ?? [],
+      commands: runtime.commands ?? [],
+    };
+  });
+}
+
+function mergeRuntimeList(baseRuntimes, extraRuntimes) {
+  const byId = new Map();
+  [...baseRuntimes, ...extraRuntimes].forEach((runtime) => {
+    if (!runtime?.id) return;
+    byId.set(runtime.id, { ...(byId.get(runtime.id) ?? {}), ...runtime });
+  });
+  return [...byId.values()];
+}
+
+function createRuntimeDraft(seed = {}) {
+  const id = normalizeToken(seed.id || seed.name || "my-agent") || "my-agent";
+  const configPath = seed.configPath || "~/.agents/registry.json";
+  return {
+    id,
+    name: seed.name || "Meu agente",
+    family: seed.family || "custom",
+    command: seed.command || `${id} status`,
+    home: seed.home || `~/.agents/workspaces/${id}`,
+    configPath,
+    workspacePath: seed.workspacePath || seed.workspace || `~/.agents/workspaces/${id}`,
+    dashboardUrl: seed.dashboardUrl || "custom",
+    recommendedScopes: seed.recommendedScopes || ["read"],
+    suggestedKeyName: seed.suggestedKeyName || `${id}-agent`,
+    summary: seed.summary || "Agente externo registrado para operar pelo Okami Monitor.",
+  };
+}
+
+function AgentRuntimes({ data, embedded = false, ensurePanelAccess = async () => true }) {
+  const { t } = useI18n();
+  const [localRuntimes, setLocalRuntimes] = useState([]);
+  const runtimes = useMemo(() => mergeRuntimeList(normalizeAgentRuntimes(data), localRuntimes), [data, localRuntimes]);
+  const [selectedRuntimeId, setSelectedRuntimeId] = useState(runtimes[0]?.id ?? "hermes");
+  const selectedRuntime = runtimes.find((runtime) => runtime.id === selectedRuntimeId) ?? runtimes[0];
+  const runtimeConfigs = selectedRuntime?.configs ?? [];
+  const [selectedPath, setSelectedPath] = useState(runtimeConfigs[0]?.path ?? null);
+  const selectedFile = runtimeConfigs.find((file) => file.path === selectedPath) ?? runtimeConfigs[0] ?? null;
+  const activeRuntimeCount = runtimes.filter((runtime) => !/missing|template|planned/i.test(String(runtime.status))).length;
+	  const [runtimeDraft, setRuntimeDraft] = useState(() => createRuntimeDraft());
+	  const [runtimeStatus, setRuntimeStatus] = useState("");
+	  const [commandOutput, setCommandOutput] = useState("");
+	  const [connectingRuntimeId, setConnectingRuntimeId] = useState("");
 
   useEffect(() => {
-    if (!profiles.includes(selectedProfile)) setSelectedProfile(profiles[0] ?? "global");
-  }, [profiles.join("|"), selectedProfile]);
+    if (!runtimes.some((runtime) => runtime.id === selectedRuntimeId)) {
+      setSelectedRuntimeId(runtimes[0]?.id ?? "hermes");
+    }
+  }, [runtimes.map((runtime) => runtime.id).join("|"), selectedRuntimeId]);
 
   useEffect(() => {
-    if (!profileFiles.some((file) => file.path === selectedPath)) setSelectedPath(profileFiles[0]?.path ?? null);
-  }, [selectedProfile, profileFiles.map((file) => file.path).join("|"), selectedPath]);
+    if (!runtimeConfigs.some((file) => file.path === selectedPath)) {
+      setSelectedPath(runtimeConfigs[0]?.path ?? null);
+    }
+  }, [selectedRuntimeId, runtimeConfigs.map((file) => file.path).join("|"), selectedPath]);
+
+  function updateRuntimeDraft(field, value) {
+    setRuntimeDraft((current) => {
+      const next = { ...current, [field]: value };
+      if (field === "id") {
+        const id = normalizeToken(value) || value;
+        next.suggestedKeyName = current.suggestedKeyName === `${current.id}-agent` ? `${id}-agent` : current.suggestedKeyName;
+        if (current.command === `${current.id} status`) next.command = `${id} status`;
+        if (current.home === `~/.agents/workspaces/${current.id}`) next.home = `~/.agents/workspaces/${id}`;
+        if (current.workspacePath === `~/.agents/workspaces/${current.id}`) next.workspacePath = `~/.agents/workspaces/${id}`;
+      }
+      return next;
+    });
+  }
+
+	  async function connectRuntime(runtime) {
+	    if (!runtime?.id) return;
+	    setConnectingRuntimeId(runtime.id);
+	    setRuntimeStatus(`Conectando ${runtime.name}...`);
+	    try {
+	      const hasAccess = await ensurePanelAccess();
+	      if (!hasAccess) {
+	        setRuntimeStatus("Antes de conectar agentes, vincule o acesso do painel neste navegador.");
+	        return;
+	      }
+
+	      const result = await connectAgentRuntime(runtime);
+	      const connectedRuntime = result.runtime ?? runtime;
+	      setLocalRuntimes((current) => mergeRuntimeList(current, [connectedRuntime]));
+	      setSelectedRuntimeId(connectedRuntime.id);
+	      setRuntimeStatus(result.injection?.saved
+	        ? `${connectedRuntime.name} conectado. Acesso aplicado em ${result.injection.path}.`
+	        : `${connectedRuntime.name} com acesso pronto no painel. ${result.injection?.message ?? "Configure o SSH dos agentes para aplicar automaticamente no servidor."}`);
+	    } catch (error) {
+	      setRuntimeStatus(`Falha ao conectar agente: ${error.message}`);
+	    } finally {
+	      setConnectingRuntimeId("");
+	    }
+	  }
+
+	  async function connectRuntimeDraft() {
+	    const id = normalizeToken(runtimeDraft.id);
+	    if (!id) {
+	      setRuntimeStatus("Informe um identificador simples para o agente.");
+	      return;
+	    }
+	    const runtime = {
+      ...runtimeDraft,
+      id,
+      recommendedScopes: runtimeDraft.recommendedScopes,
+      commands: [{ label: "Health", command: runtimeDraft.command }],
+      configs: [{
+        name: runtimeDraft.configPath.split("/").pop() || "registry.json",
+        path: runtimeDraft.configPath,
+        runtime: id,
+        profile: "global",
+        type: runtimeDraft.configPath.split(".").pop() || "json",
+        content: "",
+      }],
+      instances: [{
+        id,
+        name: runtimeDraft.name,
+        role: runtimeDraft.family,
+        status: "registered",
+	        workspace: runtimeDraft.workspacePath,
+	      }],
+	    };
+	    await connectRuntime(runtime);
+	  }
+
+  async function deleteSelectedRuntime() {
+    if (!selectedRuntime?.id || ["hermes", "openclaw", "openhuman", "claude", "codex", "custom"].includes(selectedRuntime.id)) {
+	      setRuntimeStatus("Remova apenas agentes externos registrados por voce.");
+      return;
+    }
+	    setRuntimeStatus(`Removendo ${selectedRuntime.name}...`);
+    try {
+      await deleteAgentRuntimeConfig(selectedRuntime);
+      setLocalRuntimes((current) => current.filter((runtime) => runtime.id !== selectedRuntime.id));
+      setSelectedRuntimeId("custom");
+	      setRuntimeStatus(`Agente ${selectedRuntime.name} removido.`);
+    } catch (error) {
+      setRuntimeStatus(`Falha ao remover agente: ${error.message}`);
+    }
+  }
+
+  async function runRuntimeCommand(command) {
+    setCommandOutput(`Executando ${command}...`);
+    try {
+      const result = await runHermesCommand(command);
+      setCommandOutput(result.output || `Comando finalizado com exit ${result.exitCode}`);
+    } catch (error) {
+      setCommandOutput(`Falha ao executar comando: ${error.message}`);
+    }
+  }
 
   return (
-    <section className="view is-active admin-page">
-      <AdminHero
-        eyebrow="§08 / hermes config"
-        title="Config por agente"
-        description="Mapeie YAML, JSON e ENV em campos editaveis para operar o Hermes sem abrir arquivo bruto."
-        stats={[
-          { label: "Perfis", value: profiles.length },
-          { label: "Arquivos", value: files.length },
-          { label: "Selecionado", value: selectedProfile },
-        ]}
-      />
-      <div className="ok-filter-bar" role="search" aria-label="Filtros de config">
-        <label className="ok-filter-bar__field">
-          <span className="ok-filter-bar__label">Perfil</span>
-          <select value={selectedProfile} onChange={(event) => setSelectedProfile(event.target.value)}>
-            {profiles.map((profile) => <option key={profile} value={profile}>{profile}</option>)}
+	    <section className={embedded ? "config-embedded-block agent-runtime-embedded" : "view is-active admin-page"}>
+	      {embedded ? (
+	        <SectionHead eyebrow={t("section.config.eyebrow")} title={t("section.config.title")}>
+	          <select className="okami-select" value={selectedRuntimeId} onChange={(event) => setSelectedRuntimeId(event.target.value)}>
+	            {runtimes.map((runtime) => <option key={runtime.id} value={runtime.id}>{runtime.name}</option>)}
+	          </select>
+	        </SectionHead>
+	      ) : (
+	        <AdminHero
+	          eyebrow={`§09 / ${t("section.config.eyebrow")}`}
+	          title={t("section.config.title")}
+	          description="Conecte OpenClaw, OpenHuman, Claude, Codex e outros agentes com key automatica, arquivos editaveis e comandos permitidos."
+	          stats={[
+	            { label: "Agentes", value: runtimes.length },
+	            { label: "Ativos", value: activeRuntimeCount },
+	            { label: "Arquivos", value: runtimeConfigs.length },
+	            { label: "Selecionado", value: selectedRuntime?.name ?? "-" },
+	          ]}
+        >
+          <select className="okami-select" value={selectedRuntimeId} onChange={(event) => setSelectedRuntimeId(event.target.value)}>
+            {runtimes.map((runtime) => <option key={runtime.id} value={runtime.id}>{runtime.name}</option>)}
           </select>
-        </label>
-        <div className="ok-filter-bar__result">
-          <span>{profileFiles.length}</span>
-          <small>arquivos no perfil</small>
-        </div>
-      </div>
-      <div className="config-workbench">
-        <aside className="panel config-profile-rail">
-          <div className="panel-title"><h3>Perfis</h3><span>{profiles.length}</span></div>
-          <div className="tab-list">
-            {profileCounts.map((item) => (
-              <button className={item.profile === selectedProfile ? "is-active" : ""} key={item.profile} type="button" onClick={() => setSelectedProfile(item.profile)}>
-                <b>{item.profile}</b>
-                <span>{item.count} configs disponiveis</span>
+        </AdminHero>
+	      )}
+	      <article className="panel runtime-register-panel">
+	        <div className="panel-title"><h3>Conectar novo agente</h3><span>automatico</span></div>
+	        <p className="management-summary">
+	          O painel cria a key do agente, guarda o segredo no cofre e tenta preparar o arquivo de acesso no workspace remoto. O usuario nao precisa colar key em arquivo.
+	        </p>
+	        <div className="api-form runtime-register-form">
+	          <label>Identificador<input value={runtimeDraft.id} onChange={(event) => updateRuntimeDraft("id", event.target.value)} placeholder="opencode" /></label>
+	          <label>Nome<input value={runtimeDraft.name} onChange={(event) => updateRuntimeDraft("name", event.target.value)} placeholder="OpenCode" /></label>
+	          <label>Tipo<input value={runtimeDraft.family} onChange={(event) => updateRuntimeDraft("family", event.target.value)} placeholder="coding-cli" /></label>
+	          <label>Comando de teste<input value={runtimeDraft.command} onChange={(event) => updateRuntimeDraft("command", event.target.value)} placeholder="opencode status" /></label>
+	          <label>Pasta do agente<input value={runtimeDraft.home} onChange={(event) => updateRuntimeDraft("home", event.target.value)} placeholder="~/.agents/workspaces/opencode" /></label>
+	          <label>Arquivo principal<input value={runtimeDraft.configPath} onChange={(event) => updateRuntimeDraft("configPath", event.target.value)} placeholder="~/.agents/registry.json" /></label>
+	          <label>Workspace<input value={runtimeDraft.workspacePath} onChange={(event) => updateRuntimeDraft("workspacePath", event.target.value)} placeholder="~/.agents/workspaces/opencode" /></label>
+	          <label>Nome interno da key<input value={runtimeDraft.suggestedKeyName} onChange={(event) => updateRuntimeDraft("suggestedKeyName", event.target.value)} /></label>
+	        </div>
+	        <div className="api-editor-actions">
+	          <button className="primary-button" disabled={connectingRuntimeId === normalizeToken(runtimeDraft.id)} type="button" onClick={connectRuntimeDraft}>
+	            {connectingRuntimeId === normalizeToken(runtimeDraft.id) ? "Conectando..." : "Conectar agente"}
+	          </button>
+	          <button className="ghost-button" type="button" onClick={() => setRuntimeDraft(createRuntimeDraft())}>Limpar</button>
+	          {runtimeStatus ? <span className="inline-status">{runtimeStatus}</span> : null}
+	        </div>
+	      </article>
+	      <div className="config-workbench agent-runtime-workbench">
+	        <aside className="panel config-profile-rail">
+	          <div className="panel-title"><h3>Agentes</h3><span>{runtimes.length}</span></div>
+	          <div className="tab-list">
+	            {runtimes.map((runtime) => (
+	              <button className={runtime.id === selectedRuntimeId ? "is-active" : ""} key={runtime.id} type="button" onClick={() => setSelectedRuntimeId(runtime.id)}>
+	                <b>{runtime.name}</b>
+                <span>{runtime.status ?? "unknown"} · {runtime.family ?? "agent"}</span>
               </button>
             ))}
           </div>
-        </aside>
-        <aside className="panel management-list config-file-rail">
-          <div className="panel-title"><h3>Arquivos</h3><span>{profileFiles.length}</span></div>
-          <div className="tab-list">
-            {profileFiles.map((file) => (
+	        </aside>
+	        <aside className="panel management-list config-file-rail">
+	          <div className="panel-title"><h3>Arquivos do agente</h3><span>{runtimeConfigs.length}</span></div>
+	          <div className="tab-list">
+            {runtimeConfigs.length ? runtimeConfigs.map((file) => (
               <button className={file.path === selectedFile?.path ? "is-active" : ""} key={file.path} type="button" onClick={() => setSelectedPath(file.path)}>
                 <b>{file.name}</b>
-                <span>{fileKind(file)} · {file.path}</span>
+                <span>{fileKind(file)} · {file.profile ?? selectedRuntime.id} · {file.path}</span>
               </button>
-            ))}
-          </div>
-        </aside>
-        <StructuredFilePanel file={selectedFile} titlePrefix="config" inline />
+	            )) : (
+	              <button className="is-active" type="button">
+	                <b>Sem arquivo</b>
+	                <span>defina um arquivo principal para este agente</span>
+	              </button>
+	            )}
+	          </div>
+	        </aside>
+	        <article className="panel management-detail agent-runtime-detail">
+	          <div className="panel-title"><h3>{selectedRuntime?.name ?? "Agente"}</h3><span>{selectedRuntime?.family ?? "agent"}</span></div>
+	          <p className="management-summary">{selectedRuntime?.summary ?? "Agente sem descricao cadastrada."}</p>
+	          <ObjectFacts data={{
+	            status: selectedRuntime?.status ?? "unknown",
+	            acesso: selectedRuntime?.apiKey?.injectionStatus ?? "pendente",
+	            key: selectedRuntime?.apiKey?.tokenPrefix ?? "nao criada",
+	            comando: selectedRuntime?.command ?? "-",
+	            pasta: selectedRuntime?.home ?? "-",
+	            arquivo: selectedRuntime?.configPath ?? "-",
+	            workspace: selectedRuntime?.workspacePath ?? "-",
+	            arquivo_de_acesso: selectedRuntime?.apiKey?.envPath ?? "-",
+	          }} />
+	          <div className="runtime-link-row">
+	            {selectedRuntime?.docsUrl ? <a className="ghost-button" href={selectedRuntime.docsUrl} rel="noreferrer" target="_blank">Docs</a> : null}
+	            {selectedRuntime?.repoUrl ? <a className="ghost-button" href={selectedRuntime.repoUrl} rel="noreferrer" target="_blank">Repo</a> : null}
+	            <span>key interna: {selectedRuntime?.suggestedKeyName ?? `${selectedRuntime?.id ?? "agent"}-key`}</span>
+	          </div>
+	          <div className="api-editor-actions">
+	            <button className="primary-button" disabled={!selectedRuntime || connectingRuntimeId === selectedRuntime.id} type="button" onClick={() => connectRuntime(selectedRuntime)}>
+	              {connectingRuntimeId === selectedRuntime?.id ? "Conectando..." : selectedRuntime?.apiKey ? "Renovar acesso do agente" : "Conectar agente"}
+	            </button>
+	            <button className="ghost-button" type="button" onClick={() => setRuntimeDraft(createRuntimeDraft(selectedRuntime))}>Usar como base</button>
+	            <button className="danger-button" type="button" onClick={deleteSelectedRuntime}>Remover agente externo</button>
+	          </div>
+	          <div className="agent-runtime-sections">
+            <section>
+              <div className="panel-title compact"><h3>Capacidades</h3><span>{selectedRuntime?.capabilities?.length ?? 0}</span></div>
+              <div className="runtime-chip-list">
+                {(selectedRuntime?.capabilities?.length ? selectedRuntime.capabilities : ["metadata flexivel"]).map((item) => <span key={item}>{item}</span>)}
+              </div>
+            </section>
+	            <section>
+	              <div className="panel-title compact"><h3>Permissoes</h3><span>key do agente</span></div>
+	              <div className="runtime-chip-list">
+	                {(selectedRuntime?.recommendedScopes ?? ["read"]).map((scope) => <span key={scope}>{scope}</span>)}
+	              </div>
+	            </section>
+	            <section>
+	              <div className="panel-title compact"><h3>Pendencias</h3><span>{selectedRuntime?.setup?.length ?? 0}</span></div>
+	              <div className="runtime-list">
+	                {(selectedRuntime?.setup?.length ? selectedRuntime.setup : ["Cadastrar comando de teste e arquivo principal"]).map((item) => <p key={item}>{item}</p>)}
+	              </div>
+	            </section>
+            <section>
+              <div className="panel-title compact"><h3>Comandos</h3><span>{selectedRuntime?.commands?.length ?? 0}</span></div>
+              <div className="runtime-list">
+                {(selectedRuntime?.commands?.length ? selectedRuntime.commands : [{ label: "Health", command: `${selectedRuntime?.command ?? "agent"} status` }]).map((item) => (
+                  <p key={`${item.label}-${item.command}`}>
+                    <b>{item.label}</b>
+                    <code>{item.command}</code>
+                    <button className="ghost-button" type="button" onClick={() => runRuntimeCommand(item.command)}>Executar</button>
+                  </p>
+                ))}
+              </div>
+            </section>
+	          </div>
+	          {commandOutput ? <pre className="okami-pre runtime-command-output">{commandOutput}</pre> : null}
+	          <div className="runtime-instance-strip">
+	            <div className="panel-title compact"><h3>Instancias</h3><span>{selectedRuntime?.instances?.length ?? 0}</span></div>
+            <div>
+	              {(selectedRuntime?.instances?.length ? selectedRuntime.instances : [{ id: "empty", name: "Sem instancia detectada", role: "configure este agente", status: "idle", workspace: selectedRuntime?.workspacePath ?? "-" }]).map((instance) => (
+                <article key={instance.id ?? instance.name}>
+                  <b>{instance.name}</b>
+                  <span>{instance.status ?? "unknown"} · {instance.role ?? "agent"}</span>
+                  <small>{instance.workspace ?? selectedRuntime?.workspacePath ?? "-"}</small>
+                </article>
+              ))}
+            </div>
+	          </div>
+	          <div className="runtime-file-panel">
+	            <div className="panel-title compact"><h3>Editar arquivo do agente</h3><span>{selectedFile ? fileKind(selectedFile) : "sem arquivo"}</span></div>
+	            <StructuredFilePanel file={selectedFile} titlePrefix={`${selectedRuntime?.name ?? "agente"} arquivo`} />
+	          </div>
+        </article>
       </div>
     </section>
   );
 }
 
 function Profiles({ data }) {
+  const { t } = useI18n();
   const docs = data.hermes?.profileDocs ?? [];
   const agents = data.agents ?? [];
   const groupedDocs = docs.reduce((groups, doc) => {
@@ -2656,8 +3604,8 @@ function Profiles({ data }) {
   return (
     <section className="view is-active admin-page">
       <AdminHero
-        eyebrow="§09 / agent profiles"
-        title="Perfis, soul, identity e agents.md"
+        eyebrow={`§09 / ${t("section.profiles.eyebrow")}`}
+        title={t("section.profiles.title")}
         description="Leia e edite os arquivos de personalidade, memoria e instrucao das agentes em modo leitor ou arquivo."
         stats={[
           { label: "Agentes", value: agents.length },
@@ -2699,6 +3647,7 @@ function Profiles({ data }) {
 }
 
 function Skills({ data }) {
+  const { t } = useI18n();
   const skillDocs = data.hermes?.skillDocs ?? [];
   const usageSkills = data.hermes?.analytics?.skills?.length
     ? data.hermes.analytics.skills
@@ -2788,8 +3737,8 @@ function Skills({ data }) {
   return (
     <section className="view is-active admin-page">
       <AdminHero
-        eyebrow="§10 / skills registry"
-        title="Skills disponiveis no Hermes"
+        eyebrow={`§10 / ${t("section.skills.eyebrow")}`}
+        title={t("section.skills.title")}
         description="Cruza uso real das skills com arquivos encontrados na VPS; quando nao ha SKILL.md, mostra o registro real de uso."
         stats={[
           { label: "Skills", value: skills.length },
@@ -2872,7 +3821,7 @@ function Skills({ data }) {
                 <label>Editar conteudo<textarea value={skillDraft} onChange={(event) => setSkillDraft(event.target.value)} /></label>
               </div>
               <div className="api-editor-actions">
-                <button className="primary-button" type="button" onClick={saveSkillDoc}>Salvar via SSH</button>
+                <button className="primary-button" type="button" onClick={saveSkillDoc}>Salvar arquivo</button>
                 {skillStatus ? <span className="inline-status">{skillStatus}</span> : null}
               </div>
             </>
@@ -2884,6 +3833,7 @@ function Skills({ data }) {
 }
 
 function Cron({ data }) {
+  const { t } = useI18n();
   const jobs = data.hermes?.jobs?.length ? data.hermes.jobs : [];
   const [selectedId, setSelectedId] = useState(jobs[0]?.id ?? "");
   const selectedJob = jobs.find((job) => job.id === selectedId) ?? jobs[0];
@@ -2928,8 +3878,8 @@ function Cron({ data }) {
   return (
     <section className="view is-active admin-page">
       <AdminHero
-        eyebrow="§11 / automation"
-        title="Crons e timers ativados"
+        eyebrow={`§11 / ${t("section.cron.eyebrow")}`}
+        title={t("section.cron.title")}
         description="Gerencie crontab e timers systemd com presets de horario, preview da linha final e salvamento via SSH."
         stats={[
           { label: "Jobs", value: jobs.length },
@@ -3000,6 +3950,7 @@ function Cron({ data }) {
 }
 
 function Logs({ data }) {
+  const { t } = useI18n();
   const logs = data.hermes?.logLines?.length ? data.hermes.logLines : data.activity?.map((item) => `${item.actor}: ${item.message}`) ?? [];
   const events = data.hermes?.analytics?.events ?? [];
   const [query, setQuery] = useState("");
@@ -3015,8 +3966,8 @@ function Logs({ data }) {
   return (
     <section className="view is-active admin-page">
       <AdminHero
-        eyebrow="§12 / observability"
-        title="Logs e eventos do Hermes"
+        eyebrow={`§12 / ${t("section.logs.eyebrow")}`}
+        title={t("section.logs.title")}
         description="Logs recentes e eventos do state.db formatados para leitura humana, com busca e severidade visual."
         stats={[
           { label: "Logs", value: logs.length },
@@ -3122,6 +4073,7 @@ function Logs({ data }) {
 }
 
 function Sessions({ data }) {
+  const { t } = useI18n();
   const sessions = data.hermes?.sessions?.length ? data.hermes.sessions : data.hermes?.analytics?.recent ?? [];
   const [query, setQuery] = useState("");
   const [profileFilter, setProfileFilter] = useState("todos");
@@ -3178,8 +4130,8 @@ function Sessions({ data }) {
   return (
     <section className="view is-active admin-page">
       <AdminHero
-        eyebrow="§13 / state.db"
-        title="Sessoes ativas e inativas"
+        eyebrow={`§13 / ${t("section.sessions.eyebrow")}`}
+        title={t("section.sessions.title")}
         description="Separe sessões vivas e encerradas, filtre por perfil e abra o detalhe no painel lateral."
         stats={[
           { label: "Ativas", value: active.length },
@@ -3275,55 +4227,187 @@ function Sessions({ data }) {
   );
 }
 
-function Hermes({ data }) {
+function Hermes({ data, embedded = false, ensurePanelAccess = async () => true }) {
+  const { t } = useI18n();
   const toast = useToast();
   const [config, setConfig] = useState(() => {
     try {
+      if (isMissionApiConfigured()) return data.hermes;
       const savedConfig = window.localStorage.getItem("okami.hermes.config");
       return savedConfig ? { ...data.hermes, ...JSON.parse(savedConfig) } : data.hermes;
     } catch {
       return data.hermes;
     }
   });
-  const [status, setStatus] = useState(() => ({
-    tone: isMissionApiConfigured() ? "idle" : "warn",
-    message: isMissionApiConfigured()
-      ? "Configure a ponte SSH. Ela alimenta Overview, Office, Kanban, Usage e logs do dashboard."
-      : "Sem VITE_OKAMI_API_BASE_URL: testes ficam em mock/local e nao validam a VPS real.",
-  }));
-  const [keyDraft, setKeyDraft] = useState({ name: "hostinger-hermes", passphrase: "" });
+	  const [status, setStatus] = useState(() => ({
+	    tone: isMissionApiConfigured() ? "idle" : "warn",
+	    message: isMissionApiConfigured()
+	      ? "Configure o SSH do servidor onde os agentes rodam. Ele alimenta arquivos, comandos, Kanban e logs do dashboard."
+	      : "Modo demo/local: testes nao validam o servidor real dos agentes.",
+	  }));
+		  const [keyDraft, setKeyDraft] = useState({ name: "servidor-agentes", passphrase: "" });
+	  const [selectedKeyFile, setSelectedKeyFile] = useState(null);
+	  const [connectBusy, setConnectBusy] = useState(false);
   const [passwordDraft, setPasswordDraft] = useState("");
 
   useEffect(() => {
     const { sshPassword, ...persistableConfig } = config;
     try {
-      window.localStorage?.setItem("okami.hermes.config", JSON.stringify(persistableConfig));
+      if (!isMissionApiConfigured()) {
+        window.localStorage?.setItem("okami.hermes.config", JSON.stringify(persistableConfig));
+      }
     } catch {
       // Some embedded browser contexts disable storage; the backend remains the source of truth.
     }
   }, [config]);
 
-  function updateHermesConfig(field, value) {
-    setConfig((current) => ({ ...current, [field]: value }));
-    setStatus({ tone: "dirty", message: "Configuracao alterada localmente. Salve para enviar ao backend." });
-  }
+  useEffect(() => {
+    let active = true;
 
-  async function saveConfig() {
-    setStatus({ tone: "pending", message: "Salvando perfil Hermes..." });
-    try {
-      await saveHermesConfig(config);
-      const live = isMissionApiConfigured();
-      const message = live
-        ? "Perfil Hermes salvo no backend. O backend deve escrever config.yaml e .env redigindo secrets."
-        : "Perfil salvo localmente no navegador. Ainda nao validou a VPS real porque a API do backend nao esta configurada.";
-      setStatus({ tone: live ? "ok" : "warn", message });
-      if (live) toast.success("Perfil Hermes salvo", "Backend recebeu config.yaml + .env.");
-      else toast.warning("Salvo só localmente", "Configure VITE_OKAMI_API_BASE_URL pra validar na VPS.");
-    } catch (error) {
-      setStatus({ tone: "warn", message: `Falha ao salvar Hermes: ${error.message}` });
-      toast.danger("Falha ao salvar Hermes", error.message);
+    async function loadServerConfig() {
+      if (!isMissionApiConfigured()) return;
+      if (!getMissionApiToken() && !import.meta.env.PROD && !isMissionApiLocalDev()) return;
+      try {
+        const serverConfig = await getHermesConfig();
+        if (active && serverConfig) {
+          setConfig((current) => ({ ...current, ...serverConfig }));
+        }
+      } catch {
+        // Sem key ainda ou API fora do ar. O painel de acesso mostra o proximo passo.
+      }
     }
-  }
+
+    loadServerConfig();
+    window.addEventListener("okami-api-token-change", loadServerConfig);
+    return () => {
+      active = false;
+      window.removeEventListener("okami-api-token-change", loadServerConfig);
+    };
+  }, []);
+
+		  function updateHermesConfig(field, value) {
+		    setConfig((current) => ({ ...current, [field]: value }));
+		    setStatus({ tone: "dirty", message: "Configuracao alterada localmente. Salve para enviar ao servidor." });
+		  }
+
+	  function selectKeyFile(event) {
+	    const file = event.target.files?.[0] ?? null;
+	    if (!file) {
+	      setSelectedKeyFile(null);
+	      return;
+	    }
+
+	    if (file.name.endsWith(".pub")) {
+	      setSelectedKeyFile(null);
+	      setStatus({ tone: "warn", message: "Essa e a chave publica (.pub). Selecione a chave privada, como id_ed25519, id_rsa ou .pem." });
+	      event.target.value = "";
+	      return;
+	    }
+
+	    setSelectedKeyFile(file);
+	    setKeyDraft((current) => ({ ...current, name: current.name || file.name }));
+	    setStatus({ tone: "dirty", message: `Chave ${file.name} pronta para conectar.` });
+	  }
+
+	  async function connectServer() {
+	    if (!String(config.sshHost || "").trim() || !String(config.sshUser || "").trim()) {
+	      setStatus({ tone: "warn", message: "Informe SSH host e SSH user para conectar." });
+	      return;
+	    }
+
+	    setConnectBusy(true);
+	    setStatus({ tone: "pending", message: "Conectando servidor dos agentes..." });
+	    try {
+	      const hasAccess = await ensurePanelAccess();
+	      if (!hasAccess) {
+	        setStatus({ tone: "warn", message: "Nao consegui preparar o acesso do painel para conectar o servidor." });
+	        return;
+	      }
+
+	      let nextConfig = { ...config };
+	      if (nextConfig.sshAuthMethod === "key") {
+	        if (selectedKeyFile) {
+	          setStatus({ tone: "pending", message: "Guardando chave SSH no cofre..." });
+	          const privateKey = await selectedKeyFile.text();
+	          const result = await uploadHermesSshKey({
+	            name: keyDraft.name || selectedKeyFile.name,
+	            privateKey,
+	            passphrase: keyDraft.passphrase,
+	          });
+	          nextConfig = {
+	            ...nextConfig,
+	            sshAuthMethod: "key",
+	            sshKeyPath: result.keyRef ?? `vault://ssh-key/${result.keyId}`,
+	            sshKeyFingerprint: result.fingerprint,
+	            sshKeyStorage: result.storage,
+	          };
+	          setConfig(nextConfig);
+	          setSelectedKeyFile(null);
+	        } else if (!nextConfig.sshKeyPath) {
+	          setStatus({ tone: "warn", message: "Selecione a chave privada SSH para conectar." });
+	          return;
+	        }
+	      } else if (nextConfig.sshAuthMethod === "password") {
+	        if (passwordDraft) {
+	          setStatus({ tone: "pending", message: "Guardando senha SSH no cofre..." });
+	          const result = await saveHermesSshPassword({
+	            host: nextConfig.sshHost,
+	            user: nextConfig.sshUser,
+	            port: nextConfig.sshPort,
+	            password: passwordDraft,
+	          });
+	          nextConfig = {
+	            ...nextConfig,
+	            sshAuthMethod: "password",
+	            sshPasswordRef: result.passwordRef,
+	          };
+	          setConfig(nextConfig);
+	          setPasswordDraft("");
+	        } else if (!nextConfig.sshPasswordRef) {
+	          setStatus({ tone: "warn", message: "Informe a senha SSH para conectar." });
+	          return;
+	        }
+	      }
+
+	      setStatus({ tone: "pending", message: "Salvando e testando SSH..." });
+	      await saveHermesConfig(nextConfig);
+	      const result = await testHermesSshConnection({
+	        ...nextConfig,
+	        sshPassword: nextConfig.sshAuthMethod === "password" ? passwordDraft : undefined,
+	      });
+	      const isOk = Boolean(result.ok);
+	      setStatus({
+	        tone: isOk ? "ok" : "warn",
+	        message: isOk
+	          ? `Servidor conectado. Latencia ${result.latency ?? "sem latencia"}.`
+	          : `Config salva, mas o teste SSH falhou: ${result.message}`,
+	      });
+	      if (isOk) toast.success("Servidor conectado", `SSH validado em ${nextConfig.sshHost}.`);
+	      else toast.warning("SSH com aviso", result.message);
+	    } catch (error) {
+	      setStatus({ tone: "warn", message: `Falha ao conectar servidor: ${error.message}` });
+	      toast.danger("Falha ao conectar servidor", error.message);
+	    } finally {
+	      setConnectBusy(false);
+	    }
+	  }
+
+		  async function saveConfig() {
+	    setStatus({ tone: "pending", message: "Salvando conexao SSH dos agentes..." });
+	    try {
+	      await saveHermesConfig(config);
+	      const live = isMissionApiConfigured();
+	      const message = live
+	        ? "Conexao SSH salva. O servidor pode ler arquivos remotos e aplicar acessos de agentes automaticamente."
+	        : "Conexao salva localmente no navegador. Inicie a API local para validar o servidor real.";
+	      setStatus({ tone: live ? "ok" : "warn", message });
+	      if (live) toast.success("Conexao SSH salva", "Servidor recebeu a configuracao dos agentes.");
+	      else toast.warning("Salvo só localmente", "Inicie a API local para validar o servidor real.");
+	    } catch (error) {
+	      setStatus({ tone: "warn", message: `Falha ao salvar conexao SSH: ${error.message}` });
+	      toast.danger("Falha ao salvar SSH", error.message);
+	    }
+	  }
 
   async function testSsh() {
     setStatus({ tone: "pending", message: `Testando SSH em ${config.sshUser}@${config.sshHost}:${config.sshPort}...` });
@@ -3337,7 +4421,7 @@ function Hermes({ data }) {
       const isOk = Boolean(result.ok && live);
       setStatus({
         tone: isOk ? "ok" : "warn",
-        message: `${result.message} · ${result.latency ?? "sem latencia"}${live ? "" : " · mock"}`,
+        message: `${result.message} · ${result.latency ?? "sem latencia"}${live ? "" : " · demo"}`,
       });
       if (isOk) toast.success("SSH validado", `Latência ${result.latency ?? "—"}`);
       else if (live) toast.warning("SSH com aviso", result.message);
@@ -3353,7 +4437,7 @@ function Hermes({ data }) {
       return;
     }
 
-    setStatus({ tone: "pending", message: "Salvando senha SSH no cofre do backend..." });
+	    setStatus({ tone: "pending", message: "Salvando senha SSH no cofre do servidor..." });
     try {
       const result = await saveHermesSshPassword({
         host: config.sshHost,
@@ -3368,11 +4452,11 @@ function Hermes({ data }) {
       }));
       setPasswordDraft("");
       setStatus({
-        tone: isMissionApiConfigured() ? "ok" : "warn",
-        message: isMissionApiConfigured()
-          ? "Senha salva no cofre do backend. Menos seguro que chave SSH, use so para teste."
-          : "Senha nao foi salva em backend real. Configure VITE_OKAMI_API_BASE_URL para persistir de verdade.",
-      });
+	        tone: isMissionApiConfigured() ? "ok" : "warn",
+	        message: isMissionApiConfigured()
+	          ? "Senha salva no cofre do servidor. Menos seguro que chave SSH, use so para teste."
+	          : "Senha salva apenas no modo demo/local. Inicie a API local para persistir de verdade.",
+	      });
     } catch (error) {
       setStatus({ tone: "warn", message: `Falha ao salvar senha: ${error.message}` });
     }
@@ -3388,7 +4472,7 @@ function Hermes({ data }) {
       return;
     }
 
-    setStatus({ tone: "pending", message: "Enviando chave SSH para o cofre do backend..." });
+	    setStatus({ tone: "pending", message: "Enviando chave SSH para o cofre do servidor..." });
     try {
       const privateKey = await file.text();
       const result = await uploadHermesSshKey({
@@ -3404,11 +4488,11 @@ function Hermes({ data }) {
         sshKeyStorage: result.storage,
       }));
       setStatus({
-        tone: isMissionApiConfigured() ? "ok" : "warn",
-        message: isMissionApiConfigured()
-          ? `Chave salva no backend como ${result.keyId}. O frontend guarda apenas keyId e fingerprint.`
-          : `Chave registrada em mock como ${result.keyId}. Sem backend real, isso persiste so como referencia local.`,
-      });
+	        tone: isMissionApiConfigured() ? "ok" : "warn",
+	        message: isMissionApiConfigured()
+	          ? `Chave salva no cofre como ${result.keyId}. O navegador guarda apenas keyId e fingerprint.`
+	          : `Chave registrada em demo como ${result.keyId}. Sem API local, isso persiste so como referencia local.`,
+	      });
     } catch (error) {
       setStatus({ tone: "warn", message: `Falha ao enviar chave: ${error.message}` });
     } finally {
@@ -3421,31 +4505,40 @@ function Hermes({ data }) {
     return { ...groups, [group]: [...(groups[group] ?? []), route] };
   }, {});
 
-  return (
-    <section className="view is-active">
-      <SectionHead eyebrow="§08 / hermes control" title="Ponte Hermes SSH para dados reais">
-        <button className="primary-button" onClick={saveConfig} type="button">Salvar perfil</button>
-      </SectionHead>
+		  return (
+		    <section className={embedded ? "config-embedded-block hermes-embedded" : "view is-active"}>
+		      <SectionHead eyebrow={embedded ? t("section.hermes.eyebrow") : `§08 / ${t("section.hermes.eyebrow")}`} title={embedded ? t("section.hermes.embeddedTitle") : t("section.hermes.title")}>
+		        <button className="primary-button" disabled={connectBusy} onClick={connectServer} type="button">
+		          {connectBusy ? "Conectando..." : "Conectar servidor"}
+		        </button>
+		      </SectionHead>
 
-      <div className="hermes-grid">
-        <div className="settings-panel panel">
-          <div className="panel-title full-row"><h3>Conexao SSH da VPS</h3><span>private bridge</span></div>
-          <label>SSH host<input value={config.sshHost} onChange={(event) => updateHermesConfig("sshHost", event.target.value)} /></label>
-          <label>SSH user<input value={config.sshUser} onChange={(event) => updateHermesConfig("sshUser", event.target.value)} /></label>
-          <label>SSH port<input type="number" value={config.sshPort} onChange={(event) => updateHermesConfig("sshPort", Number(event.target.value))} /></label>
-          <label>Key ref<input value={config.sshKeyPath} readOnly /></label>
-          <label>Hermes home<input value={config.hermesHome} onChange={(event) => updateHermesConfig("hermesHome", event.target.value)} /></label>
-          <label>Metodo de auth<select value={config.sshAuthMethod} onChange={(event) => updateHermesConfig("sshAuthMethod", event.target.value)}><option value="key">SSH key</option><option value="password">Senha SSH</option></select></label>
-          <label>Terminal backend<select value={config.terminalBackend} onChange={(event) => updateHermesConfig("terminalBackend", event.target.value)}><option>ssh</option><option>local</option><option>docker</option><option>modal</option><option>daytona</option><option>vercel_sandbox</option><option>singularity</option></select></label>
-          <label>Modo de roteamento<select value={config.routingMode} onChange={(event) => updateHermesConfig("routingMode", event.target.value)}><option>Custo + qualidade</option><option>Menor latencia</option><option>Modelo fixo</option></select></label>
-          <label>Orcamento diario<input value={config.dailyBudget} onChange={(event) => updateHermesConfig("dailyBudget", event.target.value)} /></label>
-          <label className="toggle"><input type="checkbox" checked={config.persistentShell} onChange={(event) => updateHermesConfig("persistentShell", event.target.checked)} /> Persistent shell SSH</label>
-          <label className="toggle"><input type="checkbox" checked={config.auditTrail} onChange={(event) => updateHermesConfig("auditTrail", event.target.checked)} /> Registrar auditoria</label>
-          <div className="api-editor-actions">
-            <button className="ok-btn ok-btn--outline ok-btn--sm" onClick={testSsh} type="button">Testar SSH</button>
-          </div>
-          <div
-            className={`ok-status-badge hermes-status-strip ${
+		      <div className="hermes-grid">
+		        <div className="settings-panel panel">
+		          <div className="panel-title full-row"><h3>Conexao SSH do servidor</h3><span>agentes remotos</span></div>
+		          <label>SSH host<input value={config.sshHost} onChange={(event) => updateHermesConfig("sshHost", event.target.value)} /></label>
+		          <label>SSH user<input value={config.sshUser} onChange={(event) => updateHermesConfig("sshUser", event.target.value)} /></label>
+		          <label>SSH port<input type="number" value={config.sshPort} onChange={(event) => updateHermesConfig("sshPort", Number(event.target.value))} /></label>
+		          <label>Pasta base dos agentes<input value={config.hermesHome} onChange={(event) => updateHermesConfig("hermesHome", event.target.value)} /></label>
+		          <label>Metodo de auth<select value={config.sshAuthMethod} onChange={(event) => updateHermesConfig("sshAuthMethod", event.target.value)}><option value="key">SSH key</option><option value="password">Senha SSH</option></select></label>
+	          <details className="config-advanced full-row">
+	            <summary>Opcoes avancadas</summary>
+	            <div className="api-form runtime-register-form">
+	              <label>Key ref<input value={config.sshKeyPath} readOnly /></label>
+	              <label>Executor de comandos<select value={config.terminalBackend} onChange={(event) => updateHermesConfig("terminalBackend", event.target.value)}><option>ssh</option><option>local</option><option>docker</option><option>modal</option><option>daytona</option><option>vercel_sandbox</option><option>singularity</option></select></label>
+	              <label>Modo de roteamento<select value={config.routingMode} onChange={(event) => updateHermesConfig("routingMode", event.target.value)}><option>Custo + qualidade</option><option>Menor latencia</option><option>Modelo fixo</option></select></label>
+	              <label>Orcamento diario<input value={config.dailyBudget} onChange={(event) => updateHermesConfig("dailyBudget", event.target.value)} /></label>
+	              <label className="toggle"><input type="checkbox" checked={config.persistentShell} onChange={(event) => updateHermesConfig("persistentShell", event.target.checked)} /> Persistent shell SSH</label>
+	              <label className="toggle"><input type="checkbox" checked={config.auditTrail} onChange={(event) => updateHermesConfig("auditTrail", event.target.checked)} /> Registrar auditoria</label>
+	            </div>
+	          </details>
+	          <div className="api-editor-actions full-row">
+	            <button className="primary-button" disabled={connectBusy} onClick={connectServer} type="button">
+	              {connectBusy ? "Conectando..." : "Conectar servidor"}
+	            </button>
+	          </div>
+	          <div
+	            className={`ok-status-badge hermes-status-strip ${
               status.tone === "ok" ? "ok-status-badge--online"
                 : status.tone === "warn" ? "ok-status-badge--warning"
                 : status.tone === "pending" ? "ok-status-badge--operational"
@@ -3456,117 +4549,122 @@ function Hermes({ data }) {
           >
             {status.message}
           </div>
-        </div>
+	        </div>
 
-        <article className="panel ssh-key-panel">
-          <div className="panel-title"><h3>Credencial SSH</h3><span>secret storage</span></div>
-          <div className="key-vault">
-            {config.sshAuthMethod === "key" ? (
-              <>
-                <label>Nome da chave<input value={keyDraft.name} onChange={(event) => setKeyDraft((current) => ({ ...current, name: event.target.value }))} /></label>
-                <label>Passphrase opcional<input type="password" value={keyDraft.passphrase} onChange={(event) => setKeyDraft((current) => ({ ...current, passphrase: event.target.value }))} /></label>
-                <label className="file-drop">Upload private key<input onChange={uploadKey} type="file" /><small>Aceita id_ed25519, id_rsa, .pem ou .key. Nao envie .pub.</small></label>
-              </>
-            ) : (
-              <>
-                <div className="security-warning">
-                  <b>Senha SSH e menos segura</b>
-                  <span>Use apenas para teste. Para producao, prefira chave SSH com permissao limitada.</span>
-                </div>
-                <label>Senha SSH<input autoComplete="new-password" type="password" value={passwordDraft} onChange={(event) => setPasswordDraft(event.target.value)} /></label>
-                <button className="ghost-button" onClick={savePassword} type="button">Salvar senha no cofre</button>
-              </>
-            )}
-            <div className="key-facts">
-              <span>method</span><b>{config.sshAuthMethod}</b>
-              <span>storage</span><b>{config.sshKeyStorage}</b>
-              <span>fingerprint</span><b>{config.sshKeyFingerprint}</b>
-              <span>password ref</span><b>{config.sshPasswordRef || "nao configurado"}</b>
-              <span>browser</span><b>nao persiste private key nem senha</b>
-            </div>
-          </div>
-        </article>
-      </div>
+		        <article className="panel ssh-key-panel">
+		          <div className="panel-title"><h3>Credencial SSH</h3><span>cofre seguro</span></div>
+	          <div className="key-vault">
+	            {config.sshAuthMethod === "key" ? (
+	              <>
+		                <label className="file-drop">Chave privada SSH<input onChange={selectKeyFile} type="file" /><small>{selectedKeyFile ? `Selecionada: ${selectedKeyFile.name}` : "id_ed25519, id_rsa, .pem ou .key"}</small></label>
+	                <label>Passphrase opcional<input type="password" value={keyDraft.passphrase} onChange={(event) => setKeyDraft((current) => ({ ...current, passphrase: event.target.value }))} /></label>
+	              </>
+	            ) : (
+	              <>
+	                <div className="security-warning">
+	                  <b>Senha SSH e menos segura</b>
+	                  <span>Use apenas para teste. Para producao, prefira chave SSH com permissao limitada.</span>
+	                </div>
+	                <label>Senha SSH<input autoComplete="new-password" type="password" value={passwordDraft} onChange={(event) => setPasswordDraft(event.target.value)} /></label>
+	              </>
+	            )}
+	            <details className="config-advanced">
+	              <summary>Cofre e fingerprint</summary>
+	              <div className="key-facts">
+		                <span>metodo</span><b>{config.sshAuthMethod}</b>
+		                <span>storage</span><b>{config.sshKeyStorage}</b>
+		                <span>fingerprint</span><b>{config.sshKeyFingerprint}</b>
+		                <span>password ref</span><b>{config.sshPasswordRef || "nao configurado"}</b>
+		                <span>navegador</span><b>nao persiste private key nem senha</b>
+		              </div>
+	            </details>
+	          </div>
+	        </article>
+	      </div>
 
-      <div className="ops-grid">
-        <article className="panel">
-          <div className="panel-title"><h3>Feeds do dashboard</h3><span>data sources</span></div>
-          <div className="storage-list">
-            {config.storage.map((item) => (
-              <div key={item.label}>
-                <b>{item.label}</b>
-                <code>{item.path}</code>
-                <span>{item.detail}</span>
-              </div>
-            ))}
-          </div>
-        </article>
-        <article className="panel">
-          <div className="panel-title"><h3>Variaveis SSH</h3><span>runtime env</span></div>
-          <div className="policy-list">
-            {config.requiredEnv.map((env) => (
-              <div key={env.key}>
-                <span>{env.status}</span>
-                <b>{env.key}</b>
-                <em>{env.key === "TERMINAL_SSH_KEY" ? config.sshKeyPath : env.value}</em>
-              </div>
-            ))}
-          </div>
-        </article>
-        <article className="panel">
-          <div className="panel-title"><h3>Politicas</h3><span>security</span></div>
-          <div className="policy-list">
-            {config.policies.map((policy) => (
-              <div key={policy.name}>
-                <span>{policy.enabled ? "on" : "off"}</span>
-                <b>{policy.name}</b>
-                <em>{policy.impact}</em>
-              </div>
-            ))}
-          </div>
-        </article>
-      </div>
+	      <details className="config-advanced">
+	        <summary>Detalhes tecnicos da conexao SSH</summary>
+	        <div className="ops-grid">
+	          <article className="panel">
+	            <div className="panel-title"><h3>Feeds do dashboard</h3><span>fontes de dados</span></div>
+	            <div className="storage-list">
+	              {config.storage.map((item) => (
+	                <div key={item.label}>
+	                  <b>{item.label}</b>
+	                  <code>{item.path}</code>
+	                  <span>{item.detail}</span>
+	                </div>
+	              ))}
+	            </div>
+	          </article>
+	          <article className="panel">
+	            <div className="panel-title"><h3>Variaveis SSH</h3><span>ambiente remoto</span></div>
+	            <div className="policy-list">
+	              {config.requiredEnv.map((env) => (
+	                <div key={env.key}>
+	                  <span>{env.status}</span>
+	                  <b>{env.key}</b>
+	                  <em>{env.key === "TERMINAL_SSH_KEY" ? config.sshKeyPath : env.value}</em>
+	                </div>
+	              ))}
+	            </div>
+	          </article>
+	          <article className="panel">
+	            <div className="panel-title"><h3>Politicas</h3><span>seguranca</span></div>
+	            <div className="policy-list">
+	              {config.policies.map((policy) => (
+	                <div key={policy.name}>
+	                  <span>{policy.enabled ? "on" : "off"}</span>
+	                  <b>{policy.name}</b>
+	                  <em>{policy.impact}</em>
+	                </div>
+	              ))}
+	            </div>
+	          </article>
+	        </div>
 
-      <article className="panel routes-panel">
-        <div className="panel-title"><h3>Contrato de rotas para alimentar o Mission Control</h3><span>{config.routes.length} endpoints</span></div>
-        <div className="route-groups">
-          {Object.entries(routeGroups).map(([group, routes]) => (
-            <section key={group}>
-              <h4>{group}</h4>
-              <div className="route-list">
-                {routes.map((route) => (
-                  <div key={`${route.method}-${route.path}`}>
-                    <em>{route.method}</em>
-                    <code>{route.path}</code>
-                    <span>{route.purpose}</span>
-                  </div>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      </article>
+	        <article className="panel routes-panel">
+	          <div className="panel-title"><h3>Rotas internas do dashboard</h3><span>{config.routes.length} endpoints</span></div>
+	          <div className="route-groups">
+	            {Object.entries(routeGroups).map(([group, routes]) => (
+	              <section key={group}>
+	                <h4>{group}</h4>
+	                <div className="route-list">
+	                  {routes.map((route) => (
+	                    <div key={`${route.method}-${route.path}`}>
+	                      <em>{route.method}</em>
+	                      <code>{route.path}</code>
+	                      <span>{route.purpose}</span>
+	                    </div>
+	                  ))}
+	                </div>
+	              </section>
+	            ))}
+	          </div>
+	        </article>
 
-      <div className="ops-grid">
-        <article className="panel">
-          <div className="panel-title"><h3>Roteamento</h3><span>models</span></div>
-          <StatList items={config.routing} />
-        </article>
-        <article className="panel">
-          <div className="panel-title"><h3>Base documental</h3><span>Hermes docs</span></div>
-          <div className="terminal">
-            <p><span>config</span> ~/.hermes/config.yaml para terminal, modelos e display</p>
-            <p><span>ssh</span> TERMINAL_SSH_HOST e TERMINAL_SSH_USER sao obrigatorios</p>
-            <p><span>kanban</span> ~/.hermes/kanban.db e a fonte canonica do board</p>
-            <p><span>api-server</span> /v1/runs e /health/detailed alimentam runs e activity</p>
-          </div>
-        </article>
-      </div>
-    </section>
-  );
-}
+	        <div className="ops-grid">
+	          <article className="panel">
+	            <div className="panel-title"><h3>Roteamento</h3><span>modelos</span></div>
+	            <StatList items={config.routing} />
+	          </article>
+	          <article className="panel">
+	            <div className="panel-title"><h3>Base documental</h3><span>agentes</span></div>
+	            <div className="terminal">
+	              <p><span>config</span> ~/.hermes/config.yaml para terminal, modelos e display</p>
+	              <p><span>ssh</span> TERMINAL_SSH_HOST e TERMINAL_SSH_USER sao obrigatorios</p>
+	              <p><span>kanban</span> ~/.hermes/kanban.db e a fonte canonica do board</p>
+	              <p><span>api-server</span> /v1/runs e /health/detailed alimentam runs e activity</p>
+	            </div>
+	          </article>
+	        </div>
+	      </details>
+	    </section>
+	  );
+	}
 
 function Cli({ data }) {
+  const { t } = useI18n();
   const [hostStatus, setHostStatus] = useState("");
 
   async function verifyHost() {
@@ -3581,7 +4679,7 @@ function Cli({ data }) {
 
   return (
     <section className="view is-active">
-      <SectionHead eyebrow="§09 / coding tools" title="Codex CLI e Claude Code no ambiente Hermes">
+      <SectionHead eyebrow={`§09 / ${t("section.cli.eyebrow")}`} title={t("section.cli.title")}>
         <button className="ghost-button" type="button" onClick={verifyHost}>Verificar host</button>
       </SectionHead>
       <div className="cli-grid">
@@ -3628,22 +4726,56 @@ const viewComponents = {
   cron: Cron,
   logs: Logs,
   sessions: Sessions,
-  hermes: Hermes,
   cli: Cli,
 };
 
+const viewAliases = {
+  agents: "config",
+  hermes: "config",
+};
+
+function resolveViewId(view) {
+  return viewAliases[view] ?? view;
+}
+
 export default function App() {
-  const initialView = window.location.hash.slice(1);
+  const initialHashView = window.location.hash.slice(1);
+  const initialView = resolveViewId(initialHashView);
+  const [language, setLanguageState] = useState(initialLanguage);
   const [activeView, setActiveViewState] = useState(viewComponents[initialView] ? initialView : "overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [gatewayModalOpen, setGatewayModalOpen] = useState(false);
   const missionControl = useMissionControl();
   const ActiveView = viewComponents[activeView];
+  const i18n = useMemo(() => ({
+    language,
+    setLanguage(value) {
+      const nextLanguage = normalizeLanguage(value);
+      setLanguageState(nextLanguage);
+      window.localStorage?.setItem(LANGUAGE_STORAGE_KEY, nextLanguage);
+    },
+    t(key) {
+      return translations[language]?.[key] ?? translations[DEFAULT_LANGUAGE]?.[key] ?? key;
+    },
+  }), [language]);
 
   function setActiveView(view) {
-    setActiveViewState(view);
-    window.history.replaceState(null, "", `#${view}`);
+    const resolvedView = resolveViewId(view);
+    setActiveViewState(resolvedView);
+    window.history.replaceState(null, "", `#${resolvedView}`);
   }
+
+  useEffect(() => {
+    const hashView = window.location.hash.slice(1);
+    const resolvedView = resolveViewId(hashView);
+    if (hashView && hashView !== resolvedView && viewComponents[resolvedView]) {
+      window.history.replaceState(null, "", `#${resolvedView}`);
+    }
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
 
   useEffect(() => {
     function closeOnEscape(event) {
@@ -3657,8 +4789,12 @@ export default function App() {
   useEffect(() => {
     function syncHashView() {
       const hashView = window.location.hash.slice(1);
-      if (viewComponents[hashView]) {
-        setActiveViewState(hashView);
+      const resolvedView = resolveViewId(hashView);
+      if (viewComponents[resolvedView]) {
+        setActiveViewState(resolvedView);
+        if (hashView !== resolvedView) {
+          window.history.replaceState(null, "", `#${resolvedView}`);
+        }
       }
     }
 
@@ -3667,43 +4803,45 @@ export default function App() {
   }, []);
 
   return (
-    <div className="app-shell" data-view={activeView}>
-      <button
-        className={`sidebar-backdrop ${sidebarOpen ? "is-visible" : ""}`}
-        type="button"
-        onClick={() => setSidebarOpen(false)}
-        aria-label="Fechar menu"
-      />
-      <Sidebar
-        activeView={activeView}
-        setActiveView={setActiveView}
-        status={missionControl.data.status}
-        open={sidebarOpen}
-        setOpen={setSidebarOpen}
-      />
-      <main className="main">
-        <Topbar
-          source={missionControl.source}
-          loading={missionControl.loading}
-          lastSync={missionControl.lastSync}
-          setOpen={setSidebarOpen}
+    <I18nContext.Provider value={i18n}>
+      <div className="app-shell" data-view={activeView}>
+        <button
+          className={`sidebar-backdrop ${sidebarOpen ? "is-visible" : ""}`}
+          type="button"
+          onClick={() => setSidebarOpen(false)}
+          aria-label={i18n.t("button.closeMenu")}
+        />
+        <Sidebar
+          activeView={activeView}
           setActiveView={setActiveView}
-          onOpenGateway={() => setGatewayModalOpen(true)}
+          status={missionControl.data.status}
+          open={sidebarOpen}
+          setOpen={setSidebarOpen}
         />
-        {missionControl.error ? (
-          <div className="api-warning">
-            API da VPS indisponivel. Exibindo dados mockados ate a conexao estabilizar.
-          </div>
-        ) : null}
-        <ActiveView
-          data={missionControl.data}
-          source={missionControl.source}
-          loading={missionControl.loading}
-        />
-        <DetailModal title={gatewayModalOpen ? "Gateway Hermes" : ""} eyebrow="gateway operacional" onClose={() => setGatewayModalOpen(false)}>
-          <GatewayDetail data={missionControl.data} />
-        </DetailModal>
-      </main>
-    </div>
+        <main className="main">
+          <Topbar
+            source={missionControl.source}
+            loading={missionControl.loading}
+            lastSync={missionControl.lastSync}
+            setOpen={setSidebarOpen}
+            setActiveView={setActiveView}
+            onOpenGateway={() => setGatewayModalOpen(true)}
+          />
+          {missionControl.error ? (
+            <div className="api-warning">
+              {i18n.t("warning.apiFallback")}
+            </div>
+          ) : null}
+          <ActiveView
+            data={missionControl.data}
+            source={missionControl.source}
+            loading={missionControl.loading}
+          />
+          <DetailModal title={gatewayModalOpen ? "Gateway Hermes" : ""} eyebrow="gateway operacional" onClose={() => setGatewayModalOpen(false)}>
+            <GatewayDetail data={missionControl.data} />
+          </DetailModal>
+        </main>
+      </div>
+    </I18nContext.Provider>
   );
 }

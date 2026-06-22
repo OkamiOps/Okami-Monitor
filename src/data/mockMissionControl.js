@@ -23,7 +23,7 @@ const mockDayBuckets = Array.from({ length: 30 }, (_, index) => {
 });
 const mockAnalytics = { hours: mockHourBuckets, days: mockDayBuckets };
 
-export const mockMissionControl = {
+const baseMissionControl = {
   status: {
     label: "Hermes online",
     detail: "Proxy seguro · 4 agentes ativos",
@@ -351,7 +351,7 @@ export const mockMissionControl = {
     sshPort: 22,
     sshKeyPath: "vault://ssh/hostinger-hermes",
     sshKeyFingerprint: "SHA256:aguardando-upload",
-    sshKeyStorage: "backend encrypted vault",
+    sshKeyStorage: "cofre cifrado do servidor",
     sshAuthMethod: "key",
     sshPasswordRef: "",
     hermesHome: "~/.hermes",
@@ -376,7 +376,7 @@ export const mockMissionControl = {
       lastCheck: "aguardando teste real",
     },
     runtime: [
-      { label: "terminal.backend", value: "ssh" },
+      { label: "executor", value: "ssh" },
       { label: "persistent_shell", value: "true" },
       { label: "state store", value: "SQLite + JSONL" },
       { label: "access", value: "SSH only" },
@@ -388,11 +388,11 @@ export const mockMissionControl = {
       { key: "TERMINAL_SSH_KEY", value: "~/.ssh/okami_hostinger", status: "optional" },
     ],
     routes: [
-      { group: "SSH", method: "POST", path: "/api/hermes/ssh/keys", purpose: "receber chave, criptografar no backend e retornar keyId/fingerprint" },
+      { group: "SSH", method: "POST", path: "/api/hermes/ssh/keys", purpose: "receber chave, criptografar no servidor e retornar keyId/fingerprint" },
       { group: "SSH", method: "GET", path: "/api/hermes/ssh/keys", purpose: "listar fingerprints e keyIds, nunca retornar private key" },
       { group: "SSH", method: "DELETE", path: "/api/hermes/ssh/keys/:keyId", purpose: "remover chave do cofre" },
       { group: "SSH", method: "POST", path: "/api/hermes/ssh/test", purpose: "validar host/user/porta/keyId com BatchMode=yes" },
-      { group: "Core", method: "GET", path: "/api/hermes/status", purpose: "health, versao, pid, uptime, gateway e backend ativo" },
+      { group: "Core", method: "GET", path: "/api/hermes/status", purpose: "health, versao, pid, uptime, gateway e servidor ativo" },
       { group: "Core", method: "GET", path: "/api/hermes/health/detailed", purpose: "proxy para health detalhado ou coleta via SSH" },
       { group: "Core", method: "GET", path: "/api/hermes/capabilities", purpose: "descobrir API server: runs, SSE, jobs, responses" },
       { group: "Core", method: "GET", path: "/api/hermes/config", purpose: "ler ~/.hermes/config.yaml redigido" },
@@ -414,7 +414,7 @@ export const mockMissionControl = {
       { group: "Kanban", method: "POST", path: "/api/hermes/kanban/tasks/:id/specify", purpose: "expandir triage em spec usando Hermes" },
       { group: "Kanban", method: "GET", path: "/api/hermes/kanban/events", purpose: "poll/SSE do task_events para atualizar Kanban" },
       { group: "Kanban", method: "GET", path: "/api/hermes/kanban/tasks/:id/log", purpose: "worker log em ~/.hermes/kanban/logs" },
-      { group: "Runs", method: "POST", path: "/api/hermes/runs", purpose: "criar run no API server /v1/runs via tunnel/backend" },
+      { group: "Runs", method: "POST", path: "/api/hermes/runs", purpose: "criar run no API server /v1/runs via tunnel/servidor" },
       { group: "Runs", method: "GET", path: "/api/hermes/runs/:runId", purpose: "status, output e usage" },
       { group: "Runs", method: "GET", path: "/api/hermes/runs/:runId/events", purpose: "SSE/progress para Office e Overview" },
       { group: "Jobs", method: "GET", path: "/api/hermes/jobs", purpose: "listar cron/jobs do Hermes" },
@@ -455,3 +455,259 @@ export const mockMissionControl = {
     { name: "GitHub CLI", version: "2.82.1", status: "installed", agents: 4, lastRun: "8 min", command: "gh" },
   ],
 };
+
+function cloneBase() {
+  return JSON.parse(JSON.stringify(baseMissionControl));
+}
+
+function normalizeDemoDate(input = new Date()) {
+  const date = input instanceof Date ? input : new Date(input);
+  return Number.isNaN(date.getTime()) ? new Date() : date;
+}
+
+function demoWave(tick, base, amplitude, phase = 0, decimals = 0) {
+  const value = base + Math.sin((tick + phase) / 7) * amplitude + Math.cos((tick + phase) / 11) * amplitude * 0.35;
+  const fixed = Number(value.toFixed(decimals));
+  return decimals ? fixed : Math.round(fixed);
+}
+
+function demoClamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function demoCompact(value) {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}k`;
+  return String(Math.round(value));
+}
+
+function demoSeries(points, tick, amplitude = 8) {
+  return points.map((point, index) => Math.max(1, demoWave(tick, point, amplitude, index * 1.7)));
+}
+
+function demoClock(now, minutesAgo = 0) {
+  return new Date(now.getTime() - minutesAgo * 60_000).toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
+function createDemoAgentRuntimes(tick) {
+  const statusCycle = ["available", "connected-demo", "needs-check"];
+  return [
+    {
+      id: "hermes",
+      name: "Agente principal",
+      family: "orchestrator",
+      status: "connected-demo",
+      command: "hermes",
+      home: "~/.hermes",
+      configPath: "~/.hermes/config.yaml",
+      workspacePath: "~/.hermes/profiles",
+      dashboardUrl: "privado via SSH",
+      summary: "Agente principal do Okami com state.db, kanban.db, sessoes, skills e logs coletados via SSH.",
+      recommendedScopes: ["read", "ssh", "kanban", "logs"],
+      suggestedKeyName: "agente-principal",
+      capabilities: ["state.db + sessions", "kanban.db", "profile docs", "skills usage", "logs remotos"],
+      setup: ["Configurar SSH dos agentes", "Testar comando de status", "Mapear profiles em ~/.hermes/profiles"],
+      apiKey: {
+        tokenPrefix: "okami_key_demo",
+        scopes: ["read", "ssh", "kanban", "logs"],
+        injectionStatus: "demo",
+        envPath: "~/.hermes/profiles/.okami.env",
+      },
+      commands: [
+        { label: "Doctor", command: "hermes doctor" },
+        { label: "Config", command: "hermes config" },
+        { label: "Sessions", command: "hermes sessions list --limit 20" },
+      ],
+      configs: [
+        { name: "config.yaml", path: "~/.hermes/config.yaml", profile: "global", type: "yaml", content: "terminal_backend: ssh\nrouting_mode: cost_quality\npersistent_shell: true\n" },
+        { name: ".env", path: "~/.hermes/.env", profile: "global", type: "env", redacted: true, content: "OPENAI_API_KEY=***\nANTHROPIC_API_KEY=***\n" },
+      ],
+      instances: [
+        { id: "hermes", name: "Hermes", role: "orchestrator", status: "active", workspace: "~/.hermes" },
+      ],
+    },
+    {
+      id: "openclaw",
+      name: "OpenClaw",
+      family: "gateway",
+      status: statusCycle[tick % statusCycle.length],
+      command: "openclaw",
+      home: "~/.openclaw",
+      configPath: "~/.openclaw/openclaw.json",
+      workspacePath: "~/.openclaw/workspace",
+      dashboardUrl: "http://127.0.0.1:18789",
+      docsUrl: "https://docs.openclaw.ai",
+      summary: "Gateway self-hosted para agentes em WhatsApp, Telegram, Slack, Discord, iMessage, Matrix, WebChat e outros canais.",
+      recommendedScopes: ["read", "ssh", "logs"],
+      suggestedKeyName: "openclaw-gateway",
+      capabilities: ["multi-channel gateway", "multi-agent routing", "workspace skills", "sessions JSONL", "config hot reload"],
+      setup: ["Instalar openclaw@latest", "Rodar openclaw onboard --install-daemon", "Validar openclaw gateway status"],
+      commands: [
+        { label: "Doctor", command: "openclaw doctor" },
+        { label: "Gateway", command: "openclaw gateway status" },
+        { label: "Version", command: "openclaw --version" },
+      ],
+      configs: [
+        { name: "openclaw.json", path: "~/.openclaw/openclaw.json", profile: "gateway", type: "json", content: "{\n  \"agents\": { \"defaults\": { \"workspace\": \"~/.openclaw/workspace\" } }\n}\n" },
+        { name: "AGENTS.md", path: "~/.openclaw/workspace/AGENTS.md", profile: "workspace", type: "md", content: "# OpenClaw agent instructions\n\nOperating rules and routing constraints.\n" },
+      ],
+      instances: [
+        { id: "openclaw-home", name: "home", role: "personal assistant", status: "planned", workspace: "~/.openclaw/workspace-home" },
+        { id: "openclaw-work", name: "work", role: "work assistant", status: "planned", workspace: "~/.openclaw/workspace-work" },
+      ],
+    },
+    {
+      id: "openhuman",
+      name: "OpenHuman",
+      family: "personal-ai",
+      status: "available",
+      command: "openhuman",
+      home: "~/.openhuman",
+      configPath: "~/.openhuman/config.toml",
+      workspacePath: "~/.openhuman/workspace",
+      dashboardUrl: "desktop app",
+      docsUrl: "https://tinyhumans.gitbook.io/openhuman/",
+      summary: "Assistente local-first com Memory Tree, vault Markdown e integracoes OAuth.",
+      recommendedScopes: ["read", "ssh", "logs"],
+      suggestedKeyName: "openhuman-local",
+      capabilities: ["memory tree", "obsidian vault", "auto-fetch", "desktop runtime"],
+      setup: ["Instalar runtime", "Abrir onboarding", "Apontar vault e workspace local"],
+      commands: [{ label: "Version", command: "openhuman --version" }],
+      configs: [
+        { name: "config.toml", path: "~/.openhuman/config.toml", profile: "runtime", type: "toml", content: "memory_backend = \"local\"\nvault_path = \"~/.openhuman/vault\"\n" },
+        { name: "memory.md", path: "~/.openhuman/vault/memory.md", profile: "vault", type: "md", content: "# OpenHuman Memory\n\nLocal memory and operator context.\n" },
+      ],
+      instances: [{ id: "openhuman-main", name: "main", role: "personal ai", status: "planned", workspace: "~/.openhuman/workspace" }],
+    },
+    {
+      id: "claude",
+      name: "Claude Code",
+      family: "coding-cli",
+      status: "detected-local",
+      command: "claude",
+      home: "~/.claude",
+      configPath: "~/.claude/settings.json",
+      workspacePath: "project CLAUDE.md",
+      dashboardUrl: "terminal",
+      docsUrl: "https://code.claude.com/docs/en/overview",
+      summary: "CLI de coding agent operado por workspace, CLAUDE.md e permissoes locais.",
+      recommendedScopes: ["read", "ssh", "logs"],
+      suggestedKeyName: "claude-code-agent",
+      capabilities: ["workspace CLAUDE.md", "terminal sessions", "code review", "tool permissions"],
+      setup: ["Instalar Claude Code CLI", "Criar CLAUDE.md por projeto", "Definir permissoes por workspace"],
+      commands: [{ label: "Version", command: "claude --version" }],
+      configs: [{ name: "settings.json", path: "~/.claude/settings.json", profile: "global", type: "json", content: "{\n  \"permissions\": {},\n  \"model\": \"claude-sonnet\"\n}\n" }],
+      instances: [{ id: "claude-code", name: "Claude Code", role: "coding agent", status: "planned", workspace: "project workspace" }],
+    },
+    {
+      id: "codex",
+      name: "Codex",
+      family: "coding-cli",
+      status: "detected-local",
+      command: "codex",
+      home: "~/.codex",
+      configPath: "~/.codex/config.toml",
+      workspacePath: "project AGENTS.md",
+      dashboardUrl: "terminal / Codex app",
+      summary: "Coding agent por workspace com AGENTS.md, skills locais e execucao controlada por permissao.",
+      recommendedScopes: ["read", "ssh", "logs"],
+      suggestedKeyName: "codex-agent",
+      capabilities: ["AGENTS.md", "skills", "terminal sessions", "code review", "browser verification"],
+      setup: ["Configurar ~/.codex/config.toml", "Criar AGENTS.md no projeto", "Validar escopos e sandbox"],
+      commands: [{ label: "Version", command: "codex --version" }],
+      configs: [{ name: "config.toml", path: "~/.codex/config.toml", profile: "global", type: "toml", content: "model = \"gpt-5\"\napproval_policy = \"on-request\"\n" }],
+      instances: [{ id: "codex", name: "Codex", role: "coding agent", status: "active", workspace: "project workspace" }],
+    },
+    {
+      id: "custom",
+      name: "Outros agentes",
+      family: "generic",
+      status: "template",
+      command: "custom",
+      home: "~/.agents",
+      configPath: "~/.agents/registry.json",
+      workspacePath: "~/.agents/workspaces",
+      dashboardUrl: "custom",
+      summary: "Template para registrar AutoGen, CrewAI, LangGraph, OpenCode, Cursor, Devin ou qualquer agente externo.",
+      recommendedScopes: ["read"],
+      suggestedKeyName: "custom-agent-readonly",
+      capabilities: ["metadata flexivel", "config por agente", "workspace isolado", "chave por agente"],
+      setup: ["Definir comando de teste", "Definir arquivo principal", "Conectar agente pelo painel"],
+      commands: [{ label: "Health", command: "custom status" }],
+      configs: [{ name: "registry.json", path: "~/.agents/registry.json", profile: "global", type: "json", content: "{\n  \"runtimes\": []\n}\n" }],
+      instances: [],
+    },
+  ];
+}
+
+export function createDemoMissionControl(inputDate = new Date()) {
+  const now = normalizeDemoDate(inputDate);
+  const tick = Math.floor(now.getTime() / 8000);
+  const base = cloneBase();
+  const tokenValue = 290_000 + demoWave(tick, 16_000, 8_000, 3);
+  const costValue = demoClamp(demoWave(tick, 6.2, 1.1, 9, 2), 2.8, 9.8);
+  const activeTasks = demoClamp(demoWave(tick, 12, 4, 2), 5, 21);
+  const runtimeHealthy = demoClamp(demoWave(tick, 9, 2, 5), 6, 12);
+
+  return {
+    ...base,
+    demo: {
+      enabled: true,
+      mode: "connected-demo",
+      generatedAt: now.toISOString(),
+      tick,
+    },
+    status: {
+      ...base.status,
+      label: "Demo conectado",
+      detail: `${runtimeHealthy} runtimes simulados · atualizacao viva`,
+      updatedAt: now.toISOString(),
+    },
+    metrics: [
+      { label: "tokens hoje", value: demoCompact(tokenValue), delta: `${demoWave(tick, 14, 6, 1)}% vs ontem`, hot: true },
+      { label: "custo hoje", value: `$${costValue.toFixed(2)}`, delta: "-7% via roteamento" },
+      { label: "tarefas ativas", value: String(activeTasks), delta: `${demoClamp(demoWave(tick, 5, 2, 4), 2, 8)} em coding loop` },
+      { label: "runtimes hit", value: String(runtimeHealthy), delta: `${Math.max(0, runtimeHealthy - 2)} healthy · 2 riscos` },
+    ],
+    tokenSeries: {
+      input: demoSeries(base.tokenSeries.input, tick, 11),
+      output: demoSeries(base.tokenSeries.output, tick + 3, 9),
+    },
+    liveEvents: [
+      { time: demoClock(now, 0), message: "demo atualizou runtimes e keys" },
+      { time: demoClock(now, 2), message: "hermes sincronizou memoria do projeto" },
+      { time: demoClock(now, 4), message: "codex validou contrato de agentes" },
+      { time: demoClock(now, 6), message: "openclaw simulou gateway multi-canal" },
+    ],
+    activity: base.activity.map((item, index) => ({
+      ...item,
+      status: index === tick % base.activity.length ? "LIVE" : item.status,
+    })),
+    agentRuntimes: createDemoAgentRuntimes(tick),
+    apiKeys: base.apiKeys.map((api, index) => ({
+      ...api,
+      latency: Math.max(60, api.latency + demoWave(tick, 0, 24, index)),
+      usage: demoClamp(api.usage + demoWave(tick, 0, 8, index * 2), 0, 100),
+      detail: index === 0 ? "Okami key pronta para agentes" : api.detail,
+    })),
+    hermes: {
+      ...base.hermes,
+      sshStatus: {
+        status: "demo-live",
+        latency: `${demoClamp(demoWave(tick, 146, 35, 7), 80, 260)}ms`,
+        lastCheck: now.toISOString(),
+      },
+    },
+    cliTools: base.cliTools.map((tool, index) => ({
+      ...tool,
+      agents: Math.max(1, tool.agents + ((tick + index) % 2)),
+      lastRun: `${((tick + index) % 16) + 1} min`,
+    })),
+  };
+}
+
+export const mockMissionControl = createDemoMissionControl();

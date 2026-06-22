@@ -987,7 +987,8 @@ function hasWorkTask(person, tasks = []) {
 }
 
 function isTechnicalAgentName(name = "") {
-  return /^(cli|cron|slack|session|shell|terminal|run|worker|telegram)-?\d*$/i.test(String(name).trim());
+  return /^(cli|cron|slack|session|shell|terminal|run|worker|telegram)-?\d*$/i.test(String(name).trim())
+    || /^(agentops|triage|kanban)(-|$)/i.test(String(name).trim());
 }
 
 function normalizeVisualId(value = "") {
@@ -1025,19 +1026,6 @@ function buildOfficePeople(agents, tasks = []) {
     task: agent.currentTask,
     visualProfileKey: mainAgentVisualProfiles[index % mainAgentVisualProfiles.length],
   }));
-  const subagents = agents.flatMap((agent) => (agent.subagents ?? []).map((child) => ({
-    ...agent,
-    id: `${agent.id}-${child.id ?? child.name}`,
-    parentId: agent.id,
-    name: child.name,
-    visualType: "subagent",
-    status: child.status,
-    task: child.task,
-    model: child.model,
-  })));
-
-  const meaningful = subagents.filter((child) => !isTechnicalAgentName(child.name));
-
   // Os 6 agentes nomeados (Astride/Zelda/Diana/Morgana/Persefone/Leona) SEMPRE
   // sentam na mesa pra evitar empilhamento. workingByData controla o badge:
   //   true  → ● working (verde) + bubble com task atual
@@ -1047,11 +1035,10 @@ function buildOfficePeople(agents, tasks = []) {
     ...p,
     workingByData: hasWorkTask(p, tasks),
   }));
-  const roaming = meaningful.map((p) => ({ ...p, workingByData: false }));
 
   return {
     seated: seated.slice(0, 12),
-    roaming: roaming.slice(0, 9),
+    roaming: [],
   };
 }
 
@@ -4044,6 +4031,16 @@ export function PixelOfficeCanvas({ agents, tasks, selectedAgentId, onSelectAgen
   useEffect(() => {
     let game;
     let disposed = false;
+    const refreshTimers = [];
+
+    const safeRefresh = () => {
+      if (disposed || !game?.scale || !hostRef.current) return;
+      try {
+        game.scale.refresh();
+      } catch {
+        // Phaser can throw during route changes after React has removed the parent node.
+      }
+    };
 
     async function boot() {
       const Phaser = await import("phaser");
@@ -4106,7 +4103,8 @@ export function PixelOfficeCanvas({ agents, tasks, selectedAgentId, onSelectAgen
       });
       gameRef.current = game;
       // Garantir que canvas Phaser fique acima do <video>
-      setTimeout(() => {
+      refreshTimers.push(window.setTimeout(() => {
+        if (disposed) return;
         const canvasEl = hostRef.current?.querySelector("canvas");
         if (canvasEl) {
           canvasEl.style.position = "relative";
@@ -4115,11 +4113,11 @@ export function PixelOfficeCanvas({ agents, tasks, selectedAgentId, onSelectAgen
         // Forçar re-medição depois que CSS/flex layout assentaram.
         // Sem isso, em alguns refreshes o Phaser monta com 0x0 e nada aparece
         // até o usuário trocar de aba (visibilitychange dispara refresh).
-        game?.scale?.refresh();
-      }, 100);
+        safeRefresh();
+      }, 100));
       // Refresh extras escalonados — pega casos onde fonts/imgs atrasam o layout.
       [300, 800, 1600].forEach((delay) => {
-        setTimeout(() => game?.scale?.refresh(), delay);
+        refreshTimers.push(window.setTimeout(safeRefresh, delay));
       });
     }
 
@@ -4130,7 +4128,7 @@ export function PixelOfficeCanvas({ agents, tasks, selectedAgentId, onSelectAgen
     let resizeObserver = null;
     if (hostRef.current && typeof ResizeObserver !== "undefined") {
       resizeObserver = new ResizeObserver(() => {
-        game?.scale?.refresh();
+        safeRefresh();
       });
       resizeObserver.observe(hostRef.current);
     }
@@ -4138,7 +4136,7 @@ export function PixelOfficeCanvas({ agents, tasks, selectedAgentId, onSelectAgen
     // Fallback explícito: quando a aba volta a ficar visível, garante refresh.
     const onVisibility = () => {
       if (document.visibilityState === "visible") {
-        game?.scale?.refresh();
+        safeRefresh();
       }
     };
     document.addEventListener("visibilitychange", onVisibility);
@@ -4147,7 +4145,9 @@ export function PixelOfficeCanvas({ agents, tasks, selectedAgentId, onSelectAgen
       disposed = true;
       document.removeEventListener("visibilitychange", onVisibility);
       resizeObserver?.disconnect();
+      refreshTimers.forEach((timer) => window.clearTimeout(timer));
       game?.destroy(true);
+      game = null;
       gameRef.current = null;
     };
   }, []);
