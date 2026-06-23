@@ -99,7 +99,7 @@ const navItems = navGroups.flatMap((g) =>
 );
 
 const LANGUAGE_STORAGE_KEY = "okami.ui.language";
-const DEFAULT_LANGUAGE = "pt-BR";
+const DEFAULT_LANGUAGE = "en";
 
 const translations = {
   "pt-BR": {
@@ -132,7 +132,7 @@ const translations = {
     "button.newAgent": "Novo agente",
     "warning.apiFallback": "API da VPS indisponivel. Exibindo demo vivo ate a conexao estabilizar.",
     "overview.eyebrow": "command deck",
-    "overview.title": "Operacao Hermes em tempo real",
+    "overview.title": "Operacao em tempo real",
     "overview.periodFilters": "Filtros de periodo",
     "overview.tokens.title": "Uso de tokens",
     "overview.tokens.subtitle": "input / output",
@@ -164,7 +164,7 @@ const translations = {
     "section.office.eyebrow": "agent floor",
     "section.office.title": "Workstations dos agentes",
     "section.pixel.eyebrow": "pixel ops",
-    "section.pixel.title": "Pixel Office dos agentes Hermes",
+    "section.pixel.title": "Pixel Office dos agentes",
     "section.kanban.eyebrow": "execution board",
     "section.kanban.title": "Kanban operacional dos agentes",
     "section.config.eyebrow": "agentes",
@@ -175,15 +175,15 @@ const translations = {
     "section.profiles.eyebrow": "agent profiles",
     "section.profiles.title": "Perfis, soul, identity e agents.md",
     "section.skills.eyebrow": "skills registry",
-    "section.skills.title": "Skills disponiveis no Hermes",
+    "section.skills.title": "Skills dos agentes",
     "section.cron.eyebrow": "automation",
     "section.cron.title": "Crons e timers ativados",
     "section.logs.eyebrow": "observability",
-    "section.logs.title": "Logs e eventos do Hermes",
+    "section.logs.title": "Logs e eventos dos agentes",
     "section.sessions.eyebrow": "state.db",
     "section.sessions.title": "Sessoes ativas e inativas",
     "section.cli.eyebrow": "coding tools",
-    "section.cli.title": "Codex CLI e Claude Code no ambiente Hermes",
+    "section.cli.title": "Codex CLI e Claude Code no ambiente de agentes",
   },
   en: {
     "lang.pt": "PT-BR",
@@ -215,7 +215,7 @@ const translations = {
     "button.newAgent": "New agent",
     "warning.apiFallback": "VPS API unavailable. Showing live demo until the connection stabilizes.",
     "overview.eyebrow": "command deck",
-    "overview.title": "Hermes operation in real time",
+    "overview.title": "Operation in real time",
     "overview.periodFilters": "Period filters",
     "overview.tokens.title": "Token usage",
     "overview.tokens.subtitle": "input / output",
@@ -247,7 +247,7 @@ const translations = {
     "section.office.eyebrow": "agent floor",
     "section.office.title": "Agent workstations",
     "section.pixel.eyebrow": "pixel ops",
-    "section.pixel.title": "Hermes agent Pixel Office",
+    "section.pixel.title": "Agent Pixel Office",
     "section.kanban.eyebrow": "execution board",
     "section.kanban.title": "Agent operational Kanban",
     "section.config.eyebrow": "agents",
@@ -258,15 +258,15 @@ const translations = {
     "section.profiles.eyebrow": "agent profiles",
     "section.profiles.title": "Profiles, soul, identity and agents.md",
     "section.skills.eyebrow": "skills registry",
-    "section.skills.title": "Available Hermes skills",
+    "section.skills.title": "Agent skills",
     "section.cron.eyebrow": "automation",
     "section.cron.title": "Active crons and timers",
     "section.logs.eyebrow": "observability",
-    "section.logs.title": "Hermes logs and events",
+    "section.logs.title": "Agent logs and events",
     "section.sessions.eyebrow": "state.db",
     "section.sessions.title": "Active and inactive sessions",
     "section.cli.eyebrow": "coding tools",
-    "section.cli.title": "Codex CLI and Claude Code in Hermes",
+    "section.cli.title": "Codex CLI and Claude Code in the agent environment",
   },
 };
 
@@ -278,15 +278,14 @@ const I18nContext = createContext({
 });
 
 function normalizeLanguage(value) {
-  return value === "en" ? "en" : DEFAULT_LANGUAGE;
+  return value === "pt-BR" ? "pt-BR" : DEFAULT_LANGUAGE;
 }
 
 function initialLanguage() {
   if (typeof window === "undefined") return DEFAULT_LANGUAGE;
   const stored = window.localStorage?.getItem(LANGUAGE_STORAGE_KEY);
   if (stored) return normalizeLanguage(stored);
-  const browser = window.navigator?.language?.toLowerCase() ?? "";
-  return browser.startsWith("en") ? "en" : DEFAULT_LANGUAGE;
+  return DEFAULT_LANGUAGE;
 }
 
 function useI18n() {
@@ -295,7 +294,8 @@ function useI18n() {
 
 const UI_TEXT_EN = {
   "Demo conectado": "Demo connected",
-  "Hermes online": "Hermes online",
+  "Hermes online": "Agent network online",
+  "Agentes online": "Agents online",
   "Proxy seguro · 4 agentes ativos": "Secure proxy · 4 active agents",
   "atualizacao viva": "live update",
   "atualização viva": "live update",
@@ -310,7 +310,14 @@ const UI_TEXT_EN = {
   "Gerando UI de dashboards responsivos": "Building responsive dashboard UI",
   "Monitorando concorrentes e docs": "Monitoring competitors and docs",
   "Fallback para OpenRouter acionado": "OpenRouter fallback triggered",
-  "Proxy Hermes com latencia acima do alvo": "Hermes proxy latency above target",
+  "Proxy Hermes com latencia acima do alvo": "Agent proxy latency above target",
+  "Proxy dos agentes com latencia acima do alvo": "Agent proxy latency above target",
+  "Roteando tarefas entre agentes e gateway LLM": "Routing tasks between agents and the LLM gateway",
+  "mapeou endpoints dos agentes": "mapped agent endpoints",
+  "agent-core sincronizou memoria do projeto": "agent-core synchronized project memory",
+  "agent-core sincronizou memória do projeto": "agent-core synchronized project memory",
+  "Proxy reverso dos agentes": "Agent reverse proxy",
+  "Agent routing · fallback ativo": "Agent routing · fallback active",
   "Scout aguardando credencial da VPS": "Scout waiting for VPS credential",
   "sem endpoint publico": "no public endpoint",
   "sem endpoint público": "no public endpoint",
@@ -329,8 +336,10 @@ const UI_TEXT_EN = {
   "Sem tarefa ativa vinculada": "No linked active task",
   "sem tarefa vinculada": "no linked task",
   "sem prioridade": "no priority",
-  "O Hermes nao retornou descricao detalhada para esta tarefa no snapshot atual.": "Hermes did not return a detailed description for this task in the current snapshot.",
-  "O Hermes não retornou descrição detalhada para esta tarefa no snapshot atual.": "Hermes did not return a detailed description for this task in the current snapshot.",
+  "O Hermes nao retornou descricao detalhada para esta tarefa no snapshot atual.": "The agent backend did not return a detailed description for this task in the current snapshot.",
+  "O Hermes não retornou descrição detalhada para esta tarefa no snapshot atual.": "The agent backend did not return a detailed description for this task in the current snapshot.",
+  "A operacao nao retornou descricao detalhada para esta tarefa no snapshot atual.": "The operation did not return a detailed description for this task in the current snapshot.",
+  "A operação não retornou descrição detalhada para esta tarefa no snapshot atual.": "The operation did not return a detailed description for this task in the current snapshot.",
   "Processamento": "Processing",
   "sem eventos recentes": "no recent events",
   "logs do perfil": "profile logs",
@@ -347,11 +356,22 @@ const UI_TEXT_EN = {
   "monitor do agente": "agent monitor",
   "Comentários": "Comments",
   "Sem eventos de work log para esta task.": "No work log events for this task.",
-  "Criar no Hermes": "Create in Hermes",
-  "Nova tarefa para o Hermes": "New task for Hermes",
-  "detalhe da tarefa Hermes": "Hermes task detail",
-  "Informe um titulo para criar a tarefa no Kanban do Hermes.": "Enter a title to create the task in Hermes Kanban.",
-  "Criando tarefa no Hermes Kanban...": "Creating task in Hermes Kanban...",
+  "Criar no Hermes": "Create task",
+  "Criar tarefa": "Create task",
+  "Nova tarefa para o Hermes": "New agent task",
+  "Nova tarefa de agente": "New agent task",
+  "detalhe da tarefa Hermes": "Task detail",
+  "detalhe da tarefa": "Task detail",
+  "Payload": "Payload",
+  "Fonte planejada: Kanban dos agentes via SSH.": "Planned source: agent Kanban over SSH.",
+  "Sincronizado com Kanban dos agentes via SSH.": "Synchronized with agent Kanban over SSH.",
+  "Informe um titulo para criar a tarefa no Kanban do Hermes.": "Enter a title to create the task in the agent Kanban.",
+  "Informe um titulo para criar a tarefa no Kanban dos agentes.": "Enter a title to create the task in the agent Kanban.",
+  "Criando tarefa no Hermes Kanban...": "Creating agent task...",
+  "Criando tarefa no Kanban dos agentes...": "Creating agent task...",
+  "O backend real chama o conector de Kanban dos agentes.": "The real backend calls the agent Kanban connector.",
+  "Agent kanban.db": "Agent kanban.db",
+  "Agent Core": "Agent Core",
   "Board sincronizado sem bloqueios reportados no snapshot atual.": "Board synchronized with no blocks reported in the current snapshot.",
   "tarefas": "tasks",
   "bloqueios": "blocks",
@@ -371,7 +391,8 @@ const UI_TEXT_EN = {
   "mensal fixo": "fixed monthly",
   "economia": "savings",
   "Fluxo de tokens": "Token flow",
-  "leitura do Hermes": "Hermes reading",
+  "leitura do Hermes": "agent usage",
+  "leitura dos agentes": "agent usage",
   "Sem consumo real": "No real usage",
   "Nao ha corte urgente, mas o uso continua concentrado em poucas assinaturas.": "No urgent cut, but usage is still concentrated in a few subscriptions.",
   "Não ha corte urgente, mas o uso continua concentrado em poucas assinaturas.": "No urgent cut, but usage is still concentrated in a few subscriptions.",
@@ -534,6 +555,9 @@ const UI_TEXT_EN = {
   "registro de aplicacao": "application record",
   "registro de aplicação": "application record",
   "Detalhe": "Detail",
+  "documentacao": "documentation",
+  "documentação": "documentation",
+  "gateway operacional": "operational gateway",
   "Documentacao viva para agentes": "Live documentation for agents",
   "Documentação viva para agentes": "Live documentation for agents",
   "Sincronizar": "Sync",
@@ -562,13 +586,24 @@ const UI_TEXT_EN = {
   "Sem conteudo em texto para exibir.": "No text content to display.",
   "Sem conteúdo em texto para exibir.": "No text content to display.",
   "Salvar doc": "Save doc",
-  "Deploy, rollback, incidentes e proxy Hermes.": "Deploy, rollback, incidents and Hermes proxy.",
+  "Deploy, rollback, incidentes e proxy Hermes.": "Deploy, rollback, incidents and agent proxy.",
+  "Deploy, rollback, incidentes e proxy dos agentes.": "Deploy, rollback, incidents and agent proxy.",
+  "Validar saude do gateway antes do release.": "Validate gateway health before release.",
+  "Validar saúde do gateway antes do release.": "Validate gateway health before release.",
+  "Conferir logs dos agentes via ponte SSH.": "Check agent logs through the SSH bridge.",
+  "Registrar snapshot de sessions, tokens e skills.": "Record a snapshot of sessions, tokens and skills.",
+  "Pausar novas execucoes.": "Pause new executions.",
+  "Pausar novas execuções.": "Pause new executions.",
+  "Restaurar build anterior.": "Restore the previous build.",
+  "Reprocessar tarefas bloqueadas no Kanban.": "Reprocess blocked Kanban tasks.",
   "Objetivos, ferramentas, limites e rotinas por agente.": "Goals, tools, limits and routines per agent.",
   "Tokens, componentes, tom visual e padroes Okami.": "Tokens, components, visual tone and Okami patterns.",
   "Tokens, componentes, tom visual e padrões Okami.": "Tokens, components, visual tone and Okami patterns.",
   "sem perfil": "no profile",
-  "Verificando host Hermes via SSH...": "Verifying Hermes host via SSH...",
-  "Hermes status executado.": "Hermes status executed.",
+  "Verificando host Hermes via SSH...": "Verifying agent host over SSH...",
+  "Verificando host dos agentes via SSH...": "Verifying agent host over SSH...",
+  "Hermes status executado.": "Agent status executed.",
+  "Status dos agentes executado.": "Agent status executed.",
   "Status do host": "Host status",
   "um diretorio isolado por agente": "one isolated directory per agent",
   "um diretório isolado por agente": "one isolated directory per agent",
@@ -606,6 +641,10 @@ const UI_TEXT_EN = {
   "Sumário": "Summary",
   "Aplicacao": "Application",
   "Rotas": "Routes",
+  "criar board de agentes quando necessario": "create an agent board when needed",
+  "criar board de agentes quando necessário": "create an agent board when needed",
+  "expandir triage em spec usando agentes": "expand triage into a spec using agents",
+  "listar cron/jobs dos agentes": "list agent cron/jobs",
   "Fluxo": "Flow",
   "Eventos": "Events",
   "Eventos state.db": "state.db events",
@@ -643,11 +682,14 @@ const UI_TEXT_EN = {
   "Sem dados": "No data",
   "resultado": "result",
   "registrado": "recorded",
-  "Nenhum resultado retornado ainda pelo Kanban do Hermes.": "No result returned by Hermes Kanban yet.",
+  "Nenhum resultado retornado ainda pelo Kanban do Hermes.": "No result returned by agent Kanban yet.",
+  "Nenhum resultado retornado ainda pelo Kanban dos agentes.": "No result returned by agent Kanban yet.",
   "descricao": "description",
   "descrição": "description",
-  "Sem descricao detalhada no retorno atual do Hermes.": "No detailed description in the current Hermes response.",
-  "Sem descrição detalhada no retorno atual do Hermes.": "No detailed description in the current Hermes response.",
+  "Sem descricao detalhada no retorno atual do Hermes.": "No detailed description in the current agent response.",
+  "Sem descrição detalhada no retorno atual do Hermes.": "No detailed description in the current agent response.",
+  "Sem descricao detalhada no retorno atual dos agentes.": "No detailed description in the current agent response.",
+  "Sem descrição detalhada no retorno atual dos agentes.": "No detailed description in the current agent response.",
   "Sem skills declaradas nesta task.": "No skills declared for this task.",
   "Decisao de assinatura": "Subscription decision",
   "Decisão de assinatura": "Subscription decision",
@@ -761,9 +803,10 @@ const UI_TEXT_EN = {
   "Logs recentes e eventos do state.db formatados para leitura humana, com busca e severidade visual.": "Recent logs and state.db events formatted for human reading, with search and visual severity.",
   "Separe sessões vivas e encerradas, filtre por perfil e abra o detalhe no painel lateral.": "Separate live and finished sessions, filter by profile and open the detail in the side panel.",
   "Separe sessoes vivas e encerradas, filtre por perfil e abra o detalhe no painel lateral.": "Separate live and finished sessions, filter by profile and open the detail in the side panel.",
-  "Nao encontrei SKILL.md para esta skill. Exibindo o registro real agregado de uso do Hermes para voce decidir se cria uma definicao formal.": "I did not find SKILL.md for this skill. Showing the aggregated real Hermes usage record so you can decide whether to create a formal definition.",
-  "Não encontrei SKILL.md para esta skill. Exibindo o registro real agregado de uso do Hermes para você decidir se cria uma definição formal.": "I did not find SKILL.md for this skill. Showing the aggregated real Hermes usage record so you can decide whether to create a formal definition.",
-  "Esta skill tem uso real no Hermes, mas o coletor encontrou apenas o registro `.usage.json`. O conteúdo abaixo é uma leitura humana do uso; para editar comportamento, crie o `SKILL.md` no caminho sugerido.": "This skill has real Hermes usage, but the collector only found the `.usage.json` record. The content below is a human-readable usage view; to edit behavior, create `SKILL.md` at the suggested path.",
+  "Nao encontrei SKILL.md para esta skill. Exibindo o registro real agregado de uso do Hermes para voce decidir se cria uma definicao formal.": "I did not find SKILL.md for this skill. Showing the aggregated real agent usage record so you can decide whether to create a formal definition.",
+  "Não encontrei SKILL.md para esta skill. Exibindo o registro real agregado de uso do Hermes para você decidir se cria uma definição formal.": "I did not find SKILL.md for this skill. Showing the aggregated real agent usage record so you can decide whether to create a formal definition.",
+  "Esta skill tem uso real no Hermes, mas o coletor encontrou apenas o registro `.usage.json`. O conteúdo abaixo é uma leitura humana do uso; para editar comportamento, crie o `SKILL.md` no caminho sugerido.": "This skill has real agent usage, but the collector only found the `.usage.json` record. The content below is a human-readable usage view; to edit behavior, create `SKILL.md` at the suggested path.",
+  "Esta skill tem uso real nos agentes, mas o coletor encontrou apenas o registro `.usage.json`. O conteúdo abaixo é uma leitura humana do uso; para editar comportamento, crie o `SKILL.md` no caminho sugerido.": "This skill has real agent usage, but the collector only found the `.usage.json` record. The content below is a human-readable usage view; to edit behavior, create `SKILL.md` at the suggested path.",
   "filtrar campos...": "filter fields...",
   "Sem titulos detectados": "No headings detected",
   "Arquivo vazio.": "Empty file.",
@@ -790,11 +833,14 @@ function translateUiText(value, language = DEFAULT_LANGUAGE) {
     [/\b(\d+)\s+runtimes simulados\b/gi, "$1 simulated runtimes"],
     [/\b(\d+)\s+agentes\s+·\s+ultimo run\s+(.+)/gi, "$1 agents · last run $2"],
     [/\b(\d+)\s+agentes\s+·\s+último run\s+(.+)/gi, "$1 agents · last run $2"],
-    [/\b(\d+)\s+assinatura\(s\) sem uso detectado no Hermes\. Corte mais obvio: ([^.]+)\./gi, "$1 subscription(s) with no usage detected in Hermes. Clearest cut: $2."],
-    [/\b(\d+)\s+assinatura\(s\) sem uso detectado no Hermes\. Corte mais óbvio: ([^.]+)\./gi, "$1 subscription(s) with no usage detected in Hermes. Clearest cut: $2."],
+    [/\b(\d+)\s+assinatura\(s\) sem uso detectado no Hermes\. Corte mais obvio: ([^.]+)\./gi, "$1 subscription(s) with no agent usage detected. Clearest cut: $2."],
+    [/\b(\d+)\s+assinatura\(s\) sem uso detectado no Hermes\. Corte mais óbvio: ([^.]+)\./gi, "$1 subscription(s) with no agent usage detected. Clearest cut: $2."],
+    [/\b(\d+)\s+assinatura\(s\) sem uso detectado nos agentes\. Corte mais obvio: ([^.]+)\./gi, "$1 subscription(s) with no agent usage detected. Clearest cut: $2."],
+    [/\b(\d+)\s+assinatura\(s\) sem uso detectado nos agentes\. Corte mais óbvio: ([^.]+)\./gi, "$1 subscription(s) with no agent usage detected. Clearest cut: $2."],
     [/\b(\d+)\s+tarefas operacionais\b/gi, "$1 operational tasks"],
     [/\b(\d+)\s+bloqueio\(s\) precisam de revisao antes do proximo ciclo\./gi, "$1 block(s) need review before the next cycle."],
     [/\b(\d+)\s+bloqueio\(s\) precisam de revisão antes do próximo ciclo\./gi, "$1 block(s) need review before the next cycle."],
+    [/\b(.+?)\s+criada\. O backend real chama o conector de Kanban dos agentes\./gi, "$1 created. The real backend calls the agent Kanban connector."],
     [/\b(\d+)\s+em coding loop\b/gi, "$1 in coding loop"],
     [/\b(\d+)\s+healthy\s+·\s+(\d+)\s+riscos\b/gi, "$1 healthy · $2 risks"],
     [/\b(.+?)\s+concentra\s+(\d+)%\s+dos tokens\b/gi, "$1 holds $2% of tokens"],
@@ -1320,7 +1366,7 @@ function AgentMonitor({ agent, task }) {
       <div className="monitor-task-focus">
         <span>{tx("tarefa ativa")}</span>
         <h3>{tx(activeTask?.title ?? agent?.currentTask ?? "Sem tarefa ativa vinculada")}</h3>
-        <p>{tx(activeTask?.description ?? activeTask?.body ?? activeTask?.raw?.description ?? activeTask?.raw?.body ?? "O Hermes nao retornou descricao detalhada para esta tarefa no snapshot atual.")}</p>
+        <p>{tx(activeTask?.description ?? activeTask?.body ?? activeTask?.raw?.description ?? activeTask?.raw?.body ?? "A operacao nao retornou descricao detalhada para esta tarefa no snapshot atual.")}</p>
         <div>
           <b>{tx(activeTask?.status ?? activeTask?.meta ?? agent?.status ?? "idle")}</b>
           <b>{tx(activeTask?.owner ?? activeTask?.assignee ?? agent?.name)}</b>
@@ -1706,7 +1752,7 @@ function GatewayDetail({ data }) {
         </article>
 
         <article className="panel gateway-card">
-          <div className="panel-title"><h3>Rotas</h3><span>Hermes gateway</span></div>
+          <div className="panel-title"><h3>Rotas</h3><span>Agent gateway</span></div>
           <div className="gateway-route-list">
             {gatewayRoutes.length ? gatewayRoutes.map((route) => (
               <div key={`${route.method}-${route.path}`}>
@@ -2002,9 +2048,9 @@ function Usage({ data }) {
       <div className="usage-v3">
         <article className="usage-brief panel">
           <div>
-            <span>{tx("leitura do Hermes")}</span>
+            <span>{tx("leitura dos agentes")}</span>
             <strong>{heaviest ? tx(`${heaviest.name} concentra ${Math.round((Number(heaviest.tokenRaw || 0) / totalTokens) * 100)}% dos tokens`) : tx("Sem consumo real")}</strong>
-            <p>{primaryCut ? tx(`${inactiveCount} assinatura(s) sem uso detectado no Hermes. Corte mais obvio: ${bestCut?.name ?? primaryCut.name}.`) : tx("Nao ha corte urgente, mas o uso continua concentrado em poucas assinaturas.")}</p>
+            <p>{primaryCut ? tx(`${inactiveCount} assinatura(s) sem uso detectado nos agentes. Corte mais obvio: ${bestCut?.name ?? primaryCut.name}.`) : tx("Nao ha corte urgente, mas o uso continua concentrado em poucas assinaturas.")}</p>
           </div>
           <div className="usage-brief-metrics">
             <div><span>{tx("mensal fixo")}</span><b>{formatCurrency(totals.monthlyCost)}</b></div>
@@ -2448,7 +2494,7 @@ function taskUiKey(task, scope, index) {
 function TaskDetail({ task }) {
   const { tx } = useI18n();
   const raw = task.raw ?? {};
-  const description = task.body ?? task.description ?? raw.body ?? raw.description ?? raw.notes ?? "Sem descricao detalhada no retorno atual do Hermes.";
+  const description = task.body ?? task.description ?? raw.body ?? raw.description ?? raw.notes ?? "Sem descricao detalhada no retorno atual dos agentes.";
   const createdAt = raw.created_at ? new Date(Number(raw.created_at) * 1000).toLocaleString("pt-BR") : raw.createdAt;
   const startedAt = raw.started_at ? new Date(Number(raw.started_at) * 1000).toLocaleString("pt-BR") : raw.startedAt;
   const completedAt = raw.completed_at ? new Date(Number(raw.completed_at) * 1000).toLocaleString("pt-BR") : raw.completedAt;
@@ -2473,7 +2519,7 @@ function TaskDetail({ task }) {
         <div className="task-run-card">
           <span>{tx("resultado")}</span>
           <b>{tx(raw.result ? "registrado" : "pendente")}</b>
-          <p>{tx(raw.result ?? "Nenhum resultado retornado ainda pelo Kanban do Hermes.")}</p>
+          <p>{tx(raw.result ?? "Nenhum resultado retornado ainda pelo Kanban dos agentes.")}</p>
         </div>
         <div className="task-run-card">
           <span>skills</span>
@@ -2501,7 +2547,7 @@ function TaskDetail({ task }) {
           </section>
         </div>
         <details className="task-payload-details">
-          <summary>Payload Hermes</summary>
+          <summary>{tx("Payload")}</summary>
           <pre>{JSON.stringify(raw, null, 2)}</pre>
         </details>
       </main>
@@ -2547,8 +2593,8 @@ function Kanban({ data }) {
   const [board, setBoard] = useState(data.kanban);
   const [selectedTask, setSelectedTask] = useState(null);
   const [selectedBoard, setSelectedBoard] = useState(null);
-  const [draft, setDraft] = useState({ title: "", assignee: "Hermes", priority: "P2", status: "Triage", body: "" });
-  const [syncStatus, setSyncStatus] = useState("Fonte planejada: ~/.hermes/kanban.db via /api/hermes/kanban/tasks.");
+  const [draft, setDraft] = useState({ title: "", assignee: "Agent Core", priority: "P2", status: "Triage", body: "" });
+  const [syncStatus, setSyncStatus] = useState("Fonte planejada: Kanban dos agentes via SSH.");
 
   // Lista de boards distintos detectados nas tasks (campo `board` vindo do backend).
   const boards = useMemo(() => {
@@ -2593,17 +2639,17 @@ function Kanban({ data }) {
 
   useEffect(() => {
     setBoard(data.kanban);
-    setSyncStatus("Sincronizado com ~/.hermes/kanban.db via ponte SSH.");
+    setSyncStatus("Sincronizado com Kanban dos agentes via SSH.");
   }, [data.kanban]);
 
   async function createTask() {
     const title = draft.title.trim();
     if (!title) {
-      setSyncStatus("Informe um titulo para criar a tarefa no Kanban do Hermes.");
+      setSyncStatus("Informe um titulo para criar a tarefa no Kanban dos agentes.");
       return;
     }
 
-    setSyncStatus("Criando tarefa no Hermes Kanban...");
+    setSyncStatus("Criando tarefa no Kanban dos agentes...");
     const created = await createHermesKanbanTask({
       title,
       body: draft.body,
@@ -2616,7 +2662,7 @@ function Kanban({ data }) {
     const task = {
       id: created.id,
       title: created.title,
-      meta: `Hermes kanban.db · ${created.status}`,
+      meta: `Agent kanban.db · ${created.status}`,
       priority: created.priority,
       owner: created.assignee,
       estimate: "sync",
@@ -2628,7 +2674,7 @@ function Kanban({ data }) {
       [draft.status]: [task, ...(current[draft.status] ?? [])],
     }));
     setDraft((current) => ({ ...current, title: "", body: "" }));
-    setSyncStatus(`${created.id} criada. No backend real isso chama kanban_db/hermes kanban create --json.`);
+    setSyncStatus(`${created.id} criada. O backend real chama o conector de Kanban dos agentes.`);
   }
 
   return (
@@ -2648,11 +2694,11 @@ function Kanban({ data }) {
             ))}
           </div>
         ) : null}
-        <button className="primary-button" onClick={createTask} type="button">{tx("Criar no Hermes")}</button>
+        <button className="primary-button" onClick={createTask} type="button">{tx("Criar tarefa")}</button>
       </SectionHead>
       <article className="kanban-brief panel">
         <div>
-          <span>Hermes kanban.db</span>
+          <span>Agent kanban.db</span>
           <strong>{tx(`${taskCount} tarefas operacionais`)}</strong>
           <p>{tx(blockedCount ? `${blockedCount} bloqueio(s) precisam de revisao antes do proximo ciclo.` : "Board sincronizado sem bloqueios reportados no snapshot atual.")}</p>
         </div>
@@ -2664,7 +2710,7 @@ function Kanban({ data }) {
         </div>
       </article>
       <div className="kanban-sync-panel panel">
-        <label>{tx("Titulo")}<input value={draft.title} onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))} placeholder={tx("Nova tarefa para o Hermes")} /></label>
+        <label>{tx("Titulo")}<input value={draft.title} onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))} placeholder={tx("Nova tarefa de agente")} /></label>
         <label>Assignee<input value={draft.assignee} onChange={(event) => setDraft((current) => ({ ...current, assignee: event.target.value }))} /></label>
         <label>{tx("Prioridade")}<select value={draft.priority} onChange={(event) => setDraft((current) => ({ ...current, priority: event.target.value }))}><option>P1</option><option>P2</option><option>P3</option></select></label>
         <label>{tx("Coluna")}<select value={draft.status} onChange={(event) => setDraft((current) => ({ ...current, status: event.target.value }))}>{[...new Set([draft.status, ...Object.keys(board)])].map((column) => <option key={column}>{column}</option>)}</select></label>
@@ -2698,7 +2744,7 @@ function Kanban({ data }) {
           </article>
         ))}
       </div>
-      <DetailModal title={selectedTask?.title} eyebrow="detalhe da tarefa Hermes" onClose={() => setSelectedTask(null)}>
+      <DetailModal title={selectedTask?.title} eyebrow={tx("detalhe da tarefa")} onClose={() => setSelectedTask(null)}>
         {selectedTask ? (
           <TaskDetail task={selectedTask} />
         ) : null}
@@ -4278,7 +4324,7 @@ function Skills({ data }) {
       patch_count: selectedSkill.patch_count ?? 0,
       profiles: selectedSkill.profiles ?? [],
       last_used_at: selectedSkill.last_used_at ?? null,
-      note: "Registro real agregado a partir dos .usage.json do Hermes. Nao foi encontrado SKILL.md para esta skill.",
+      note: "Registro real agregado a partir dos .usage.json dos agentes. Nao foi encontrado SKILL.md para esta skill.",
       suggested_skill_path: `${data.hermes?.hermesHome ?? "~/.hermes"}/skills/${selectedSkill.name}/SKILL.md`,
     }, null, 2)}\n`,
   } : null);
@@ -4369,7 +4415,7 @@ function Skills({ data }) {
                   <div>
                     <span>{tx("Registro real")}</span>
                     <h3>{selectedSkill?.name}</h3>
-                    <p>{tx("Esta skill tem uso real no Hermes, mas o coletor encontrou apenas o registro `.usage.json`. O conteúdo abaixo é uma leitura humana do uso; para editar comportamento, crie o `SKILL.md` no caminho sugerido.")}</p>
+                    <p>{tx("Esta skill tem uso real nos agentes, mas o coletor encontrou apenas o registro `.usage.json`. O conteúdo abaixo é uma leitura humana do uso; para editar comportamento, crie o `SKILL.md` no caminho sugerido.")}</p>
                   </div>
                   <div className="skill-summary-grid">
                     {skillUsageSummary(selectedSkill, selectedDoc).map((item) => (
@@ -5247,10 +5293,10 @@ function Cli({ data }) {
   const [hostStatus, setHostStatus] = useState("");
 
   async function verifyHost() {
-    setHostStatus("Verificando host Hermes via SSH...");
+    setHostStatus("Verificando host dos agentes via SSH...");
     try {
       const result = await runHermesCommand("hermes status");
-      setHostStatus(result.output || "Hermes status executado.");
+      setHostStatus(result.output || "Status dos agentes executado.");
     } catch (error) {
       setHostStatus(`Falha ao verificar host: ${error.message}`);
     }
@@ -5419,7 +5465,7 @@ export default function App() {
             source={missionControl.source}
             loading={missionControl.loading}
           />
-          <DetailModal title={gatewayModalOpen ? "Gateway Hermes" : ""} eyebrow="gateway operacional" onClose={() => setGatewayModalOpen(false)}>
+          <DetailModal title={gatewayModalOpen ? "Operations Gateway" : ""} eyebrow="gateway operacional" onClose={() => setGatewayModalOpen(false)}>
             <GatewayDetail data={missionControl.data} />
           </DetailModal>
         </main>

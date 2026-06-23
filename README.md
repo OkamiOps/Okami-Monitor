@@ -1,30 +1,31 @@
 # OKAMI Mission Control
 
-Dashboard React + Vite para operar agentes Okami, custos, Kanban, sessões, logs, conexão SSH, Pixel Office e Okami API Keys com fluxo guiado.
+React + Vite dashboard for operating multi-agent environments, usage, Kanban, sessions, logs, SSH access, Pixel Office and Okami API Keys through a guided workflow.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-cyan.svg)](LICENSE)
 ![Status](https://img.shields.io/badge/status-active-success)
 ![Stack](https://img.shields.io/badge/stack-React%2019%20%2B%20Vite%207%20%2B%20Phaser%204-orange)
 
-Parte do projeto [OKAMI HQ](https://okami-site.msant262.workers.dev).
+Part of [OKAMI HQ](https://okami-site.msant262.workers.dev).
 
 ---
 
 ## Highlights
 
-- **14 módulos visíveis**: Overview, Usage, Kanban, Office, Pixel, Perfis, Sessions, Cron, Agentes, Skills, Logs, Apps, CLIs e Docs.
-- **Agentes unificado**: uma tela só para preparar o acesso do painel, configurar o SSH do servidor dos agentes e conectar agentes externos.
-- **Key automática por agente**: o botão **Conectar agente** cria a Okami API Key, guarda o segredo no cofre e tenta aplicar `.okami.env` no workspace remoto.
-- **Idiomas PT-BR e EN**: seletor no topo do painel, persistido no navegador, cobrindo navegação, status e cabeçalhos principais.
-- **Tokens por período**: o Overview recalcula o card principal de tokens com o filtro ativo (`1h`, `24h`, `7d` ou `30d`) e mantém o total alinhado ao card lateral.
-- **Fluxo simples por padrão**: o usuário não precisa editar arquivo manualmente para colar key; geração manual fica recolhida em **Avançado**.
-- **Agentes suportados**: agente principal, OpenClaw, OpenHuman, Claude, Codex e externos como OpenCode/AutoGen/CrewAI/LangGraph.
-- **Demo vivo**: sem servidor/token, a UI usa `createDemoMissionControl()` com dados variáveis e contrato completo, incluindo `agentRuntimes`.
-- **SSE via same-origin**: em produção o frontend chama `/api` no mesmo domínio e o proxy injeta `OKAMI_BACKEND_PROXY_TOKEN`.
-- **Polling autenticado direto**: quando `VITE_OKAMI_API_BASE_URL` aponta direto para a API, as chamadas usam `Authorization: Bearer <Okami API Key>`.
-- **SSH dos agentes**: o servidor Node coleta dados reais via SSH (`state.db`, `kanban.db`, logs, sessões, skills e configs).
-- **Storage endurecido**: `server/.data` usa permissões restritas; segredos SSH/API ficam cifrados e API Keys são armazenadas só como hash.
-- **Pixel Office**: Phaser 4 + canvas transparente sobre `office.mp4`, com cleanup seguro em troca de abas.
+- **Multi-agent cockpit**: the product copy is no longer tied to a single Hermes-only flow. The main command deck is now **Operation in real time**.
+- **14 visible modules**: Overview, Usage, Kanban, Office, Pixel, Profiles, Sessions, Cron, Agents, Skills, Logs, Apps, CLIs and Docs.
+- **Unified Agents screen**: one place to prepare dashboard access, configure the agent server SSH connection and connect external agents.
+- **Automatic agent keys**: **Connect agent** creates an Okami API Key, stores the secret in the encrypted server vault and tries to apply `.okami.env` to the remote workspace.
+- **English-first UI with PT-BR support**: the dashboard defaults to English and keeps a language switcher for Portuguese.
+- **Period-aware tokens**: Overview recalculates token totals for `1h`, `24h`, `7d` and `30d` with one consistent aggregation source.
+- **Simpler default flow**: users do not need to manually generate, copy and paste API Keys. Manual key tools are kept under advanced access.
+- **Supported agent runtimes**: main agent, OpenClaw, OpenHuman, Claude Code, Codex and external runtimes such as OpenCode, AutoGen, CrewAI and LangGraph.
+- **Live demo mode**: without a server or token, `createDemoMissionControl()` provides variable demo data and the full UI contract.
+- **Same-origin API support**: in production, the frontend can call `/api` on the same domain while the proxy injects `OKAMI_BACKEND_PROXY_TOKEN`.
+- **Direct authenticated polling**: when `VITE_OKAMI_API_BASE_URL` points directly to the API, requests use `Authorization: Bearer <Okami API Key>`.
+- **Agent server over SSH**: the Node server collects real state through SSH, including `state.db`, `kanban.db`, logs, sessions, skills and config files.
+- **Hardened local storage**: `server/.data` uses restricted permissions; SSH/API secrets are encrypted and API Keys are stored only as hashes.
+- **Pixel Office**: Phaser 4 renders the pixel office canvas with stable cleanup when switching views.
 
 ---
 
@@ -38,11 +39,11 @@ cp .env.example .env.local
 npm run dev:all
 ```
 
-Acesse `http://localhost:5173`.
+Open `http://localhost:5173`.
 
-Em desenvolvimento local, `npm run dev:all` já usa `/api` via proxy do Vite para `http://127.0.0.1:3001` e confia em chamadas de loopback. Você não precisa definir `VITE_OKAMI_API_BASE_URL` nem colar Okami API Key para operar o painel localmente.
+For local development, `npm run dev:all` starts the Express API and the Vite frontend. Vite proxies `/api` to `http://127.0.0.1:3001`, and loopback requests are trusted by default so non-technical users can test the dashboard without manually pasting an Okami API Key.
 
-Configuração opcional:
+Optional configuration:
 
 ```env
 VITE_OKAMI_API_BASE_URL=same-origin
@@ -59,108 +60,103 @@ OKAMI_BACKEND_URL=
 OKAMI_BACKEND_PROXY_TOKEN=
 ```
 
-Abra `http://localhost:5173/#config` ou clique em **Agentes**. Para conectar o servidor, preencha host/user, escolha a chave privada SSH e clique **Conectar servidor**. O painel prepara o acesso local automaticamente; a área de keys fica recolhida em **Acesso e keys (avançado)** apenas para suporte/backup.
+Open `http://localhost:5173/#config` or click **Agents**. To connect the server, fill in host/user, choose the SSH authentication method and click **Connect server**. The dashboard prepares local access automatically; manual key tools remain under **Access and keys (advanced)** for support and backup only.
 
-O idioma pode ser alternado no topo do painel entre **PT-BR** e **EN**. A preferência fica salva no `localStorage` em `okami.ui.language`.
-
-Na mesma tela:
-
-- **Servidor dos agentes** configura SSH do host onde os agentes rodam.
-- **Agentes conectados** cria/vincula a key do agente automaticamente com **Conectar agente**.
-- **Acesso e keys (avançado)** permite ver backups, colar key existente ou gerar uma key manual quando necessário.
-- Se o SSH já estiver salvo, o servidor tenta escrever `.okami.env` no workspace do agente com `OKAMI_API_KEY`, `OKAMI_API_BASE_URL`, `OKAMI_AGENT_ID` e `OKAMI_AGENT_NAME`.
-- Se o SSH ainda não estiver salvo, a key fica pronta no cofre e será aplicada quando a conexão SSH for configurada.
+The language switcher in the top bar supports **EN** and **PT-BR**. The preference is stored in `localStorage` under `okami.ui.language`.
 
 ---
 
 ## Scripts
 
-| Comando | O que faz |
+| Command | Purpose |
 | --- | --- |
-| `npm run dev` | Frontend Vite na porta 5173 |
-| `npm run dev:api` | API Express na porta `OKAMI_API_PORT` ou 3001 |
-| `npm run dev:all` | API + frontend em paralelo |
-| `npm run build` | Build de produção em `dist/` |
-| `npm run preview` | Preview do build |
+| `npm run dev` | Vite frontend on port 5173 |
+| `npm run dev:api` | Express API on `OKAMI_API_PORT` or 3001 |
+| `npm run dev:all` | API and frontend together |
+| `npm run build` | Production build in `dist/` |
+| `npm run preview` | Preview the production build |
 
 ---
 
-## Arquitetura
+## Architecture
 
 ```text
 Okami-Monitor/
-├── functions/api/[[path]].js     # Proxy same-origin Cloudflare Pages
+├── functions/api/[[path]].js      # Cloudflare Pages same-origin proxy
 ├── src/
-│   ├── App.jsx                   # SPA principal, 14 views visíveis e aba Agentes unificada
-│   ├── PixelOfficeCanvas.jsx     # Pixel Office Phaser 4
-│   ├── styles.css                # Design system e componentes
+│   ├── App.jsx                    # Main SPA, 14 views and unified Agents flow
+│   ├── PixelOfficeCanvas.jsx      # Phaser 4 Pixel Office
+│   ├── styles.css                 # Design system and components
 │   ├── components/
 │   │   ├── Toast.jsx
 │   │   └── MarkdownLite.jsx
-│   ├── data/mockMissionControl.js # Demo vivo e schema base
+│   ├── data/mockMissionControl.js # Live demo data and base schema
 │   └── lib/
-│       ├── apiClient.js          # Auth, API client, Okami API Keys e conexão de agentes
-│       └── useMissionControl.js  # SSE same-origin + polling fallback
+│       ├── apiClient.js           # Auth, API client, Okami API Keys and agent connection
+│       └── useMissionControl.js   # Same-origin SSE plus polling fallback
 ├── server/
-│   ├── index.js                  # Express API, auth, scopes, SSE e conexão automática de agentes
-│   ├── hermesCollector.js        # Coleta dados dos agentes via SSH
-│   ├── sshBridge.js              # ssh2 wrapper
-│   └── store.js                  # Config, registry, secrets cifrados e auth hashes
-└── public/                       # Video, sprites, favicon e assets pixel
+│   ├── index.js                   # Express API, auth, scopes, SSE and agent connection
+│   ├── hermesCollector.js         # Real agent data collection over SSH
+│   ├── sshBridge.js               # ssh2 wrapper
+│   └── store.js                   # Config, registry, encrypted secrets and auth hashes
+└── public/                        # Video, sprites, favicon and pixel assets
 ```
 
-Stack principal: React 19, Vite 7, Phaser 4, Express 5, ssh2 e Node ESM.
+Main stack: React 19, Vite 7, Phaser 4, Express 5, ssh2 and Node ESM.
+
+The `hermesCollector.js` name is still the internal collector contract. User-facing copy now describes the monitored environment as an agent operation, not a Hermes-only product surface.
 
 ---
 
 ## Okami API Keys
 
-O servidor aceita três formas de autenticação:
+The server supports three authentication paths:
 
-1. **Proxy interno**: `x-okami-proxy-token: <OKAMI_BACKEND_PROXY_TOKEN>` para Cloudflare Pages/functions.
-2. **Token estático opcional**: `OKAMI_API_TOKEN` ou `VITE_OKAMI_API_TOKEN`.
-3. **Okami API Key gerada**: `Authorization: Bearer okami_key_...`.
+1. **Internal proxy**: `x-okami-proxy-token: <OKAMI_BACKEND_PROXY_TOKEN>` for Cloudflare Pages/functions.
+2. **Optional static token**: `OKAMI_API_TOKEN` or `VITE_OKAMI_API_TOKEN`.
+3. **Generated Okami API Key**: `Authorization: Bearer okami_key_...`.
 
-Rotas públicas:
+Public routes:
 
 - `GET /api/health`
 - `GET /api/auth/status`
-- `POST /api/auth/bootstrap` via loopback/proxy autorizado e apenas enquanto não houver key ativa
+- `POST /api/auth/bootstrap`, allowed through loopback or the authorized proxy while no active key exists
 
-Rotas protegidas usam escopos:
+Protected scopes:
 
-- `read`: state, docs, apps e leitura operacional
-- `write`: registry de apps/docs/agentes/APIs
-- `ssh`: conexão SSH, comandos allowlist, arquivos permitidos e cron/timers
-- `kanban`: criação de tasks
-- `logs`: leitura de logs
-- `admin`: criar/listar/revogar API Keys
+- `read`: state, docs, apps and operational read access
+- `write`: apps, docs, agents and API registry writes
+- `ssh`: SSH connection, command allowlist, allowed file writes and cron/timers
+- `kanban`: task creation
+- `logs`: log reads
+- `admin`: create, list and revoke API Keys
 
-As keys completas aparecem apenas no momento de criação. Depois disso o servidor guarda `tokenHash`, `tokenPrefix`, escopos, criação, último uso e revogação em `auth.json`.
+Full key values are shown only at creation time. After that, the server stores `tokenHash`, `tokenPrefix`, scopes, creation time, last use and revocation state in `auth.json`.
 
 ---
 
-## Agentes
+## Agents
 
-A aba visível **Agentes** usa o hash `#config` por compatibilidade e substitui as antigas telas separadas de Config, Agentes e Hermes. Ela mostra:
+The visible **Agents** screen uses the `#config` hash for backward compatibility and replaces the older split between Config, Agents and Hermes. It contains:
 
-- agentes padrão: agente principal, OpenClaw, OpenHuman, Claude Code, Codex e Outros agentes
-- conexão de agente externo com identificador, nome, tipo, comando de teste, pasta, arquivo principal e workspace
-- arquivos editáveis por agente
-- instâncias associadas aos agentes reais ou demo
-- comandos diagnósticos executáveis somente via allowlist
+- default runtimes: main agent, OpenClaw, OpenHuman, Claude Code, Codex and Other agents
+- external agent connection with identifier, name, type, test command, base folder, entry file and workspace
+- editable files per agent
+- instances associated with real or demo agents
+- diagnostic commands executed only through an allowlist
+- dashboard access, server SSH setup and advanced key support
 
-O servidor persiste agentes locais em `server/.data/registry.json` e, quando há SSH real, também lê `~/.agents/registry.json` no host remoto.
+The server persists local agents in `server/.data/registry.json`. When real SSH is configured, it also reads `~/.agents/registry.json` on the remote host.
 
-Ao clicar **Conectar agente**, a API executa `POST /api/mission-control/agent-runtimes/:id/connect`:
+When the user clicks **Connect agent**, the API calls `POST /api/mission-control/agent-runtimes/:id/connect`:
 
-1. Normaliza o cadastro do agente.
-2. Cria uma Okami API Key com os escopos recomendados.
-3. Salva o segredo cifrado no cofre.
-4. Registra no agente apenas prefixo, fingerprint, referência do segredo e status.
-5. Tenta escrever `.okami.env` no workspace remoto via SSH.
+1. Normalize the runtime registration.
+2. Create an Okami API Key with the recommended scopes.
+3. Store the secret in the encrypted vault.
+4. Register only the prefix, fingerprint, secret reference and status on the runtime.
+5. Try to write `.okami.env` to the remote workspace over SSH.
 
-Exemplo de agente externo:
+Example external agent:
 
 ```json
 {
@@ -177,16 +173,16 @@ Exemplo de agente externo:
 
 ---
 
-## Conectar Servidor dos Agentes por SSH
+## Agent Server SSH
 
-1. Abra **Agentes**.
-2. Em **Servidor dos agentes**, preencha host, user, porta, método de auth e a pasta base dos agentes.
-3. Escolha a private key ou informe uma senha temporária.
-4. Clique **Conectar servidor**. O painel prepara o acesso, salva a credencial no cofre, salva a configuração e testa o SSH na mesma ação.
+1. Open **Agents**.
+2. In **Agent server**, fill in host, user, port, authentication method and the base folder used by the agents.
+3. Choose a private key or enter a temporary SSH password.
+4. Click **Connect server**. The dashboard prepares access, saves the credential in the vault, saves the config and tests SSH in one action.
 
-Com SSH configurado, `collectHermesState()` troca o demo por dados reais e alimenta Overview, Usage, Office, Pixel, Kanban, Perfis, Skills, Logs, Sessions, CLIs e a seção Agentes.
+With SSH configured, `collectHermesState()` replaces demo data with real state and feeds Overview, Usage, Office, Pixel, Kanban, Profiles, Skills, Logs, Sessions, CLIs and Agents.
 
-Principais endpoints:
+Main endpoints:
 
 - `GET /api/mission-control/state`
 - `GET /api/mission-control/stream`
@@ -199,63 +195,76 @@ Principais endpoints:
 
 ---
 
-## Segurança
+## Security
 
-- O Express remove `x-powered-by`.
-- CORS permite origens configuradas em `OKAMI_ALLOWED_ORIGINS`; sem lista, dev/local continua simples.
-- Em desenvolvimento local, requests vindos de loopback (`127.0.0.1`/`::1`) recebem acesso de painel para não travar usuários leigos; defina `OKAMI_TRUST_LOCAL_DEV=0` para desativar.
-- `server/.data` é criado com `0700`, arquivos sensíveis com `0600`.
-- Segredos salvos via `store.saveSecret()` usam AES-256-GCM.
-- API Keys são validadas por hash SHA-256; o token completo não é persistido.
-- Comandos remotos passam por allowlist fixa + comandos diagnósticos seguros dos agentes registrados.
-- Escrita remota de arquivos só aceita paths em raízes de agentes permitidas.
-- A escrita automática de `.okami.env` usa `chmod 600` e não retorna o segredo para o registro do agente.
-- Cron/systemd rejeitam quebras de linha em campos de comando/calendário.
+- Express disables `x-powered-by`.
+- CORS uses `OKAMI_ALLOWED_ORIGINS` when configured; without a list, local development stays simple.
+- In local development, loopback requests receive dashboard access by default. Set `OKAMI_TRUST_LOCAL_DEV=0` to disable this.
+- `server/.data` is created with `0700`; sensitive files use `0600`.
+- Secrets saved through `store.saveSecret()` use AES-256-GCM.
+- API Keys are validated through SHA-256 hashes; full tokens are never persisted.
+- Remote commands pass through a fixed allowlist plus registered safe diagnostic commands.
+- Remote file writes are limited to allowed agent roots.
+- Automatic `.okami.env` writes use `chmod 600` and do not expose the secret in the agent registry.
+- Cron/systemd helpers reject line breaks in sensitive command/calendar fields.
 
 ---
 
-## Validação
+## Validation
 
-Checklist local usado nesta mudança:
+Recommended local checks:
 
 ```bash
 node --check server/index.js server/store.js server/hermesCollector.js src/data/mockMissionControl.js
 npm run build
 npm audit --json
+git diff --check
 ```
 
-Verificações adicionais do Overview/i18n:
+Release validation covered:
 
-- API local em `http://127.0.0.1:3001/api/mission-control/state` respondendo `200`.
-- Playwright CLI em `http://127.0.0.1:5173` com filtros `1h`, `7d` e `30d`; o card principal **Tokens** acompanha o total do card de período.
-- Alternância EN -> PT-BR validada no navegador; navegação, status, título do Overview e label de período mudam sem recarregar a página.
-
-E2E realizado:
-
-- bootstrap de Okami API Key
-- key admin lendo state
-- key read-only lendo state e falhando com 403 em escrita
-- registro de runtime `opencode`
-- bloqueio de comando inseguro
-- bloqueio de escrita em `/etc/passwd`
-- navegação por todas as 14 abas visíveis
-- preparação do acesso principal pela UI
-- conexão de agente externo pela UI com key automática
-- edição de arquivo de agente pela UI
-- Pixel canvas renderizado e não vazio
-- console browser sem errors/warnings
+- API state fetch through a generated/admin key.
+- Read-only key allowed to read state and blocked with `403` on writes.
+- Runtime registration and automatic agent key connection.
+- Unsafe remote command blocked.
+- File write outside allowed paths blocked.
+- Navigation through all 14 visible modules.
+- Main access preparation through the UI.
+- External agent connection through the UI with automatic key creation.
+- Agent file editing through the UI.
+- Pixel canvas rendered and non-empty.
+- Browser console checked without relevant application errors.
+- Overview token filters `1h`, `24h`, `7d` and `30d` aligned with the main token card.
 
 ---
 
 ## Design System
 
-Tokens canônicos em `src/styles.css`:
+Canonical tokens live in `src/styles.css`:
 
-- cores `--ok-bg-*`, `--ok-fg-*`, `--ok-orange`, `--ok-magenta`, `--ok-cyan`, `--ok-success`, `--ok-warning`, `--ok-danger`
-- tipografia Space Grotesk + JetBrains Mono
-- spacing `--ok-s-*`
-- cantos retos por padrão
-- componentes `.ok-btn-*`, `.ok-status-badge`, `.ok-filter-bar`, `.ok-toast`, `.ok-empty`, `.md-lite`
+- colors: `--ok-bg-*`, `--ok-fg-*`, `--ok-orange`, `--ok-magenta`, `--ok-cyan`, `--ok-success`, `--ok-warning`, `--ok-danger`
+- typography: Space Grotesk and JetBrains Mono
+- spacing: `--ok-s-*`
+- sharp corners by default
+- components: `.ok-btn-*`, `.ok-status-badge`, `.ok-filter-bar`, `.ok-toast`, `.ok-empty`, `.md-lite`
+
+---
+
+## Portuguese Version
+
+O OKAMI Mission Control e um dashboard React + Vite para operar ambientes multiagentes, custos, Kanban, sessoes, logs, SSH, Pixel Office e Okami API Keys.
+
+Nesta beta, a experiencia principal deixa de ser centrada em Hermes como produto e passa a representar a operacao de agentes de forma mais ampla. A tela **Agentes** concentra acesso do painel, conexao SSH do servidor, conexao de agentes externos, arquivos, instancias e suporte avancado a keys.
+
+Fluxo principal:
+
+1. Rode `npm install`, copie `.env.example` para `.env.local` e execute `npm run dev:all`.
+2. Abra `http://localhost:5173`.
+3. Clique em **Agentes**.
+4. Configure o servidor dos agentes por SSH.
+5. Use **Conectar agente** para criar/vincular a Okami API Key automaticamente.
+
+O idioma padrao do produto e ingles, mas o seletor no topo permite alternar para **PT-BR**. A preferencia fica salva em `okami.ui.language`.
 
 ---
 

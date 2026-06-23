@@ -1,7 +1,5 @@
-// Analytics sintético para o modo demo/mock: 24 baldes de hora-do-dia e 30 dias
-// de calendário (ancorados em datas reais terminando hoje). Sem isto, todos os
-// ranges do Overview (1h/24h/7d/30d) caíam no mesmo fallback e o filtro parecia
-// "de enfeite". Com dados reais do Hermes via SSH, este bloco é substituído.
+// Synthetic analytics for demo/mock mode: 24 hour-of-day buckets and 30 calendar
+// days anchored on today. Real agent data collected over SSH replaces this block.
 const MOCK_NOW = new Date();
 const mockHourBuckets = Array.from({ length: 24 }, (_, index) => {
   const input = 14000 + Math.round(11000 * Math.abs(Math.sin((index + 1) / 3.1)));
@@ -25,7 +23,7 @@ const mockAnalytics = { hours: mockHourBuckets, days: mockDayBuckets };
 
 const baseMissionControl = {
   status: {
-    label: "Hermes online",
+    label: "Agentes online",
     detail: "Proxy seguro · 4 agentes ativos",
     healthy: true,
     updatedAt: new Date().toISOString(),
@@ -42,7 +40,7 @@ const baseMissionControl = {
   },
   overview: {
     serviceHealth: [
-      { name: "Hermes Core", value: 99.98, status: "healthy" },
+      { name: "Agent Core", value: 99.98, status: "healthy" },
       { name: "Gateway LLM", value: 99.91, status: "healthy" },
       { name: "VPS Proxy", value: 98.72, status: "watch" },
       { name: "Agent Streams", value: 96.4, status: "watch" },
@@ -54,7 +52,7 @@ const baseMissionControl = {
       { label: "review", value: 2 },
     ],
     incidents: [
-      { severity: "P2", title: "Proxy Hermes com latencia acima do alvo", owner: "Gateway", eta: "18 min" },
+      { severity: "P2", title: "Proxy dos agentes com latencia acima do alvo", owner: "Gateway", eta: "18 min" },
       { severity: "P3", title: "Scout aguardando credencial da VPS", owner: "Scout", eta: "manual" },
     ],
   },
@@ -65,7 +63,7 @@ const baseMissionControl = {
     { name: "kimi-k2.5", share: 3 },
   ],
   activity: [
-    { actor: "Hermes", message: "Recebeu brief do WhatsApp gateway", status: "OK", tone: "ok" },
+    { actor: "Agent Core", message: "Recebeu brief do WhatsApp gateway", status: "OK", tone: "ok" },
     { actor: "Coder-1", message: "Gerando UI de dashboards responsivos", status: "OK", tone: "ok" },
     { actor: "Scout", message: "Monitorando concorrentes e docs", status: "OK", tone: "ok" },
     { actor: "Gateway", message: "Fallback para OpenRouter acionado", status: "Retry", tone: "warn" },
@@ -160,7 +158,7 @@ const baseMissionControl = {
   agents: [
     {
       id: "hermes",
-      name: "Hermes",
+      name: "Agente principal",
       role: "orchestrator",
       color: "orange",
       status: "active",
@@ -169,7 +167,7 @@ const baseMissionControl = {
       branch: "main",
       workspace: "/srv/okami/hermes",
       progress: 76,
-      tool: "Hermes Core",
+      tool: "Agent Core",
       monitorTitle: "orchestration loop",
       monitorLines: [
         "route: incoming_event -> agent_pool",
@@ -215,7 +213,7 @@ const baseMissionControl = {
       color: "success",
       status: "observing",
       currentTask: "Catalogar endpoints e documentacao da VPS",
-      project: "Hermes Gateway",
+      project: "Agent Gateway",
       branch: "research/hostinger-api",
       workspace: "/srv/agents/scout",
       progress: 34,
@@ -229,7 +227,7 @@ const baseMissionControl = {
       ],
       logs: [
         "21:05:12 verificou status da VPS",
-        "21:06:55 mapeou endpoints Hermes",
+        "21:06:55 mapeou endpoints dos agentes",
         "21:08:03 aguardando token de API",
       ],
     },
@@ -286,31 +284,31 @@ const baseMissionControl = {
   ],
   liveEvents: [
     { time: "21:06:44", message: "coder-1 abriu branch feature/ui" },
-    { time: "21:07:02", message: "hermes sincronizou memoria do projeto" },
+    { time: "21:07:02", message: "agent-core sincronizou memoria do projeto" },
     { time: "21:07:18", message: "scout anexou 3 links de referencia" },
     { time: "21:08:11", message: "codex aguardando checks locais" },
   ],
   kanban: {
     Backlog: [
-      { title: "Conectar Supabase metrics", meta: "Hermes · API", priority: "P1", owner: "Hermes", estimate: "4h", board: "Okami Core" },
+      { title: "Conectar Supabase metrics", meta: "Agent Core · API", priority: "P1", owner: "Agent Core", estimate: "4h", board: "Okami Core" },
       { title: "Mapa de custos por cliente", meta: "Finance · Data", priority: "P2", owner: "Codex", estimate: "6h", board: "Cliente Aurora" },
     ],
     "Em progresso": [
       { title: "Mission Control mobile", meta: "Codex · UI", hot: true, priority: "P1", owner: "Coder-1", estimate: "2h", board: "Okami Core" },
-      { title: "Proxy reverso Hermes", meta: "Gateway · Infra", priority: "P1", owner: "Hermes", estimate: "1d", board: "Okami Core" },
+      { title: "Proxy reverso dos agentes", meta: "Gateway · Infra", priority: "P1", owner: "Agent Core", estimate: "1d", board: "Okami Core" },
     ],
     Review: [{ title: "Docs de instalacao CLI", meta: "Writer · Docs", priority: "P2", owner: "Writer", estimate: "40m", board: "Cliente Aurora" }],
     Done: [{ title: "Inventario de apps", meta: "Scout · Links", priority: "P3", owner: "Scout", estimate: "done", board: "Cliente Aurora" }],
   },
   apiKeys: [
     { id: "openai", name: "OpenAI", maskedValue: "openai-token-masked", detail: "Produção · rotacao em 18d", latency: 310, usage: 46, status: "healthy" },
-    { id: "anthropic", name: "Anthropic", maskedValue: "anthropic-token-masked", detail: "Hermes · fallback ativo", latency: 280, usage: 61, status: "healthy" },
+    { id: "anthropic", name: "Anthropic", maskedValue: "anthropic-token-masked", detail: "Agent routing · fallback ativo", latency: 280, usage: 61, status: "healthy" },
     { id: "openrouter", name: "OpenRouter", maskedValue: "openrouter-token-masked", detail: "Rate limit 82%", latency: 520, usage: 82, status: "watch" },
     { id: "github", name: "GitHub", maskedValue: "github-token-masked", detail: "Repos OkamiOps", latency: 190, usage: 33, status: "healthy" },
   ],
   apps: [
     { name: "Okami Site", url: "https://okami-site.msant262.workers.dev", detail: "workers.dev", status: "Online", uptime: 99.99, env: "prod" },
-    { name: "Hermes Dashboard", url: "#", detail: "localhost proxy", status: "Proxy", uptime: 98.7, env: "private" },
+    { name: "Operations Dashboard", url: "#", detail: "localhost proxy", status: "Proxy", uptime: 98.7, env: "private" },
     { name: "Gateway LLM", url: "#", detail: "api.okamiops", status: "Healthy", uptime: 99.91, env: "prod" },
     { name: "Docs Portal", url: "#", detail: "runbooks + playbooks", status: "Draft", uptime: 100, env: "stage" },
   ],
@@ -318,11 +316,11 @@ const baseMissionControl = {
     {
       id: "runbooks",
       title: "Runbooks",
-      body: "Deploy, rollback, incidentes e proxy Hermes.",
+      body: "Deploy, rollback, incidentes e proxy dos agentes.",
       updated: "hoje",
       coverage: 72,
       source: "docs/runbooks.md",
-      content: "# Runbooks\n\n## Deploy\n- Validar saude do gateway antes do release.\n- Conferir logs do Hermes via ponte SSH.\n- Registrar snapshot de sessions, tokens e skills.\n\n## Rollback\n- Pausar novas execucoes.\n- Restaurar build anterior.\n- Reprocessar tarefas bloqueadas no Kanban.",
+      content: "# Runbooks\n\n## Deploy\n- Validate gateway health before the release.\n- Check agent logs through the SSH bridge.\n- Record a snapshot of sessions, tokens and skills.\n\n## Rollback\n- Pause new executions.\n- Restore the previous build.\n- Reprocess blocked Kanban tasks.",
     },
     {
       id: "agent-briefs",
@@ -331,7 +329,7 @@ const baseMissionControl = {
       updated: "ontem",
       coverage: 81,
       source: "docs/agent-briefs.md",
-      content: "# Agent Briefs\n\n## Diana\nResponsavel por revisao visual, consistencia de interface e tarefas de acabamento.\n\n## Morgana\nResponsavel por curadoria de sessoes, memoria e documentacao operacional.\n\n## Zelda\nResponsavel por metricas, reconciliacao de dados e painels de uso.",
+      content: "# Agent Briefs\n\n## Diana\nResponsible for visual review, interface consistency and finishing tasks.\n\n## Morgana\nResponsible for session curation, memory and operational documentation.\n\n## Zelda\nResponsible for metrics, data reconciliation and usage panels.",
     },
     {
       id: "system-design",
@@ -340,7 +338,7 @@ const baseMissionControl = {
       updated: "hoje",
       coverage: 94,
       source: "okami-design-system",
-      content: "# Okami System Design\n\n- Base escura com grid tecnico discreto.\n- Acentos distribuidos entre cyan, magenta, laranja e verde.\n- Cards com bordas finas, informacao densa e contraste controlado.\n- Texto operacional curto, sem marketing dentro do produto.",
+      content: "# Okami System Design\n\n- Dark base with a discreet technical grid.\n- Accents distributed across cyan, magenta, orange and green.\n- Thin bordered cards, dense information and controlled contrast.\n- Short operational copy, with no marketing text inside the product.",
     },
   ],
   hermes: {
@@ -402,7 +400,7 @@ const baseMissionControl = {
       { group: "Sessions", method: "GET", path: "/api/hermes/sessions/:id", purpose: "ler detalhe/transcript redigido" },
       { group: "Sessions", method: "GET", path: "/api/hermes/sessions/stats", purpose: "tokens, mensagens, fontes, tamanho do banco" },
       { group: "Kanban", method: "GET", path: "/api/hermes/kanban/boards", purpose: "listar boards em ~/.hermes/kanban.db" },
-      { group: "Kanban", method: "POST", path: "/api/hermes/kanban/boards", purpose: "criar board Hermes quando necessario" },
+      { group: "Kanban", method: "POST", path: "/api/hermes/kanban/boards", purpose: "criar board de agentes quando necessario" },
       { group: "Kanban", method: "GET", path: "/api/hermes/kanban/tasks", purpose: "listar tasks por status, assignee, tenant, archived" },
       { group: "Kanban", method: "POST", path: "/api/hermes/kanban/tasks", purpose: "criar task via kanban_db/hermes kanban create --json" },
       { group: "Kanban", method: "GET", path: "/api/hermes/kanban/tasks/:id", purpose: "show/context/runs/comments de uma task" },
@@ -411,13 +409,13 @@ const baseMissionControl = {
       { group: "Kanban", method: "POST", path: "/api/hermes/kanban/tasks/:id/block", purpose: "bloquear com motivo" },
       { group: "Kanban", method: "POST", path: "/api/hermes/kanban/tasks/:id/unblock", purpose: "desbloquear task" },
       { group: "Kanban", method: "POST", path: "/api/hermes/kanban/tasks/:id/complete", purpose: "concluir com summary/metadata" },
-      { group: "Kanban", method: "POST", path: "/api/hermes/kanban/tasks/:id/specify", purpose: "expandir triage em spec usando Hermes" },
+      { group: "Kanban", method: "POST", path: "/api/hermes/kanban/tasks/:id/specify", purpose: "expandir triage em spec usando agentes" },
       { group: "Kanban", method: "GET", path: "/api/hermes/kanban/events", purpose: "poll/SSE do task_events para atualizar Kanban" },
       { group: "Kanban", method: "GET", path: "/api/hermes/kanban/tasks/:id/log", purpose: "worker log em ~/.hermes/kanban/logs" },
       { group: "Runs", method: "POST", path: "/api/hermes/runs", purpose: "criar run no API server /v1/runs via tunnel/servidor" },
       { group: "Runs", method: "GET", path: "/api/hermes/runs/:runId", purpose: "status, output e usage" },
       { group: "Runs", method: "GET", path: "/api/hermes/runs/:runId/events", purpose: "SSE/progress para Office e Overview" },
-      { group: "Jobs", method: "GET", path: "/api/hermes/jobs", purpose: "listar cron/jobs do Hermes" },
+      { group: "Jobs", method: "GET", path: "/api/hermes/jobs", purpose: "listar cron/jobs dos agentes" },
       { group: "Jobs", method: "POST", path: "/api/hermes/jobs", purpose: "criar job agendado" },
       { group: "Logs", method: "GET", path: "/api/hermes/logs", purpose: "errors.log/gateway.log redigidos" },
       { group: "Logs", method: "GET", path: "/api/hermes/logs/stream", purpose: "stream de logs redigidos para monitoramento" },
@@ -527,7 +525,7 @@ function createDemoAgentRuntimes(tick) {
         { name: ".env", path: "~/.hermes/.env", profile: "global", type: "env", redacted: true, content: "OPENAI_API_KEY=***\nANTHROPIC_API_KEY=***\n" },
       ],
       instances: [
-        { id: "hermes", name: "Hermes", role: "orchestrator", status: "active", workspace: "~/.hermes" },
+        { id: "hermes", name: "Agente principal", role: "orchestrator", status: "active", workspace: "~/.hermes" },
       ],
     },
     {
@@ -679,7 +677,7 @@ export function createDemoMissionControl(inputDate = new Date()) {
     },
     liveEvents: [
       { time: demoClock(now, 0), message: "demo atualizou runtimes e keys" },
-      { time: demoClock(now, 2), message: "hermes sincronizou memoria do projeto" },
+      { time: demoClock(now, 2), message: "agent-core sincronizou memoria do projeto" },
       { time: demoClock(now, 4), message: "codex validou contrato de agentes" },
       { time: demoClock(now, 6), message: "openclaw simulou gateway multi-canal" },
     ],
